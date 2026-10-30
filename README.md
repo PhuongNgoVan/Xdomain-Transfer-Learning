@@ -19,15 +19,5 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## Chạy kiểm thử (Unit Tests)
 
-Toàn bộ unit test chạy hoàn toàn ngoại tuyến (không tải mạng) trên CPU:
 
-```bash
-pytest -v
-```
-
-## Tài liệu tham chiếu
-- Quy tắc chung và phân công nhiệm vụ: [`AGENTS.md`](AGENTS.md)
-- Hợp đồng giao diện (nguồn sự thật duy nhất): [`docs/contract.md`](docs/contract.md)
-- Chi tiết các nhiệm vụ theo giai đoạn: [`tasks/`](tasks/)
