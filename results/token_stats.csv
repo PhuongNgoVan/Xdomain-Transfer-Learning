@@ -1,0 +1,5 @@
+tokenizer,subset,n_samples,max_length,min_tokens,mean_tokens,median_tokens,p95_tokens,p99_tokens,max_tokens,n_truncated,truncation_rate
+PhoBERT (vinai/phobert-base-v2),all,32966,256,3,24.7443,14.0,76.0,192.0,1431,199,0.006037
+PhoBERT (vinai/phobert-base-v2),train,23048,256,4,24.4967,14.0,74.65,187.0,1303,134,0.005814
+PhoBERT (vinai/phobert-base-v2),dev,3305,256,5,24.7933,14.0,74.0,186.0,670,20,0.006051
+PhoBERT (vinai/phobert-base-v2),test,6613,256,3,25.5831,14.0,81.4,218.76,1431,45,0.006805

@@ -1,0 +1,693 @@
+id,text,label,subset,text_seg
+6234,người ta có bạn bè nhìn vui thật,1,test,người ta có bạn_bè nhìn vui thật
+6235,cho nghỉ viêc mói đúng sao goi là kỷ luật,5,test,cho nghỉ viêc mói đúng sao goi là kỷ_luật
+6236,kinh vãi 😡,4,test,kinh vãi emo_anger
+6237,nhà thì không xa lắm nhưng chưa bao giờ đi vì sợ bị đè bẹp luôn người =))))),2,test,nhà thì không xa lắm nhưng chưa bao_giờ đi vì sợ bị đè_bẹp luôn người emo_joy
+6238,bố không thích nộp đấy mày thích ý kiến không,3,test,bố không thích nộp đấy mày thích ý_kiến không
+6239,bắt cóc bỏ đĩa . quanh đi quẩn lại chỉ khổ dân đen thôi !,6,test,bắt_cóc_bỏ_đĩa . quanh_đi_quẩn_lại chỉ khổ dân_đen thôi !
+6240,per khi nào bạn có bằng xe ôtô thì bạn mới hiểu . sai thì đã có ca,6,test,per khi nào bạn có bằng xe ôtô thì bạn mới hiểu . sai thì đã có ca
+6241,một hành động đẹp đầy tính nhân văn ☺️☺️,0,test,một hành_động đẹp đầy tính nhân_văn emo_u 263 a emo_u 263 a
+6242,"anh nhỏ nhẹ xin 100k rồi trước khi đi còn chào người đẹp , đi cẩn thận """,6,test,"anh nhỏ_nhẹ xin 100k rồi trước khi đi còn chào người đẹp , đi cẩn_thận """
+6243,per trình mày vẫn còn thấp chán =)),6,test,per trình mày vẫn còn thấp chán emo_joy
+6244,mấy ai được như vậy ??,6,test,mấy_ai được như_vậy ?
+6245,có ai như tao vô đọc bình luận 🤣 tao cười tao xĩu,0,test,có ai như tao vô đọc bình_luận emo_joy tao cười tao xĩu
+6246,ủa má . 2 đứa yêu nhau vô duyên và sân si giống nhau vậy ?,4,test,ủa má . 2 đứa yêu nhau vô_duyên và sân_si giống nhau vậy ?
+6247,góp vui cho chủ thớt 😂😂,0,test,góp vui cho chủ thớt emo_joy emo_joy
+6248,sống 17 năm chưa crush ai bao giờ,1,test,sống 17 năm chưa crush ai bao_giờ
+6249,ổng quay thiệt mà sao chửi ổng thế . không quay sao máy bạn xem được đó :)),6,test,ổng quay thiệt mà sao chửi ổng thế . không quay sao máy bạn xem được đó emo_joy
+6250,thần kinh cái đầu mày …,4,test,thần_kinh cái đầu mày …
+6251,nghe ngọt thế :((,0,test,nghe ngọt thế emo_sad
+6252,sao lại cứ phải thế nhỉ,6,test,sao lại cứ phải thế nhỉ
+6253,mệt vãi .. mà cừời cũng vãi ??????,0,test,mệt vãi . mà cừời cũng vãi ?
+6254,kinh khủng thật :((,2,test,kinh_khủng thật emo_sad
+6255,hậu duệ mặt trời đấy chứ đùa đâu nhá 😗😗,6,test,hậu_duệ mặt_trời đấy chứ đùa đâu nhá emo_love emo_love
+6256,tôi ở phú yên và anh này nói rất chuẩn < 3,0,test,tôi ở phú_yên và anh này nói rất chuẩn < 3
+6257,đứa nào bị táo bón thâm niên cứ ra cầu này mà nhảy đảm bảo hiệu quả ngay lần đầu trải nghiệm 🤣🤣🤣,0,test,đứa nào bị táo_bón thâm_niên cứ ra cầu này mà nhảy đảm_bảo hiệu_quả ngay lần đầu trải_nghiệm emo_joy emo_joy emo_joy
+6258,trơi ơi sao lại cháy chứ,5,test,trơi ơi sao lại cháy chứ
+6259,có những người không có ý thức bỏ quần áo rách hoặc mặc rồi để vào tủ để đỡ phải đi vứt ...,4,test,có những người không có ý_thức bỏ quần_áo rách hoặc mặc rồi để vào tủ để đỡ phải đi vứt .
+6260,per khi ế nhưng vẫn phải giương mắt nhìn bọn nó ân ái,1,test,per khi ế nhưng vẫn phải giương mắt nhìn bọn nó ân_ái
+6261,per tiến cử bản thân nào,6,test,per tiến_cử bản_thân nào
+6262,vẫn chọn tech là ngân hàng đồng hành,0,test,vẫn chọn tech là ngân_hàng đồng_hành
+6263,per dạo này ít tung tăng hơn xưa nên hơi trầm cảm dồi chăng 😳,6,test,per dạo này ít tung_tăng hơn xưa nên hơi trầm_cảm dồi chăng emo_fear
+6264,dume sao sao nó nói tiếng việt được vậy,5,test,dume sao sao nó nói tiếng việt được vậy
+6265,kêu gọi thì lói thế thôi chứ dân nó vẫn dùng apple như thường,6,test,kêu_gọi thì lói thế thôi chứ dân nó vẫn dùng apple như_thường
+6266,nhưng tao đéo có crush,1,test,nhưng tao đéo có crush
+6267,"từ nay ho , thì phải kiếm chỗ nào nằm tạm",6,test,"từ nay ho , thì phải kiếm chỗ nào nằm tạm"
+6268,tao đéo ngờ được đây là trường tao :)))),5,test,tao đéo ngờ được đây là trường tao emo_joy
+6269,yêu nghề thực sự,0,test,yêu nghề thực_sự
+6270,:))) ra thấy nó xấu chó thì lại về chặn số à,6,test,emo_joy ra thấy nó xấu chó thì lại về chặn số à
+6271,này là xạo chó chứ nguyên giá gì . kinh doanh là phải lừa lọc ... lừa giỏi diễn đạt thì giàu,4,test,này là xạo chó chứ nguyên giá gì . kinh_doanh là phải lừa_lọc . lừa giỏi diễn_đạt thì giàu
+6272,ý thức con ruồi là chủ yếu .. thì ngập rác là chuyện đương nhiên .,4,test,ý_thức con ruồi là chủ_yếu . thì ngập rác là chuyện đương_nhiên .
+6273,phim hay thật nhưng cái kết hơi khó hiểu :v chốt lại là đáng đồng tiền bát gạo :v,0,test,phim hay thật nhưng cái kết hơi khó hiểu emo_joy chốt lại là đáng đồng_tiền_bát_gạo emo_joy
+6274,trời đụ thằng con trời đánh,3,test,trời đụ thằng con trời_đánh
+6275,"má , chơi dị ai chơi lại , mấy ba",4,test,"má , chơi dị ai chơi lại , mấy ba"
+6276,bọn biến thái,4,test,bọn biến_thái
+6277,nào thức tỉnh đi các bạn ơi 😃,6,test,nào thức_tỉnh đi các bạn ơi emo_joy
+6278,chắc chắn bố của bạn này là một người vui tính chứ không phải khó tính . khiếu khôi hài bạn ấy ảnh hưởng từ bố .,0,test,chắc_chắn bố của bạn này là một người vui_tính chứ không phải khó_tính . khiếu khôi_hài bạn ấy ảnh_hưởng từ bố .
+6279,chất lượng âm thanh bản này hình như nghe hay hơn bản gốc hồi mấy năm trước nhiều < 3,0,test,chất_lượng âm_thanh bản này hình_như nghe hay hơn bản_gốc hồi mấy năm trước nhiều < 3
+6280,mặt chúng bạn kiểu lại đéo được trả tiền rồi 😞,1,test,mặt chúng_bạn kiểu lại đéo được trả tiền rồi emo_sad
+6281,"mình chưa từng thấy phim nào ý nghĩa như phim này cả , nó dạy cho ta về nhiều mặt trong cuộc sống , khi vui , khi buồn",0,test,"mình chưa từng thấy phim nào ý_nghĩa như phim này cả , nó dạy cho ta về nhiều mặt trong cuộc_sống , khi vui , khi buồn"
+6282,nhìn thôi cũng đau lòng :)),1,test,nhìn thôi cũng đau_lòng emo_joy
+6283,"xem cái con cặc gì , tắt đi",3,test,"xem cái con cặc gì , tắt đi"
+6284,sao có dầu ăn ở đây nhỉ ?,5,test,sao có dầu ăn_ở đây nhỉ ?
+6285,"dưới nước không nhìn được , kiểu gì chả có đứa sờ mông sờ .... dcm súc vật :)",3,test,"dưới nước không nhìn được , kiểu gì chả có đứa sờ mông sờ . dcm súc_vật emo_joy"
+6286,tao rất sợ mất đứa tỏ ra như thế,2,test,tao rất sợ mất đứa tỏ ra như_thế
+6287,per ơi .... anh muốn anh và nó sẽ bảo vệ đời em 😎,0,test,per ơi . anh muốn anh và nó sẽ bảo_vệ đời em emo_joy
+6288,tao cũng thế mà ba tao vứt hết mẹ rồi,6,test,tao cũng thế_mà ba tao vứt hết mẹ rồi
+6289,đến cái camera nó cũng hắt hủi mày :))) chớt đi chứ sống nàm gì nữa,4,test,đến cái camera nó cũng hắt_hủi mày emo_joy chớt đi chứ sống nàm gì nữa
+6290,hú hồn cái lồn còn nguyên :),2,test,hú_hồn cái lồn còn nguyên emo_joy
+6291,vẫn thắc mắc tại sao trước mình thi vào 10 lại dễ thế,6,test,vẫn thắc_mắc tại_sao trước mình thi vào 10 lại dễ thế
+6292,có vẻ người dân hơi mê tín quá 😂,4,test,có_vẻ người_dân hơi mê_tín quá emo_joy
+6293,"mình trả hùa , mình vẫn đỗ nhắn tin",0,test,"mình trả hùa , mình vẫn đỗ nhắn_tin"
+6294,tôi còn chẳng lấy ảnh lớp cho nữa,1,test,tôi còn chẳng lấy ảnh lớp cho nữa
+6295,per sáng mai kiểu gì cũng về tới nhà :)),0,test,per sáng_mai kiểu gì cũng về tới nhà emo_joy
+6296,đợt trước con em tao đi học cũng bị con kia hăm đòi đánh . tao lên tận trường kêu nó ra bảo mày muốn đánh tao cho tụi mày đánh đó . học sinh mà bố láo,3,test,đợt trước con_em tao đi học cũng bị con kia hăm đòi đánh . tao lên tận trường kêu nó ra bảo mày muốn đánh tao cho tụi mày đánh đó . học_sinh mà bố_láo
+6297,tôi cũng muốn được cảm thấy như vậy ??,1,test,tôi cũng muốn được cảm_thấy như_vậy ?
+6298,xăm chữ trái và phải lên mu bàn tay ... hy vọng là mày vẫn biết phâ biệt mặt chữ :)),0,test,xăm chữ trái và phải lên mu bàn_tay . hy_vọng là mày vẫn biết phâ biệt mặt_chữ emo_joy
+6299,sang năm quyêt định đi ngủ cho đỡ mỏi mắt,6,test,sang năm quyêt định đi ngủ cho đỡ mỏi_mắt
+6300,khi nào vụ này kết thúc thì mình uống cf trung nguyên trở lại . sợ làm giàu cho cô per lắm .,4,test,khi nào vụ này kết_thúc thì mình uống cf trung_nguyên trở_lại . sợ làm_giàu cho cô per lắm .
+6301,đến năm cuối đại học rồi lúc nhớ lại đéo có gì :)),1,test,đến năm cuối đại_học rồi lúc nhớ lại đéo có gì emo_joy
+6302,t chắc bỏ nhà ra đi khi ở với bố mẹ kiểu này quá . vẫn may bố mẹ tao không hề giống này tí nào,0,test,t chắc bỏ nhà ra đi khi ở với bố_mẹ kiểu này quá . vẫn may bố_mẹ tao không hề giống này tí nào
+6303,đứa con gái nào mà đề nghị là biết bị ma nhập mà né nha mấy cha,2,test,đứa con gái nào mà đề_nghị là biết bị ma nhập mà né nha mấy cha
+6304,"đéo phải ai cũng được đặt tên cho 1 "" thuật bán hàng "" trong kinh doanh đâu . chấm hết",4,test,"đéo phải ai cũng được đặt tên cho 1 "" thuật bán hàng "" trong kinh_doanh đâu . chấm_hết"
+6305,per mấy con đĩ lồn cục súc ... dòng thứ quỷ yêu đel làm gì cũng rượt cho sấp mặt luôn,3,test,per mấy con đĩ lồn cục_súc . dòng thứ quỷ yêu đel làm gì cũng rượt cho sấp_mặt luôn
+6306,hình như bồ tao cũng tập gym 😶😶,6,test,hình_như bồ tao cũng tập gym emo_neutral emo_neutral
+6307,"lúc trước chạy xe đạp đi ngang qua đàn vịt có mấy con ngỗng lẫn trong đó . thế là dume tụi nó rượt tao vừa chạy vừa la cái thứ âm thanh nghe "" ứ ứ "" "" hiếp em đi "" làm tao sợ tụt lol :))",2,test,"lúc trước chạy xe_đạp đi ngang qua đàn vịt có mấy con ngỗng lẫn trong đó . thế_là dume tụi nó rượt tao vừa chạy vừa la cái thứ âm_thanh nghe "" ứ ứ "" "" hiếp em đi "" làm tao sợ tụt lol emo_joy"
+6308,"tên của tao nghe rất bình thương , không có gì đặc sắc nên nhiều khi nghĩ cùng buồn tẹo .",1,test,"tên của tao nghe rất bình thương , không có gì đặc_sắc nên nhiều khi nghĩ cùng buồn tẹo ."
+6309,thích :)))) đi làm vui hay không là có đồng nghiệp tốt đừng chơi xấu mình là được :)),0,test,thích emo_joy đi làm vui hay không là có đồng_nghiệp tốt đừng chơi_xấu mình là được emo_joy
+6310,per xem đi mày sẽ sướng thi nhìn con nhện bị giết 😂,0,test,per xem đi mày sẽ sướng thi nhìn con nhện bị giết emo_joy
+6311,chạm đáy nỗi đau 😞,1,test,chạm đáy nỗi đau emo_sad
+6312,thế ông bác sĩ đó bây giờ còn sống không 🙂,6,test,thế ông bác_sĩ đó bây_giờ còn sống không emo_joy
+6313,😞 đó sẽ là những kỉ niệm thật đẹp,1,test,emo_sad đó sẽ là những kỉ_niệm thật đẹp
+6314,"per chưa bị rượt mà đọc bình luận thấy sợ quá , chắc tao sợ chó không là gì với con này :)",2,test,"per chưa bị rượt mà đọc bình_luận thấy sợ quá , chắc tao sợ chó không là gì với con này emo_joy"
+6315,"bắt cóc như chơi đó mậy , be careful",2,test,"bắt_cóc như_chơi đó mậy , be careful"
+6316,đảng ta bao dung thật < 3,0,test,đảng ta bao_dung thật < 3
+6317,rất tiếc em vẫn chưa gặp được anh :((((,1,test,rất tiếc em vẫn chưa gặp được anh emo_sad
+6318,đái mẹ ra quần ??,2,test,đái mẹ ra quần ?
+6319,có ai không nghe thấy nói gì mà toàn xem hình người con gái ấy không 😂,6,test,có ai không nghe thấy nói gì mà toàn xem hình người con gái ấy không emo_joy
+6320,đẹp trai ghê :)),0,test,đẹp_trai ghê emo_joy
+6321,dụ đấy ... đừng tin,4,test,dụ đấy . đừng tin
+6322,tán cây hình trái tim thì phải,6,test,tán cây hình trái_tim thì phải
+6323,làm việc vất vả mới được miếng ăn mà chúng nó khốn nạn thật,3,test,làm_việc vất_vả mới được miếng ăn mà chúng_nó khốn_nạn thật
+6324,dể thương quá ah,0,test,dể thương quá ah
+6325,tốt nhất không miễn phí cho những thể loại người như vậy . nhắc nhỉ thẳng thắn,3,test,tốt nhất không miễn_phí cho những thể_loại người như_vậy . nhắc nhỉ thẳng_thắn
+6326,gần thôi :))) giờ nhìn lại đề thi và không hiểu sao mình ra trường được :))),0,test,gần thôi emo_joy giờ nhìn lại đề thi và không hiểu sao mình ra trường được emo_joy
+6327,những đứa như vậy quá hèn,4,test,những đứa như_vậy quá hèn
+6328,hồi xưa làm fanpage được gạ kèo 7 triệu nhưng nhất quyết không bán . cảm thấy quyết định đúng đắn nhất trong đời,0,test,hồi xưa làm fanpage được gạ kèo 7 triệu nhưng nhất_quyết không bán . cảm_thấy quyết_định đúng_đắn nhất trong đời
+6329,per lúc xưa toàn nấu bằng bếp nay,6,test,per lúc xưa toàn nấu bằng bếp nay
+6330,per luôn yêu đời và luôn yêu công việc em nhé,0,test,per luôn yêu_đời và luôn yêu công_việc em nhé
+6331,"ngày trước thì đòi dấn thân vào showbiz , giờ lại đòi lấy chồng đại gia , đâu ra lắm thế",4,test,"ngày_trước thì đòi dấn_thân vào showbiz , giờ lại đòi lấy chồng đại_gia , đâu ra lắm thế"
+6332,"phim này coi lâu lắm ùi , mà mỗi năm phải coi lại 1 - 2 lần mới đủ , thực sự cực kì hay và sâu sắc , nhạc phim hay mà diễn cũng rất nhập nữa , amir khan đỉnh nhất ^.^/",0,test,"phim này coi lâu lắm ùi , mà mỗi năm phải coi lại 1 - 2 lần mới đủ , thực_sự cực_kì hay và sâu_sắc , nhạc phim hay mà diễn cũng rất nhập nữa , amir khan đỉnh nhất ^ . ^ /"
+6333,"đần mặt ra nhìn nó y như con ngu , còn cười theo nó nữa , xong bị nó phát hiện .",0,test,"đần mặt ra nhìn nó y_như con ngu , còn cười theo nó nữa , xong bị nó phát_hiện ."
+6334,bà tôi giờ mất mấy năm rồi giờ lớn lên rồi mà chả tặng được bà món quà nào cả 😭😭😭,1,test,bà tôi giờ mất mấy năm rồi giờ lớn lên rồi mà chả tặng được bà món quà nào cả emo_sad emo_sad emo_sad
+6335,hãm lồn là khi mình đéo ra gì còn đi nói người khác 🤭,4,test,hãm lồn là khi mình đéo ra gì còn đi nói người khác emo_u 1 f92d
+6336,"ý thức như lol vậy ai cũng như mày thì máy bay quá tải dẫn tới chết chùm , ý thức như lol vậy mà còn đăng lên",4,test,"ý_thức như lol vậy ai cũng như mày thì máy_bay quá_tải dẫn tới chết_chùm , ý_thức như lol vậy mà còn đăng lên"
+6337,ai chửi admin ngu chứng tỏ eq thấp tệ,4,test,ai chửi admin ngu chứng_tỏ eq thấp tệ
+6338,nấu mì 2 tôm là vô địch,0,test,nấu mì 2 tôm là vô_địch
+6339,mấy anh thiệt là nóng bỏng !!,0,test,mấy anh thiệt là nóng_bỏng !
+6340,qua chạy xe nẹt nẹt bốc đầu bố ai dám dô,2,test,qua chạy xe nẹt nẹt bốc đầu bố ai dám dô
+6341,chia se cho ai thích thể hiện nè,6,test,chia se cho ai thích thể_hiện nè
+6342,em mày cách mày bao nhiêu tuổi ?,6,test,em mày cách mày bao_nhiêu tuổi ?
+6343,thật chứ thấy bạn nam kia cứu con chó không cần nhìn mặt cũng biết đẹp trai rồi 😆,0,test,thật chứ thấy bạn nam kia cứu con chó không cần nhìn mặt cũng biết đẹp_trai rồi emo_joy
+6344,đó là những câu chuyện buồn mà :((,1,test,đó là những câu_chuyện buồn mà emo_sad
+6345,"diễn còn cứng quá à , kiểu biết rồi mà còn giả bộ bất ngờ :))",0,test,"diễn còn cứng quá à , kiểu biết rồi mà_còn giả_bộ bất_ngờ emo_joy"
+6346,làm người khác thỏa mãn bằng mùi hương của chính bản thân,0,test,làm người khác thoả_mãn bằng mùi hương của chính bản_thân
+6347,dkm xấu mặt những thằng tập gym vkl tao đéo hiểu sao thằng này nó lại thích đi đường tiểu ngạch là sao,4,test,dkm xấu mặt những thằng tập gym vkl tao đéo hiểu sao thằng này nó lại thích đi đường tiểu_ngạch là sao
+6348,"chỉ cần cho em nó 1 điểm tựa , em nó sẽ không ngán cả thế giới :))",0,test,"chỉ cần cho em nó 1 điểm_tựa , em nó sẽ không ngán cả thế_giới emo_joy"
+6349,per một lần thôi không có lần thứ hai đâu 😊,0,test,per một lần thôi không có lần thứ hai đâu emo_joy
+6350,con đường này chắc dành cho mấy người như tôi,0,test,con đường này chắc dành cho mấy người như tôi
+6351,đã bị đuổi 1 lần . đéo lgi cũng bị dí,3,test,đã bị đuổi 1 lần . đéo lgi cũng bị dí
+6352,lựa chọn cách thức tuyển như thế nào thì tốt quá rồi,0,test,lựa_chọn cách_thức tuyển như_thế_nào thì tốt quá rồi
+6353,lùi về sau 3 bước đi . ngứa cả con mắt,3,test,lùi về sau 3 bước_đi . ngứa cả con mắt
+6354,tội bà vợ,1,test,tội bà vợ
+6355,đẳng cấp :)),0,test,đẳng_cấp emo_joy
+6356,"nhìn mặt ổng nhẫn nhìn kìa :)) tao chờ sen tao ra thôi , lúc đó tao tung hê hết 😑",6,test,"nhìn mặt ổng nhẫn nhìn kìa emo_joy tao chờ sen tao ra thôi , lúc đó tao tung_hê hết emo_neutral"
+6357,dễ thương 😂,0,test,dễ_thương emo_joy
+6358,"đỉnh rồi , hiệu ứng tốt :))) ấn tượng vãi_chưởng luôn",0,test,"đỉnh rồi , hiệu_ứng tốt emo_joy ấn_tượng vãi _ chưởng luôn"
+6359,ko có biển cấm dừng đỗ nhưng đỗ thò đầu ở ngã 3 kia là rất bố láo .,3,test,ko có biển cấm dừng đỗ nhưng đỗ thò đầu ở ngã 3 kia là rất bố_láo .
+6360,khi mày tắt điện thoại một buổi sáng và tao nhảy tưng tưng lên :),6,test,khi mày tắt điện_thoại một buổi sáng và tao nhảy tưng_tưng lên emo_joy
+6361,vèo cái đã 7 năm 😕,1,test,vèo cái đã 7 năm emo_sad
+6362,đm ngồi chờ đã rồi các tổng đài viên đều bận 😭😭😭,1,test,đm ngồi chờ đã rồi các tổng_đài_viên đều bận emo_sad emo_sad emo_sad
+6363,nó đòi mượn áo thôi mà . thằng này kỳ ...,4,test,nó đòi mượn áo thôi mà . thằng này kỳ .
+6364,cả ngàn tin nhắn không đổi lại được 1 lần xem :((,1,test,cả ngàn tin nhắn không đổi lại được 1 lần xem emo_sad
+6365,đúng là tốt quá lai thành lạm dụng 😶,1,test,đúng là tốt quá lai thành lạm_dụng emo_neutral
+6366,"t cũng thế . đang ngồi chơi với con , vợ nó đắp mặt nạ lù lù bước vào . xém đái trog quần ??????",2,test,"t cũng thế . đang ngồi chơi với con , vợ nó đắp mặt_nạ lù_lù bước vào . xém đái trog quần ?"
+6367,cũng là 1 mạng người nên các cụ đừng phũ mồm chửi người ta . mong anh ấy sớm siêu thoát . a di đà phật !!!,6,test,cũng là 1 mạng người nên các cụ đừng phũ mồm chửi người ta . mong anh ấy sớm siêu_thoát . a di đà phật !
+6368,đây gọi là nghiệp vật,0,test,đây gọi là_nghiệp vật
+6369,có khi không biết thế nào là tự ái đâu :))),6,test,có khi không biết thế_nào là tự_ái đâu emo_joy
+6370,cho thơm miếng nào yêu quá cơ,0,test,cho thơm miếng nào yêu quá cơ
+6371,liên quan gì tới mày . mời đám cưới chắc gì mày đã đi . hỏi hỏi con cặc,4,test,liên_quan gì tới mày . mời đám_cưới chắc gì mày đã đi . hỏi hỏi con cặc
+6372,"thích cái câu "" em không yêu anh nữa ""😊😊",0,test,"thích cái câu "" em không yêu anh nữa "" emo_joy emo_joy"
+6373,cho tao hỏi lúa nó dính mưa vầy ròi thì làm được gì không .,6,test,cho tao hỏi lúa nó dính mưa vầy ròi thì làm được gì không .
+6374,nghe bạn này nói dễ thương zị,0,test,nghe bạn này nói dễ_thương zị
+6375,"làm ca nào không quan trọng , quan trọng là có đồng bọn bảo yến nguyễn hạnh 🤣🤣🤣",0,test,"làm ca nào không quan_trọng , quan_trọng là có đồng_bọn bảo yến nguyễn_hạnh emo_joy emo_joy emo_joy"
+6376,đỗ ngay góc cua thế có ngày sứt mõm ??,6,test,đỗ ngay góc cua thế có ngày sứt mõm ?
+6377,phát ngán .,4,test,phát ngán .
+6378,em ý cute vãi !,0,test,em ý cute vãi !
+6379,per về nhà mà thể hiện,4,test,per về nhà mà thể_hiện
+6380,đúng . a có tầm nhìn . tâm nữa . mình biết,0,test,đúng . a có tầm nhìn . tâm nữa . mình biết
+6381,củ cà rốt thôi mà cái mẹt đã vây nếu là miếng thịt thì không bít mẹt ra sao nhể 😂,6,test,củ cà_rốt thôi mà cái mẹt đã vây nếu là miếng thịt thì không bít mẹt ra sao nhể emo_joy
+6382,cái miệng nói chuyện không có người phụ nữ nào có trời ơi thật là có duyên khiếp quá đi thôi,0,test,cái miệng nói_chuyện không có người phụ_nữ nào có trời_ơi thật là có duyên khiếp quá đi thôi
+6383,tuyệt vời quá cần nhiều tấm lòng tốt hơn nua thật là ý nghĩa,0,test,tuyệt_vời quá cần nhiều tấm lòng tốt hơn nua thật là ý_nghĩa
+6384,đi đâu cũng gặp mấy cái thứ,3,test,đi đâu cũng gặp mấy cái thứ
+6385,per sao bố lại đủ bình tĩnh để xem hết cái trailer này nhỉ . _ . sợ vãi,2,test,per sao bố lại đủ bình_tĩnh để xem hết cái trailer này nhỉ . _ . sợ vãi
+6386,sao mà đỉnh dữ vậy trời,5,test,sao mà đỉnh dữ vậy trời
+6387,"hai thằng đó sẽ .. nhau , cô về nhà nằm mơ típ đi cô bé",4,test,"hai thằng đó sẽ . nhau , cô về nhà nằm_mơ típ đi cô bé"
+6388,thương .. hy vọng sớm có người cưu mang bé,1,test,thương . hy_vọng sớm có người cưu_mang bé
+6389,"mức thu cao nhất - đồng ý vì số liệu nó thể hiện như vậy , chứ còn hiệu quả thì mình không biết đúng không 😂 mỗi lần vô vcb là hiểu phải đợi mỏi mòn , không như những nh khác",1,test,"mức thu cao nhất - đồng_ý vì số_liệu nó thể_hiện như_vậy , chứ còn hiệu_quả thì mình không biết đúng không emo_joy mỗi lần vô vcb là hiểu phải đợi mỏi_mòn , không như những nh khác"
+6390,cần lắm nhiều vụ ly hôn như thế 😂😀😀😁🤣🤣,0,test,cần lắm nhiều vụ ly_hôn như_thế emo_joy emo_joy emo_joy emo_joy emo_joy emo_joy
+6391,"sời , lừa làm sao được tao :))",0,test,"sời , lừa làm_sao được tao emo_joy"
+6392,"có bao nhiêu đôi ngôn tình , cớ sao lìa xa mình ta :((",1,test,"có bao_nhiêu đôi ngôn tình , cớ_sao lìa xa mình ta emo_sad"
+6393,đây là một câu chuyện buồn không chỉ riêng tao,1,test,đây là một câu_chuyện buồn không_chỉ riêng tao
+6394,con gái tao thì suốt ngày hêy siri bắt chước mẹ 😂,0,test,con gái tao thì suốt ngày hêy siri bắt_chước mẹ emo_joy
+6395,chạy ios cho máu 😂,0,test,chạy ios cho máu emo_joy
+6396,khâm phục !!! quá khâm phục !!!,0,test,khâm_phục ! quá khâm_phục !
+6397,per dạo này béo quá rùi :(,1,test,per dạo này béo quá rùi emo_sad
+6398,mau khoẻ nhé :d,0,test,mau khoẻ nhé emo_joy
+6399,"quá đơn rản , bạn thân yêu ơi ,",0,test,"quá đơn rản , bạn thân_yêu ơi ,"
+6400,tao học nhân sự đây còn đang lo thất nghiệp đây này,2,test,tao học nhân_sự đây còn đang lo thất_nghiệp đây này
+6401,cắt cả thắt lưng da của bố để làm ná 😂😂,0,test,cắt cả thắt_lưng da của bố để làm ná emo_joy emo_joy
+6402,per hẹn xem phim này nữa nha mày 😛,0,test,per hẹn xem phim này nữa nha mày emo_u 1 f61b
+6403,per vẫn là con mẻ . nay hàng họ to quá ;)))),5,test,per vẫn là con_mẻ . nay hàng_họ to quá ; )
+6404,"đỡ mua 5k tiền sổ rồi , kaka",0,test,"đỡ mua 5k tiền sổ rồi , kaka"
+6405,tinh trùng đâu lắm thế,5,test,tinh_trùng đâu lắm thế
+6406,"per giỏi phết đấy mỗi tội nghịch thôi , được cái làm từ thiện nhiều .",0,test,"per giỏi phết đấy mỗi_tội nghịch thôi , được cái làm từ_thiện nhiều ."
+6407,ngọt sớt :))),0,test,ngọt sớt emo_joy
+6408,tuổi thơ mình lớp 4 đã cảm nắng 1 anh chàng từ 1 viên phấn vôi .,0,test,tuổi_thơ mình lớp 4 đã cảm nắng 1 anh_chàng từ 1 viên phấn vôi .
+6409,nhìn cái bản mặt bà ta mà ghét thay . tham vô độ . dân mình nhiều nhà dăn ba tỉ còn khó ....,4,test,nhìn cái bản_mặt bà ta mà ghét thay . tham vô_độ . dân mình nhiều nhà dăn ba tỉ còn khó .
+6410,câu hỏi thú vị 😃😃😃,0,test,câu hỏi thú_vị emo_joy emo_joy emo_joy
+6411,"cô ấy rất tốt , nhưng tôi biết thứ nào tốt đều không dành cho mình",1,test,"cô ấy rất tốt , nhưng tôi biết thứ nào tốt đều không dành cho mình"
+6412,đm xem mãi quay lưng đi chửa được bước lại dừng :)),4,test,đm xem mãi quay lưng đi chửa được bước lại dừng emo_joy
+6413,không gì hơn ngoài tình thân,6,test,không gì hơn ngoài tình thân
+6414,"lạ lùng nhỉ , cưỡng hôn trong thang máy thì phạt có 200k coi thường phụ nữ , bây giờ phạt 10 triệu vì đàn lợn chết (???)",4,test,"lạ_lùng nhỉ , cưỡng_hôn trong thang_máy thì phạt có 200k coi_thường phụ_nữ , bây_giờ phạt 10 triệu vì đàn lợn chết ( ? )"
+6415,thật ra nhiều lúc bị bố mẹ chửi không hiểu vì lí do gì và những câu chửi ấy có những từ không chấp nhận nổi,4,test,thật_ra nhiều lúc bị bố_mẹ chửi không hiểu vì lí_do gì và những câu chửi ấy có những từ không chấp_nhận nổi
+6416,"cay mắt lắm , mà nhìn nó lại nhớ nhiều kỉ niệm",1,test,"cay mắt lắm , mà nhìn nó lại nhớ nhiều kỉ_niệm"
+6417,per giảm tốc ở bình dương tuổi gì với cái này .,6,test,per giảm_tốc ở bình_dương tuổi gì với cái này .
+6418,per cười tức bụng nà vợ 😄,0,test,per cười tức bụng nà vợ emo_joy
+6419,"wtf , tao đã làm gì sai ☹️☹️☹️",1,test,"wtf , tao đã làm gì sai emo_sad emo_sad emo_sad"
+6420,tao không sợ đi làm mệt mỏi tao chỉ sợ không có niềm vui với nó,2,test,tao không sợ đi làm mệt_mỏi tao chỉ sợ không có niềm vui với nó
+6421,lúc nó điên lên nó chã triệu hồi cả nhà mày ra ấy chứ nhổn,6,test,lúc nó điên lên nó chã triệu_hồi cả nhà mày ra ấy chứ nhổn
+6422,còn không đụng vào được tóc của sai mà tự xưng vô địch,4,test,còn không đụng vào được tóc của sai mà tự_xưng vô_địch
+6423,mất niềm tin vào đàn ông chứ chưa từng mất niềm tin vào tình yêu ;,6,test,mất niềm tin vào đàn_ông chứ chưa từng mất niềm tin vào tình_yêu ;
+6424,"bọn có tí quan hệ hay thích khoe , ngay chị gì quận phó quận x còn gọi cả công an , chủ tịch phường ra để dằn mặt dân ??",3,test,"bọn có tí quan_hệ hay thích khoe , ngay chị gì quận phó quận x còn gọi cả công_an , chủ_tịch phường ra để dằn_mặt dân ?"
+6425,"uống hết bia rồi mới về ,😂😂😂",0,test,"uống hết bia rồi mới về , emo_joy emo_joy emo_joy"
+6426,anh thứ 2 cute thế =))),0,test,anh thứ 2 cute thế emo_joy
+6427,hơi lạ nhỉ phải nhắn lại cho khách chứ grab thế này bị hủy chuyến làm sao,6,test,hơi lạ nhỉ phải nhắn lại cho khách chứ grab thế_này bị huỷ chuyến làm_sao
+6428,chú nghĩ cháu rất giỏi văn và là người có suy nghĩ trưởng thành rồi 💐 rất đáng yêu và tếu giống mấy con giặc nhà chú ❤️,0,test,chú nghĩ cháu rất giỏi văn và là người có suy_nghĩ trưởng_thành rồi emo_u 1 f490 rất đáng yêu và tếu giống mấy con giặc nhà chú emo_love
+6429,đám người lớn văn hóa lùn đẻ ra một đám trẻ vô học . bọn mất dạy này là nhà dột từ nóc ấy mà . nên đuổi học cho lũ ngu học ấy về để nhà tiếp nối sự vô học của gia đình chúng nó,3,test,đám người_lớn văn_hoá lùn đẻ ra một đám trẻ vô_học . bọn mất_dạy này là nhà dột từ nóc ấy mà . nên đuổi học cho lũ ngu học ấy về để nhà tiếp_nối sự vô_học của gia_đình chúng_nó
+6430,chủ tịch giả làm ăn xin và cái kết . đừng bao giờ coi thường người nghèo,4,test,chủ_tịch giả làm_ăn xin và cái kết . đừng bao_giờ coi_thường người nghèo
+6431,có ai chỉ tự yêu bản thân như tôi không :(,1,test,có ai chỉ tự yêu bản_thân như tôi không emo_sad
+6432,không khoe thì không sao . khoe ra mai lại còn cái gốc ... haha 😁,0,test,không khoe thì không sao . khoe ra mai lại còn cái gốc . haha emo_joy
+6433,nhiệt tình + ngu dốt là phải trả giá bằng tiền mặt 😂😂,0,test,nhiệt_tình + ngu_dốt là phải trả_giá bằng tiền_mặt emo_joy emo_joy
+6434,valentine là lễ tình yêu không phải ngày động dục . hãy vì một valentine lành mạnh đi các bạn trẻ 🙃🙃,4,test,valentine là lễ tình_yêu không phải ngày động_dục . hãy vì một valentine lành_mạnh đi các bạn trẻ emo_u 1 f643 emo_u 1 f643
+6435,thấy anh đấy làm tùm lum mà con nhện vẫn đứng im là tao biết có chiêu rồi . định gạt anh ak,0,test,thấy anh đấy làm tùm_lum mà con nhện vẫn đứng im là tao biết có chiêu rồi . định gạt anh ak
+6436,có tí rượu vào nhìn đâu cũng thấy mồi nhìn gì cũng ăn được,6,test,có tí rượu vào nhìn đâu cũng thấy mồi nhìn gì cũng ăn được
+6437,chết luôn .. tình yêu không phân biệt . giới tính .. tình yêu ơi là tình yêu .. tao đau khổ vì mày lắm rồi ...,1,test,chết luôn . tình_yêu không phân_biệt . giới_tính . tình_yêu ơi là tình_yêu . tao đau_khổ vì mày lắm rồi .
+6438,tôi cùng hoàn cảnh với bạn má tôi củng bệnh và từng ngày từng ngày tôi bên má tôi sợ giây phút má bỏ tôi ra đi và ngày đó củng đến ai còn mẹ hảy quí từng giây từng khắc bên mẹ,1,test,tôi cùng hoàn_cảnh với bạn má tôi củng bệnh và từng ngày từng ngày tôi bên má tôi sợ giây_phút má bỏ tôi ra đi và ngày đó củng đến ai còn mẹ hảy quí từng giây từng khắc bên mẹ
+6439,"có mà bữa chạy ngược chiều trên qlo 1a tại có hẻm nhỏ để quẹo tắt , chưa kịp quẹo bị 6 anh csgt + 1 xe bắt xe tấp vô chặn đầu xe , hoảng hồn cmnl .",2,test,"có mà bữa chạy ngược chiều trên qlo 1a tại có hẻm nhỏ để quẹo tắt , chưa kịp quẹo bị 6 anh csgt + 1 xe bắt xe tấp vô chặn đầu xe , hoảng_hồn cmnl ."
+6440,ếch chết tại miệng,6,test,ếch chết tại miệng
+6441,"gần 2 năm đến sớm nhất để mở cửa lớp , lúc về cũng là người là sau cùng để khóa cửa . đến giờ ra trường được 3 năm vẫn không muốn vứt chìa khóa của lớp ...",1,test,"gần 2 năm đến sớm nhất để mở_cửa lớp , lúc về cũng là người là sau_cùng để khoá cửa . đến giờ ra trường được 3 năm vẫn không muốn vứt chìa_khoá của lớp ."
+6442,tốt nhất là cần công khai minh bạch là tốt hơn,6,test,tốt nhất là cần công_khai minh_bạch là tốt hơn
+6443,chắc mình là thánh nguy hiểm,0,test,chắc mình là thánh nguy_hiểm
+6444,mong bé sớm được mua lại,1,test,mong bé sớm được mua lại
+6445,nhiều tiền để làm gì ..... đạo đức xã hội thế này thì đi học đâm chém chứ học chữ làm gì nữa 😢,4,test,nhiều tiền để làm gì . đạo_đức xã_hội thế_này thì đi học đâm_chém chứ học chữ làm gì nữa emo_sad
+6446,má đớp chanh hùi hụi thế kia mà mặt không nhăn à,5,test,má đớp chanh hùi_hụi thế kia_mà mặt không nhăn à
+6447,thanh niên trả thù đời bằng cách này hả ?,5,test,thanh_niên trả_thù đời bằng cách này hả ?
+6448,bán hàng onl riết bán luôn não rồi 😂😂,4,test,bán hàng onl riết bán luôn não rồi emo_joy emo_joy
+6449,per nhớ cái bếp huyền thoại của 2 đứa mình he,0,test,per nhớ cái bếp huyền_thoại của 2 đứa mình he
+6450,nam chính đẹp . nữ chính hơi già . nếu nữ chính là 1 diển viên dể thương thì xem hay hơn nhiều,4,test,nam chính đẹp . nữ chính hơi già . nếu nữ chính là 1 diển viên dể thương thì xem hay hơn nhiều
+6451,chuyển cảnh nhanh quá làm tao theo không kịp luôn á,5,test,chuyển cảnh nhanh quá làm tao theo không kịp luôn á
+6452,thật ý nghĩa và hạnh phục cho 2 người họ . nhưng đâu đó trong tao vẫn thấy cái gì đó nó tởm lợn vê lờ 🤔🤔🤔,4,test,thật ý_nghĩa và hạnh phục cho 2 người họ . nhưng đâu_đó trong tao vẫn thấy cái gì đó nó tởm lợn vê lờ emo_thinking emo_thinking emo_thinking
+6453,cu ̃ người it xa ̀ mày lă ́ mày ..,4,test,cu ̃ người it xa ̀ mày lă ́ mày .
+6454,ai cũng kiếm ăn thui ... hy vong qua video nay mọi ngươi sống có ý thức hơn ... đưng xem đồng tiền của minh to quá,4,test,ai cũng kiếm_ăn thui . hy vong qua video nay mọi ngươi sống có ý_thức hơn . đưng xem đồng_tiền của minh to quá
+6455,"chửi vậy cũng bình thường mà mọi người cứ làm quá . mẹ tao cũng suốt ngày chửi tao , tao thấy vui mà .",0,test,"chửi vậy cũng bình_thường mà mọi người cứ làm quá . mẹ tao cũng suốt ngày chửi tao , tao thấy vui mà ."
+6456,"t đề nghị tụi mày trả cái đĩa bay cho con bé đi nghe , tới ca mà vào điều tra thì tụi mày mệt :))",6,test,"t đề_nghị tụi mày trả cái đĩa_bay cho con_bé đi nghe , tới ca mà vào điều_tra thì tụi mày mệt emo_joy"
+6457,thế nên thổ lộ trực tiếp vẫn hơn là tin nhắn .,6,test,thế nên thổ_lộ trực_tiếp vẫn hơn là tin nhắn .
+6458,từ lúc có vợ nhiều váy mặc để quay video hẳn :)))))),0,test,từ lúc có vợ nhiều váy mặc để quay video hẳn emo_joy
+6459,người việt nam mãi mãi cũng chỉ là bọn hạ cấp so với nước ngoài vì ý thức như lol có 100 năm sau thì ý thức vẫn đel bằng,4,test,người việt_nam mãi_mãi cũng chỉ là bọn hạ_cấp so với nước_ngoài vì ý_thức như lol có 100 năm sau thì ý_thức vẫn đel bằng
+6460,ừ nhìn rợn thật =]]]],4,test,ừ nhìn rợn thật = ]
+6461,"đuma tao đang ở đấy nè , vừa đi vừa ôm túi sợ cướp :((",2,test,"đuma tao đang ở đấy nè , vừa đi vừa ôm túi sợ cướp emo_sad"
+6462,phát hiện mới !!!,5,test,phát_hiện mới !
+6463,"ai cũng chỉ muốn cho con tất cả nhưng vì được không có mà thôi , có con thì mới biết lòng cha mẹ",1,test,"ai cũng chỉ muốn cho con tất_cả nhưng vì được không có mà thôi , có con thì mới biết lòng cha_mẹ"
+6464,moẹ ! nghe cái tên đã hấp con mẹ nó dẫn lắm rồi đây này ! đjln ??????,0,test,moẹ ! nghe cái tên đã hấp con_mẹ nó dẫn lắm rồi_đây này ! đjln ?
+6465,per không bao giờ quên được hihi,0,test,per không bao_giờ quên được hihi
+6466,nói câu trước đá câu sau vẫn là sai bét đúng không cả nhà,4,test,nói câu trước đá câu sau vẫn là sai bét đúng không cả nhà
+6467,ngu người,4,test,ngu người
+6468,nói xong còn chả dám ăn nữa 😂😂,2,test,nói xong còn chả dám ăn nữa emo_joy emo_joy
+6469,cứu tao :(( tao sợ rắn,2,test,cứu tao emo_sad tao sợ rắn
+6470,t thấy tội nghiệp thằng cải,0,test,t thấy tội_nghiệp thằng cải
+6471,anh yêu đứa bướng lắm vì mỗi lần em bướng là anh treo em lên sàn nhà đập mát tay,6,test,anh yêu đứa bướng lắm vì mỗi lần em bướng là anh treo em lên sàn nhà đập mát_tay
+6472,chỉ mới hỏi về người khác giới cái là bị gán là thích bạn đó luôn mí sợ :(,1,test,chỉ mới hỏi về người khác giới cái là bị gán là thích bạn đó luôn mí sợ emo_sad
+6473,tối mà tắt đèn gặp mặt nó với cặp mắt nó là tao còn sợ hơn thấy ma,2,test,tối mà tắt đèn gặp_mặt nó với cặp mắt nó là tao còn sợ hơn thấy ma
+6474,công nhận chữ đẹp . 🤧,0,test,công_nhận chữ đẹp . emo_u 1 f927
+6475,áo phông dễ thương quá anh ơiiii,0,test,áo_phông dễ_thương quá anh ơi
+6476,còn nhiều người có cuộc sống khốn khổ hơn ta :),1,test,còn nhiều người có cuộc_sống khốn_khổ hơn ta emo_joy
+6477,mèo nhà em thì cho tiền cũng không ra khỏi cửa,6,test,mèo nhà em thì cho tiền cũng không ra khỏi cửa
+6478,đào đúng chó cậy chủ =))),4,test,đào đúng chó cậy chủ emo_joy
+6479,:v crush có người yêu rồi,1,test,emo_joy crush có người_yêu rồi
+6480,cái con đồ chơi đó mua ở đâu nhỉ . cười đéo nhặt được mồm . 😂😂😂,0,test,cái con đồ_chơi đó mua ở đâu nhỉ . cười đéo nhặt được mồm . emo_joy emo_joy emo_joy
+6481,nghĩ lại ngày xưa cũng như 2 đứa nhỏ ??,6,test,nghĩ_lại ngày_xưa cũng như 2 đứa nhỏ ?
+6482,hôm nay quên vào đọc bình luận trước !! tính xem con nhện nước bạn khác nhện nước mình như thế nào ! ai ngờ đâu khác xa quá !! d mày mày adm ơi làm hết hồn !!,3,test,hôm_nay quên vào đọc bình_luận trước ! tính xem con nhện nước bạn khác nhện nước mình như_thế_nào ! ai_ngờ đâu khác xa quá ! d mày mày adm ơi làm hết_hồn !
+6483,má cười ỉa luônn,0,test,má cười ỉa luônn
+6484,1 năm lật tàu trật đường ray của vận tải đường sắt việt nam !,6,test,1 năm lật tàu trật đường_ray của vận_tải đường_sắt việt_nam !
+6485,"mày làm tao nhớ em gái ghê , mai sinh nhật con bé rồi mà tao đang đi làm xa nhà , không về được .......... 😑",1,test,"mày làm tao nhớ em_gái ghê , mai sinh_nhật con_bé rồi mà tao đang đi làm xa nhà , không về được . emo_neutral"
+6486,cái câu liếm củi chỏ sao sai được nhỉ,6,test,cái câu liếm củi chỏ sao sai được nhỉ
+6487,chỉ cần nghĩ tới cảnh đó là máu kinh sôi trào như núi lửa 😂😂😂,3,test,chỉ cần nghĩ tới cảnh đó là máu kinh sôi trào như núi_lửa emo_joy emo_joy emo_joy
+6488,tư ̀ hô ̀ i ba ̣ n â ́ y chuyê ̉ n trươ ̀ người thi ̀ chă ̉ người co ̀ n ai đô ́ i xư ̉ tô ́ tao vơ ́ i tao như vâ ̣ y nư ̃ anh . :(,1,test,tư ̀ hô ̀ i ba ̣ n â ́ y chuyê ̉ n trươ ̀ người thi ̀ chă ̉ người co ̀ n ai đô ́ i xư ̉ tô ́ tao vơ ́ i tao như vâ ̣ y nư ̃ anh . emo_sad
+6489,đợi chúng nó đang ăn lấy xe cứu hỏa phun nước ôi tao hình dung ra cảnh đó thật tuyệt,0,test,đợi chúng_nó đang ăn lấy xe cứu_hoả phun nước ôi tao hình_dung ra cảnh đó thật tuyệt
+6490,đã check in thành công và mãi vẫn chưa gặp được người ấy là ai :((,1,test,đã check in thành_công và mãi vẫn chưa gặp được người ấy là ai emo_sad
+6491,đôi khi thích nói chuyện chỉ vì nói chuyện hợp và vì thích nói chuyện chứ thật ra chả phải yêu đương hay thích kiểu trai gái gì,6,test,đôi_khi thích nói_chuyện chỉ vì nói_chuyện hợp và vì thích nói_chuyện chứ thật_ra chả phải yêu_đương hay thích kiểu trai_gái gì
+6492,"mình thấy sợ mấy con rắn quá trời , mà cái gì mình sợ là mình hay muốn tiêu diệt -))",2,test,"mình thấy sợ mấy con rắn quá_trời , mà cái gì mình sợ là mình hay muốn tiêu_diệt - ) )"
+6493,hút ít thôi và hãy chích nhiều hơn 😐,4,test,hút ít thôi và hãy chích nhiều hơn emo_neutral
+6494,"em cũng như con chó thôi , nếu anh đủ kiên nhẫn thì mọi chuyện đã khác rồi 😪",1,test,"em cũng như con chó thôi , nếu anh đủ kiên_nhẫn thì mọi chuyện đã khác rồi emo_u 1 f62a"
+6495,per khi trong người khó ở thì nên vào đây . động lực để nôn,4,test,per khi trong người khó_ở thì nên vào đây . động_lực để nôn
+6496,ê tao đi nhật chưa được 1 năm mà xem video này làm tao loạn ngôn ngữ ghê . thỉnh thoảng phải dừng video ngẫm câu nó nói nghĩa gì,2,test,ê tao đi nhật chưa được 1 năm mà xem video này làm tao_loạn ngôn_ngữ ghê . thỉnh_thoảng phải dừng video ngẫm câu nó nói nghĩa gì
+6497,"về thôi , nghỉ ngơi rồi nở rộ tiếp",6,test,"về thôi , nghỉ_ngơi rồi nở_rộ tiếp"
+6498,ông mặt trời dễ thương hha,0,test,ông mặt_trời dễ_thương hha
+6499,vậy nên cứ lờ đi mà sống tiếp,6,test,vậy nên cứ lờ đi mà sống tiếp
+6500,vậy vài bửa trời nắng mình không mang quần nằm dưới nắng cho nó nở ra :)),6,test,vậy vài bửa trời nắng mình không mang quần nằm dưới nắng cho nó nở ra emo_joy
+6501,những cử chỉ đẹp làm từ thiện cho người nghèo hay thiếu đến lấy thừa đi đến cho,0,test,những cử_chỉ đẹp làm từ_thiện cho người nghèo hay thiếu đến lấy thừa đi đến cho
+6502,ý tưởng hay 😂,0,test,ý_tưởng hay emo_joy
+6503,cả thế giới thấy hay trừ tao,6,test,cả thế_giới thấy hay trừ tao
+6504,toàn mấy con lợn ký gửi với xách tay thì đợi đấy mà xếp hạng :)),4,test,toàn mấy con lợn ký_gửi với xách tay thì đợi đấy mà xếp_hạng emo_joy
+6505,nhanh vãi mới thấy xong,6,test,nhanh vãi mới thấy xong
+6506,sợ quá đi,2,test,sợ quá đi
+6507,tao đây chứ còn ai,6,test,tao đây chứ còn ai
+6508,bằng củi thì tao nấu suốt cho tới tận bây giờ còn bằng rơm thì chưa từng :v,6,test,bằng củi thì tao nấu suốt cho tới tận bây_giờ còn bằng rơm thì chưa từng emo_joy
+6509,thấy dòng này quen quen . thấy đọc bình luận của ai á . haha . buồn cười 🤣 🤣 🤣,0,test,thấy dòng này quen_quen . thấy đọc bình_luận của ai á . haha . buồn_cười emo_joy emo_joy emo_joy
+6510,tuy chưa viết hết nhưng tao người khác sẽ hiểu là viết cái gì,0,test,tuy chưa viết hết nhưng tao người khác sẽ hiểu là viết cái gì
+6511,làm ở đâu cũng vậy cũng có đầy rẫy những khó khăn nhưng trọng hơn là làm cùng những đồng nghiệp như thế nào,6,test,làm ở đâu cũng vậy cũng có đầy_rẫy những khó_khăn nhưng trọng hơn là làm cùng những đồng_nghiệp như_thế_nào
+6512,không nha cậu :) mình đi bình thường nha =)),0,test,không nha cậu emo_joy mình đi bình_thường nha emo_joy
+6513,bác không ở lại làm tô phở đã 🙃🙃🙃,6,test,bác không ở lại làm tô phở đã emo_u 1 f643 emo_u 1 f643 emo_u 1 f643
+6514,per tao thấy mấy ảnh thật đẹp trai,0,test,per tao thấy mấy ảnh thật đẹp_trai
+6515,do mày ngu đéo ghi chỗ khác :)),4,test,do mày ngu đéo ghi chỗ khác emo_joy
+6516,"phàm việc quan trọng trong thiên hạ , cứ về hỏi vợ , vợ nói sao cứ làm ngược lại chắc chắc sẽ đúng !",0,test,"phàm việc quan_trọng trong thiên_hạ , cứ về hỏi_vợ , vợ nói sao cứ làm ngược_lại chắc chắc sẽ đúng !"
+6517,à ra là ngứa mắt vì người ta đỗ ô tô mà không phải trả tiền . khi nào người ta mất tiền mới hài lòng .,4,test,à ra là ngứa_mắt vì người ta đỗ ô_tô mà không phải trả tiền . khi nào người ta mất tiền mới hài_lòng .
+6518,cái toilet hay nhỉ vào đấy được thoải mái nhìn nhau mà trò chuyện trong lúc ị ... :),5,test,cái toilet hay nhỉ vào đấy được thoải_mái nhìn nhau mà trò_chuyện trong lúc ị . emo_joy
+6519,dễ thương ha,0,test,dễ_thương ha
+6520,chia buồn cùng khổ chủ,1,test,chia buồn cùng_khổ chủ
+6521,cao su đó khai thắc làm sao có mủ,6,test,cao_su đó khai thắc làm_sao có mủ
+6522,sao mà có nhiều người ngu quá . đậu xe xát đường ray xe lửa . còn mấy thg bình luận cũng ngu theo xe lửa chạy theo đường ray mà kêu nó bẻ lái qua chúc xíu . bẻ đi đâu được mà bẻ,4,test,sao mà có nhiều người ngu quá . đậu xe xát đường_ray xe_lửa . còn mấy thg bình_luận cũng ngu theo xe_lửa chạy theo đường_ray mà kêu nó bẻ_lái qua chúc xíu . bẻ đi đâu được mà bẻ
+6523,cháu xl ông trước . cháu cũng không có í gì chê bai đâu ạ . nhưng cháu nhìn móng dài bẩn quá . đang ăn mà cháu cũng run run .,4,test,cháu xl ông trước . cháu cũng không có í gì chê_bai đâu ạ . nhưng cháu nhìn móng dài bẩn quá . đang ăn mà cháu cũng run_run .
+6524,giờ cứ thành lập các tổ an ninh . bắt được bao nhiêu . chiên free cho các tiệm bia hết là bao tuyệt chủng 😂😂,0,test,giờ cứ thành_lập các tổ an_ninh . bắt được bao_nhiêu . chiên fre cho các tiệm bia hết là bao tuyệt_chủng emo_joy emo_joy
+6525,cay và đắng nghe mấy ông lớn tuổi toàn kêu thế thôi,0,test,cay và đắng nghe mấy ông lớn_tuổi toàn kêu thế thôi
+6526,"làm video thì ăn bớt chắp chắp như heo lại , đang coi nghe ăn phát mất con mẹ nó hứng , vô duyên",4,test,"làm video thì ăn_bớt chắp chắp như heo lại , đang coi nghe ăn phát mất con_mẹ nó hứng , vô_duyên"
+6527,cha mẹ tao còn cãi lộn nhau vì không biết ngày sinh tháng sinh của tao là dương hay âm 😢😢,1,test,cha_mẹ tao còn cãi_lộn nhau vì không biết ngày_sinh tháng sinh của tao là dương hay âm emo_sad emo_sad
+6528,người ta đã phải bỏ tiền . bỏ sức ra mới có bữa cơm từ thiện nv mà còn có những người vô ý thức như vậy,4,test,người ta đã phải bỏ tiền . bỏ sức ra mới có bữa cơm từ_thiện nv mà_còn có những người vô_ý_thức như_vậy
+6529,oaaaaaaa ...... thực sự rất tạo động lực và niềm tin cho người khác đó < 3 rất thích nụ cười và sự thoải mái tự tin của anh chị < 3,0,test,oa . thực_sự rất tạo động_lực và niềm tin cho người khác đó < 3 rất thích nụ cười và sự thoải_mái tự_tin của anh_chị < 3
+6530,nhớ đến lại buồn . chuyện tình chúng ta chẳng đi được đến đâu cả,1,test,nhớ đến lại buồn . chuyện tình chúng_ta chẳng đi được đến đâu cả
+6531,xuất sắc quá,5,test,xuất_sắc quá
+6532,nhà tao vẫn nấu . à mà lâu lâu tao về nấu một lần thì không cháy cũng nát,1,test,nhà tao vẫn nấu . à mà lâu_lâu tao về nấu một lần thì không cháy cũng nát
+6533,thiết kế đẹp quá,5,test,thiết_kế đẹp quá
+6534,per không nhận dạng được mặt bả luôn,5,test,per không nhận_dạng được mặt bả luôn
+6535,18t đủ trách nhiệm pháp lý rồi 😏,6,test,18t đủ trách_nhiệm pháp_lý rồi emo_u 1 f60f
+6536,vô học !😡😡😡. tý tuổi tưởng vậy là hay !,4,test,vô_học ! emo_anger emo_anger emo_anger . tý tuổi tưởng vậy là hay !
+6537,ai thử rồi cho xin tấm hình cái coi nào,6,test,ai thử rồi cho xin tấm hình cái coi nào
+6538,"bố mẹ thì còng lưng nuôi ăn học vất vả không mua được thì thôi , bất hạnh cái gì , bất hạnh cái gì",3,test,"bố_mẹ thì còng lưng nuôi ăn_học vất_vả không mua được thì_thôi , bất_hạnh cái gì , bất_hạnh cái gì"
+6539,"đúg là dân miền tây , chưa nói đã chửi tục rồi . vậy mà cũg đăg lên được . ở gần phòng mấy người này , đầu mình không yên được .",4,test,"đúg là dân miền tây , chưa nói đã chửi tục rồi . vậy_mà cũg đăg lên được . ở gần phòng mấy người này , đầu mình không yên được ."
+6540,nó thả thính xong nó chạy mất ..,1,test,nó thả thính xong nó chạy mất .
+6541,bị nó chặn đầu mấy lần khóc sướt mướt luôn . mấy con yêu nghiệt này còn dữ hơn chó,2,test,bị nó chặn đầu mấy lần khóc sướt_mướt luôn . mấy con yêu nghiệt này còn dữ hơn chó
+6542,lò xo chắc giờ không còn nữa rồi,1,test,lò_xo chắc giờ không còn nữa rồi
+6543,chơi cái trò mất dạy :)),3,test,chơi cái_trò mất_dạy emo_joy
+6544,trong luâ ̣ tao co ́ khung hi ̀ nh pha ̣ tao bă ́ n không . ghê tơ ̉ mày con qua ́ i na ̀ y qua ́,4,test,trong luâ ̣ tao co ́ khung hi ̀ nh pha ̣ tao bă ́ n không . ghê tơ ̉ mày con qua ́ i na ̀ y qua ́
+6545,tao chỉ lên ngắm cảnh tí xíu mà mày cũng dìm tao :)))),1,test,tao chỉ lên ngắm cảnh tí_xíu mà mày cũng dìm tao emo_joy
+6546,tim vỡ nát,1,test,tim vỡ nát
+6547,có biết giận là gì đâu 😌🙂,6,test,có biết giận là gì đâu emo_u 1 f60c emo_joy
+6548,lương này là tính luôn quá trình tham nhũng ăn bớt ăn xén rồi đó ! tụi mày chưa đủ trình đó thì lấy tư cách gì nói người ta nói xạo ?,4,test,lương này là tính luôn quá_trình tham_nhũng ăn_bớt ăn xén rồi đó ! tụi mày chưa đủ trình đó thì lấy tư_cách gì nói người ta nói xạo ?
+6549,per không lấy được vợ thì có thể đi tâp gym đêt lấy chồng 😁😁,0,test,per không lấy được vợ thì có_thể đi tâp gym đêt lấy chồng emo_joy emo_joy
+6550,đéo thể tin tưởng một ai được,6,test,đéo thể tin_tưởng một ai được
+6551,thái độ lồi lõm có ngày răng rụng đầy đường đấy =)),4,test,thái_độ lồi_lõm có ngày răng rụng đầy đường đấy emo_joy
+6552,thử đụng vô tao coi dume mấy thằng lol cặn bã,3,test,thử đụng vô tao coi dume mấy thằng lol cặn_bã
+6553,chắc anh phải đáng yêu lắm luôn ý nhể 🤗🤗,0,test,chắc anh phải đáng yêu lắm luôn ý nhể emo_joy emo_joy
+6554,muốn bảo vệ và chăm sóc người đấy,0,test,muốn bảo_vệ và chăm_sóc người đấy
+6555,hết sức nguy hiểm và có phần dại dột !,4,test,hết_sức nguy_hiểm và có phần dại_dột !
+6556,"ôi thôi , cưng quá :v",0,test,"ôi_thôi , cưng quá emo_joy"
+6557,nghe kể mà thèm ạ :'(,1,test,nghe kể mà thèm ạ : ' (
+6558,"per vãi xem phải cỡ này . , đoạn nó nhếch môi bố mày sợ suýt đái ra quần dume 😑",2,test,"per vãi xem phải cỡ này . , đoạn nó nhếch môi bố mày sợ suýt đái ra quần dume emo_neutral"
+6559,tao . đôi lúc nghĩ lại thì tao vẫn thấy sợ tao lúc tức giận .,2,test,tao . đôi_lúc nghĩ_lại thì tao vẫn thấy sợ tao lúc tức_giận .
+6560,nó mà là đặc vụ thật thì lại ngớ người 😂,6,test,nó mà là đặc_vụ thật thì lại ngớ người emo_joy
+6561,các chàng trai của tôi về đến nhà chưa ??,6,test,các chàng trai của tôi về đến nhà chưa ?
+6562,liệu có còn tồn tại cô gái nào chấp nhận một thằng vừa nghèo vừa xấu đặc biệt lại còn yếu sinh lý như tôi không,1,test,liệu có còn tồn_tại cô gái nào chấp_nhận một thằng vừa nghèo vừa xấu đặc_biệt lại còn yếu sinh_lý như tôi không
+6563,per quan tâm per như là 1 đứa em gái thôi . đừng có mà ảo tưởng nha .,6,test,per quan_tâm per như là 1 đứa em_gái thôi . đừng có mà ảo_tưởng nha .
+6564,vì ghét nhau thôi,4,test,vì ghét nhau thôi
+6565,một con ngựa hoang đúng nghĩa ..... đầy tài năng nhưng đang tiếc là không gặp được hlv và những đồng đội hỉu mình,0,test,một con ngựa hoang đúng nghĩa . đầy tài_năng nhưng đang tiếc là không gặp được hlv và những đồng_đội hỉu mình
+6566,hời ơi ... cưng xĩu,0,test,hời ơi . cưng xĩu
+6567,t chỉ chờ đết lúc nó lôi ra xem được cục to như ngón tay không,6,test,t chỉ chờ đết lúc nó lôi ra xem được cục to như ngón tay_không
+6568,nuôi kiểu đéo gì lại để nó như thế này ??? thằg chủ có tâm hồn thối rữa à ??,3,test,nuôi kiểu đéo gì lại để nó như thế_này ? thằg chủ có tâm_hồn thối rữa à ?
+6569,hút cần xong đúng là đời toàn màu hồng em nhỉ . nói chậm vãi :)))),4,test,hút cần xong đúng là đời toàn màu hồng em nhỉ . nói chậm vãi emo_joy
+6570,cục cuối khủng bố vãi vậy :(,5,test,cục cuối khủng_bố vãi vậy emo_sad
+6571,per xem xong hình như tao mới bị thêm bệnh tiểu đường,1,test,per xem xong hình_như tao mới bị thêm bệnh tiểu_đường
+6572,"mất dạy từ nhỏ , đẹp mặt khi bố mẹ nó đang ngồi xem tivi , cứ tưởng hay",4,test,"mất_dạy từ nhỏ , đẹp_mặt khi bố_mẹ nó đang ngồi xem tivi , cứ tưởng hay"
+6573,wow sản phẩm tốt ngoài mong đợi luôn á,5,test,wow sản_phẩm tốt ngoài mong_đợi luôn á
+6574,không cướp ở đâu đi cướp ngân hàng của nhà nước 🤣🤣🤣🤣,0,test,không cướp ở đâu đi cướp ngân_hàng của nhà_nước emo_joy emo_joy emo_joy emo_joy
+6575,đấy thấy chưa con người ta khổ như thế,1,test,đấy thấy chưa con_người ta khổ như_thế
+6576,"quàooo hay vậy sao , chà chà =))))",5,test,"quào hay vậy sao , chà chà emo_joy"
+6577,nuốt được cục tiền đó cũng hay đó ( y ),0,test,nuốt được cục tiền đó cũng hay đó ( y )
+6578,mày nhớ đặt bạn ý cho những lần gọi sau nhé !,6,test,mày nhớ đặt bạn ý cho những lần gọi sau nhé !
+6579,nhiệt tình cộng ngu dốt bằng phá hoại,4,test,nhiệt_tình cộng ngu_dốt bằng phá_hoại
+6580,lỗi tại cái gậy thôi mà 🤣🤣🤣,6,test,lỗi tại cái gậy thôi mà emo_joy emo_joy emo_joy
+6581,hả hả .. tới giờ ăn hả,5,test,hả hả . tới giờ ăn hả
+6582,"chưa tỏ tình với ai bao giờ , nhưng tao bức xúc với những người không tôn trọng quyền riêng tư như vậy",3,test,"chưa tỏ_tình với ai bao_giờ , nhưng tao bức_xúc với những người không tôn_trọng quyền riêng_tư như_vậy"
+6583,"mỗi lần nó cắt thì tao không muốn thấy mặt nó một tuần , nhìn xấu vãi",4,test,"mỗi lần nó cắt thì tao không muốn thấy mặt nó một tuần , nhìn xấu vãi"
+6584,"t đéo hiểu ai bày ra cái này . xàm lol chết mẹ . người ta viết nhạc cho nghe rồi làm video xàm , mày thề là không hát theo đi",4,test,"t đéo hiểu ai bày ra cái này . xàm lol chết mẹ . người ta viết nhạc cho nghe rồi làm video xàm , mày thề là không hát theo đi"
+6585,"con quỷ này dí bao dai ... thù dai hơn cả chó , tuổi thơ đi ngang qua bầy ngỗng là y như rằng đúng con quỷ đó nó dí tao",3,test,"con quỷ này dí bao_dai . thù dai hơn cả chó , tuổi_thơ đi ngang qua bầy ngỗng là y_như_rằng đúng con quỷ đó nó dí tao"
+6586,nhìn là biết đỏ chót rồi,6,test,nhìn là biết đỏ_chót rồi
+6587,đựng túi nilon là chất rồi 🤣,0,test,đựng túi nilon là chất rồi emo_joy
+6588,"tan rã hết rồi , giờ toàn đánh lẻ thôi 😭😭😭",1,test,"tan_rã hết rồi , giờ toàn đánh lẻ thôi emo_sad emo_sad emo_sad"
+6589,ăn học bao nhiêu năm rồi mà vẫn ngu,4,test,ăn_học bao_nhiêu năm rồi mà vẫn ngu
+6590,cái lol mẹ đóng vào mồm thì có ở đấy mà đóng băng,3,test,cái lol mẹ đóng vào mồm thì có ở đấy mà đóng_băng
+6591,khoảnh khắc tao nhận ra tao đã từng rơi vào hoàn cảnh bế tắc này 😌😌,1,test,khoảnh_khắc tao nhận ra tao đã từng rơi vào hoàn_cảnh bế_tắc này emo_u 1 f60c emo_u 1 f60c
+6592,t nói té 1 cái không dập mề thua gì cũg thua ..,2,test,t nói té 1 cái không dập mề thua gì cũg thua .
+6593,"cái này mà đơn giản ? chị à , là chị nghĩ đơn giản thôi =]]]]",4,test,"cái này mà đơn_giản ? chị à , là chị nghĩ đơn_giản thôi = ]"
+6594,tao ở thanh hà và nhà tao không quả vải nào hết 😂,1,test,tao ở thanh_hà và nhà tao không quả vải nào hết emo_joy
+6595,hãy mang cô ấy sang việt nam ngay,6,test,hãy mang cô ấy sang việt_nam ngay
+6596,:)) thật là kì lạ,5,test,emo_joy thật là kì_lạ
+6597,"bả thôi đó , gặm đi .",6,test,"bả thôi đó , gặm đi ."
+6598,per tụi bây có thấy nó vô lí vlonee hôngg 🙂,4,test,per tụi bây có thấy nó vô_lí vlone hôngg emo_joy
+6599,"họ sáng tạo , cải chế cho đời thêm xanh thì bảo họ luồn cúi .",4,test,"họ sáng_tạo , cải chế cho đời thêm xanh thì bảo họ luồn_cúi ."
+6600,per thua là hết cf để uống .,6,test,per thua là hết cf để uống .
+6601,đơn giản vậy thôi là đủ ❤️,0,test,đơn_giản vậy thôi là đủ emo_love
+6602,mày nói thôi mà tao nghĩ cũng thấy buồn rồi :(((,1,test,mày nói thôi mà tao nghĩ cũng thấy buồn rồi emo_sad
+6603,đái mẹ ra quần,2,test,đái mẹ ra quần
+6604,còn tôi tự nhủ dù lớp học tự ý bỏ về hết tôi cũng phải ở lại học đến tiết cuối cùng . hết giờ tôi cứ ngồi đó rồi từ từ bước chậm ra cửa ngoái đầu nhìn lại .,1,test,còn tôi tự_nhủ dù lớp_học tự_ý bỏ về hết tôi cũng phải ở lại học đến tiết cuối_cùng . hết giờ tôi cứ ngồi đó rồi từ_từ bước chậm ra cửa ngoái đầu nhìn lại .
+6605,làm bát phở đã bác ơi,6,test,làm bát phở đã bác ơi
+6606,"bị ám ảnh hồi bé đi nhổ răng , không dám đi nha sĩ nữa :((( huhu 😭😭",2,test,"bị ám_ảnh hồi bé đi nhổ răng , không dám đi nha_sĩ nữa emo_sad huhu emo_sad emo_sad"
+6607,tôi trưởng thành vclll,0,test,tôi trưởng_thành vcl
+6608,"dậy tắt đồng hồ báo thức kìa , giờ này còn ngủ được à :v",6,test,"dậy tắt đồng_hồ_báo_thức kìa , giờ này còn ngủ được à emo_joy"
+6609,"lỗi tại cái cây hay lỗi tại anh , tại anh nặng quá nên cây ....",4,test,"lỗi tại cái cây hay lỗi tại anh , tại anh nặng quá nên cây ."
+6610,"tự nhiên thấy tụi con gái khóc tu tu , thế là mình lủi ra ghế đá trước lớp ngồi . tự nhiên cô dạy văn cũng ra theo xong ôm mình khóc ,",1,test,"tự_nhiên thấy tụi con gái khóc tu tu , thế_là mình lủi ra ghế đá trước lớp ngồi . tự_nhiên cô dạy văn cũng ra theo xong ôm mình khóc ,"
+6611,đến ông cũng chẳng dám xơi,2,test,đến ông cũng chẳng dám xơi
+6612,hiếu nghĩa . nhìn cái này nhớ mắc cười má đào chúc quá 😀😀😀,0,test,hiếu_nghĩa . nhìn cái này nhớ mắc_cười má_đào chúc quá emo_joy emo_joy emo_joy
+6613,ôi trời nguy hiểm thế,2,test,ôi trời nguy_hiểm thế
+6614,tội cho mấy thằng đang xoay tiền mua bánh trung thu cho vợ thằng khác ăn,1,test,tội cho mấy thằng đang xoay tiền mua bánh_trung_thu cho vợ thằng khác ăn
+6615,mấy thằng ở ngoài bình luận gặp tao tao xé mỏ từng đứa . cha mẹ đéo dạy để xã hội dạy nhé . còn phèn lắm,3,test,mấy thằng ở ngoài bình_luận gặp tao tao xé mỏ từng đứa . cha_mẹ đéo dạy để xã_hội dạy nhé . còn phèn lắm
+6616,dỡn ngu gặp những tg yếu tim đùa kiểu này nó lên cơn lăn đùng ra ăn cho hết ...,4,test,dỡn ngu gặp những tg yếu tim đùa kiểu này nó lên_cơn lăn_đùng ra ăn cho hết .
+6617,cười ỉa :)),0,test,cười ỉa emo_joy
+6618,trước em cũng hắt xì 1 cái lưng khụ xuống như ông già đau vãi,1,test,trước em cũng hắt_xì 1 cái lưng khụ xuống như ông_già đau vãi
+6619,"thôi xong 1 chiếc ôto . chắc tối nay ăn không ngon , nhậu không yên rồi .",1,test,"thôi xong 1 chiếc ôto . chắc tối nay ăn không ngon , nhậu không yên rồi ."
+6620,cuteeeeeee 😊😊😊😊😊,0,test,cute emo_joy emo_joy emo_joy emo_joy emo_joy
+6621,bà tao mất rồi :<,1,test,bà tao mất rồi : <
+6622,nó cười mà muốn rụng tim 😂💔,0,test,nó cười mà muốn rụng tim emo_joy emo_sad
+6623,ui còn chưa kịp đi xem đã rút rồi :((,1,test,ui còn chưa kịp đi xem đã rút rồi emo_sad
+6624,"con đĩ mèo mất dạy ! gặp tao tao đá cái mày , dám đánh con thỏ của tao , bởi tao ghét vxl",3,test,"con đĩ mèo mất_dạy ! gặp tao tao đá cái mày , dám đánh con thỏ của tao , bởi tao ghét vxl"
+6625,em ấy còn viết đẹp hơn mình luôn á,5,test,em ấy còn viết đẹp hơn mình luôn á
+6626,em chân thành nên em tổn thương !,1,test,em chân_thành nên em tổn_thương !
+6627,dume mình tưởng tinh trùng :),4,test,dume mình tưởng tinh_trùng emo_joy
+6628,béo quá không ai yêu thì về đây em nuôi nè,6,test,béo quá không ai yêu thì về đây em nuôi nè
+6629,rút kinh nghiệm năm ngoái 😂😂😂😂😂👍👍👍,0,test,rút kinh_nghiệm năm_ngoái emo_joy emo_joy emo_joy emo_joy emo_joy emo_like emo_like emo_like
+6630,đ biết tình yêu là gì mà ăn rồi cứ đi thả thính đậu má,4,test,đ biết tình_yêu là gì mà ăn rồi cứ đi thả thính đậu má
+6631,per móc lên tới não :)),2,test,per móc lên tới não emo_joy
+6632,sợ vãi nồi tao còn tg thằng kia bay ra cơ :)))),2,test,sợ vãi nồi tao còn tg thằng kia bay ra cơ emo_joy
+6633,cũng đúng :)),0,test,cũng đúng emo_joy
+6634,tao nghe nói đứa bé còn nhỏ là không được chụp hình đâu mày,6,test,tao nghe nói đứa bé còn nhỏ là không được chụp hình đâu mày
+6635,bị bắt nạt im re hà hiền khô luôn thấy tội nghiệp ai dè tới chừng ...... ha ha ha,0,test,bị bắt_nạt im_re hà hiền_khô luôn thấy tội_nghiệp ai dè tới chừng . ha_ha ha
+6636,mới yêu thôi nhá yêu lâu rồi chán nhau rồi á thử xem đường đứa nào đứa đấy đi,6,test,mới yêu thôi nhá yêu lâu rồi chán nhau rồi á thử xem đường đứa nào đứa đấy đi
+6637,"con bố mẹ nào không dạy được để xã hội dạy cho , bố mẹ bất hợp tác để làng xóm hợp tác",4,test,"con bố_mẹ nào không dạy được để xã_hội dạy cho , bố_mẹ bất_hợp_tác để làng_xóm hợp_tác"
+6638,"thằng lái tàu quá đáng , bẻ lái qua tý có sao đâu :))",4,test,"thằng lái tàu quá_đáng , bẻ_lái qua tý có sao đâu emo_joy"
+6639,đừng đùa với nước bạn,6,test,đừng đùa với nước bạn
+6640,tiền mất tật mang . xe đã nát rồi giờ còn phải đền cách cửa cho tàu nửa,1,test,tiền_mất_tật_mang . xe đã nát rồi giờ còn phải đền cách cửa cho tàu nửa
+6641,ưng dã man luôn,0,test,ưng dã_man luôn
+6642,rất có thể nó đang pr trá hình để bán hàng,6,test,rất có_thể nó đang pr trá_hình để bán hàng
+6643,per mắc dại quá mà,4,test,per mắc dại quá mà
+6644,per lại lật nữa hả,5,test,per lại lật nữa hả
+6645,các em thật là vãi,4,test,các em thật là vãi
+6646,cầm cái búa ra,6,test,cầm cái búa ra
+6647,per vẽ ổ điện bá vãi em ạ 😂,5,test,per vẽ ổ điện bá vãi em ạ emo_joy
+6648,thế không đạt được gì à,5,test,thế không đạt được gì à
+6649,cuộc sống tạo ta áp lực ..,2,test,cuộc_sống tạo ta áp_lực .
+6650,tư tưởng đột phá đấy chứ,5,test,tư_tưởng đột_phá đấy chứ
+6651,đối với tình yêu thì thời gian có tác dụng xây đắp chứ không còn là phá huỷ mọi thứ nữa . ngưỡng mộ hai ông bà ❤️❤️❤️,0,test,đối_với tình_yêu thì thời_gian có tác_dụng xây_đắp chứ không còn là phá_huỷ mọi thứ nữa . ngưỡng_mộ hai ông_bà emo_love emo_love emo_love
+6652,"thời đi học tao còn bị bạt tai với bắt quỳ trên bục giảng luôn , tội phá , như này thấm gì đâu :3 phụ huynh ngày nay cứ làm quá lên",4,test,"thời đi học tao còn bị bạt_tai với bắt quỳ trên bục giảng luôn , tội phá , như này thấm gì đâu : 3 phụ_huynh ngày_nay cứ làm quá lên"
+6653,bây giờ thế mới biết tác dụng của con cái 😢,1,test,bây_giờ thế mới biết tác_dụng của con_cái emo_sad
+6654,đây là thằng chó,4,test,đây là thằng chó
+6655,trẻ trâu việt nam thật đáng sợ,2,test,trẻ trâu việt_nam thật đáng sợ
+6656,"ngày đẹp trời là ngày được nghỉ làm , đi những nơi mình thích , với người mình thương , ăn những món ăn ngon . xong về ôm nhau ngủ :)))",0,test,"ngày đẹp trời là ngày được nghỉ làm , đi những nơi mình thích , với người mình thương , ăn những món ăn ngon . xong về ôm nhau ngủ emo_joy"
+6657,mày bị ngu hả đĩ chó :) hết chỗ viết à :) thích viết thì tìm chỗ nào đéo trôi á :) hoặc mua giấy về viết chứ địt mẹ viết rồi lại viết làm tao buồn mày :),3,test,mày bị ngu hả đĩ chó emo_joy hết chỗ viết à emo_joy thích viết thì tìm chỗ nào đéo trôi á emo_joy hoặc mua giấy về viết chứ địt_mẹ viết rồi lại viết làm tao buồn mày emo_joy
+6658,"t dọn quán hát mà muốn diệt sạch mấy con ngu :))) đuỵt ăn sinh nhật mà cỡ nát hết cốc , bôi bánh hết lên ghế bàn thì ks , đây bôi cả lên loa , ti vi , trần nhà .... dume cái :))) đồ điện bôi lên để tao dọn tao bị giật chết à :))",3,test,"t dọn quán hát mà muốn diệt sạch mấy con ngu emo_joy đuỵt ăn sinh_nhật mà cỡ nát hết cốc , bôi bánh hết lên ghế bàn thì ks , đây bôi cả lên loa , ti_vi , trần nhà . dume cái emo_joy đồ điện bôi lên để tao dọn tao bị giật chết à emo_joy"
+6659,giáo viên tiếng anh mà không biết tiếng anh ?,4,test,giáo_viên tiếng anh mà không biết tiếng anh ?
+6660,tao có hiểu đéo gì đau,1,test,tao có hiểu đéo gì đau
+6661,sao không xúm lại rỉa lông tụi đầu bếp nhỉ .,6,test,sao không xúm lại rỉa lông tụi đầu_bếp nhỉ .
+6662,khang khang 1 thời cùng nhau vui say ! bjo thì khác rồi thân ai nấy lo hở chị hố hố ;)),0,test,khang khang 1 thời cùng nhau vui say ! bjo thì khác rồi thân ai_nấy lo hở chị hố hố ; ) )
+6663,phát hiện nghi vấn đổ vỏ :)),6,test,phát_hiện nghi_vấn đổ vỏ emo_joy
+6664,tuổi thơ bất hạnh .. học mẫu giáo mà cạnh trường học là 1 bầy ngỗng . sáng nào tao cũng được chạy bộ tập thể dục nhờ bọn nó,1,test,tuổi_thơ bất_hạnh . học mẫu_giáo mà cạnh trường_học là 1 bầy ngỗng . sáng nào tao cũng được chạy bộ tập_thể_dục nhờ bọn nó
+6665,:v cướp xong trừ khi ông bơi sông . chứ đi đường :)))) với cái bộ dạng đó . ai trả thấy :))),4,test,emo_joy cướp xong trừ khi ông bơi sông . chứ đi đường emo_joy với cái bộ_dạng đó . ai trả thấy emo_joy
+6666,không biết ô ý có nhận con nuôi không nhỉ ?,6,test,không biết ô ý có nhận con_nuôi không nhỉ ?
+6667,"1 chút đắng , chút chua cay , với 1 chút ngọt ngào ở đâu đó 😞",1,test,"1 chút đắng , chút chua_cay , với 1 chút ngọt_ngào ở đâu_đó emo_sad"
+6668,quá đau lòng nhưng chúng ta phải chấp nhận với điều đó,1,test,quá đau_lòng nhưng chúng_ta phải chấp_nhận với điều đó
+6669,mở ra mà thấy vậy chắc tao sợ quá mà chết luôn mất :),2,test,mở ra mà thấy vậy chắc tao sợ quá mà chết luôn mất emo_joy
+6670,ai làm được cây cầu khó đi này tài quá,5,test,ai làm được cây cầu khó đi này tài quá
+6671,tình anh em thật đáng khâm phục 😍😍😍,0,test,tình anh_em thật đáng khâm_phục emo_love emo_love emo_love
+6672,xàm bà cố luôn ??????,4,test,xàm bà cố luôn ?
+6673,chuẩn bị đón chờ mùa nhiệt miệng lưỡi :v,6,test,chuẩn_bị đón chờ mùa nhiệt miệng_lưỡi emo_joy
+6674,per lần sau hãy hưởng ứng câu chuyện của tao như này này,6,test,per lần sau hãy hưởng_ứng câu_chuyện của tao như này này
+6675,các cháu giờ lợi hại quá :<,0,test,các cháu giờ lợi_hại quá : <
+6676,bất công,4,test,bất_công
+6677,chưa bao giờ nghe ngươ ̀ i ta chửi thề mà đáng êu đến vậy lun =))!,0,test,chưa bao_giờ nghe ngươ ̀ i ta chửi thề mà đáng êu đến vậy lun emo_joy !
+6678,ghi nguồn vào page ạ :),6,test,ghi nguồn vào page ạ emo_joy
+6679,mấy đứa thấy mình hiền nó làm tới hà .. quá đáng lắm luôn á !,3,test,mấy đứa thấy mình hiền nó làm_tới hà . quá_đáng lắm luôn á !
+6680,mày dek làm được ghen ak,4,test,mày dek làm được ghen ak
+6681,không đấm vào mặt là may rồi :)),4,test,không đấm vào mặt là may rồi emo_joy
+6682,chưa bao giờ bắn trúng thứ gì 😆.,0,test,chưa bao_giờ bắn trúng thứ gì emo_joy .
+6683,chuẩn rồi per dù mệt mỏi nhưng vẫn vui :))),6,test,chuẩn rồi per dù mệt_mỏi nhưng vẫn vui emo_joy
+6684,thả mẹ tay ra :vậy đằng nào em kia cũng không sống nổi 😅,6,test,thả mẹ tay ra : vậy đằng nào em kia cũng không sống nổi emo_joy
+6685,không có bạn trai ... thì giận ai 😑😑,1,test,không có bạn trai . thì giận ai emo_neutral emo_neutral
+6686,năm xưa mày cũng ôm gối đứng cửa phòng c như này này per 🤣🤣🤣,0,test,năm_xưa mày cũng ôm gối đứng cửa phòng c như này này per emo_joy emo_joy emo_joy
+6687,bác bảo vệ như lồn,4,test,bác bảo_vệ như lồn
+6688,dell hiểu sao ngày sưa tao có thể cầm nó trưen tay đi câu cá 😳😳😳 nhớ lại vẫn thấy ớn 😂,2,test,dell hiểu sao ngày sưa tao có_thể cầm nó trưen tay đi câu cá emo_fear emo_fear emo_fear nhớ lại vẫn thấy ớn emo_joy
+6689,đạp xe xíu rã chân ông này đạp như tay đua xe,0,test,đạp xe xíu rã chân ông này đạp như tay_đua xe
+6690,ơ thế sai chỗ mẹ nào nữa ??,5,test,ơ thế sai chỗ mẹ nào nữa ?
+6691,bọn sống thất đức không có tâm chưa nói tới tầm ! bảo sao tâm hồn trẻ trí tuệ kém phát triển ảnh hưởng tới thể chất cũng như tâm sinh lí trong tương lai,4,test,bọn sống thất_đức không có tâm chưa nói tới tầm ! bảo sao tâm_hồn trẻ trí_tuệ kém phát_triển ảnh_hưởng tới thể_chất cũng như tâm_sinh_lí trong tương_lai
+6692,"cũng nhờ thầy khắt khe uốn nén bỏ thói hư tật xấu , bây giờ mỗi lần họp lớp đều nhắc tới thầy và vô cùng kính trọng",0,test,"cũng nhờ thầy khắt_khe uốn nén bỏ thói hư tật xấu , bây_giờ mỗi lần họp lớp đều nhắc tới thầy và vô_cùng kính_trọng"
+6693,ừm ngồi đất đỡ mỏi châm,6,test,ừm ngồi đất đỡ mỏi châm
+6694,có đứa nào vừa coi vừa nuốt nước miếng như tao không ?,0,test,có đứa nào vừa coi vừa nuốt nước_miếng như tao không ?
+6695,tư duy của họ hơn hẳn 1 cái đầu 👍,0,test,tư_duy của họ hơn hẳn 1 cái đầu emo_like
+6696,"cấp 1 hiền lành ít nói , ngồi gần 1 cô bé cái gì cũng nhường cô ấy , nhường đến mức nhường luôn tập sách , để bà già phải dẫn ra nhà nó lấy lại ! 😂😂😂",0,test,"cấp 1 hiền_lành ít nói , ngồi gần 1 cô bé cái gì cũng nhường cô ấy , nhường đến mức nhường luôn tập sách , để bà_già phải dẫn ra nhà nó lấy lại ! emo_joy emo_joy emo_joy"
+6697,ngu nhất năm,4,test,ngu nhất năm
+6698,kiểu em sai rồi . a xin lỗi em đi 😂😂,0,test,kiểu em sai rồi . a xin_lỗi em đi emo_joy emo_joy
+6699,chỉ mong ông trời sẽ bù đắp cho con cháu của họ sau này 😔😔,1,test,chỉ mong ông trời sẽ bù_đắp cho con_cháu của họ sau_này emo_sad emo_sad
+6700,bà mẹ nó giật mình,2,test,bà mẹ nó giật_mình
+6701,chỉ có bọn óc chó . đú đởn mới phàn nàn .,6,test,chỉ có bọn óc chó . đú_đởn mới phàn_nàn .
+6702,chưa 1 lần vấn vương thời c3 =)),6,test,chưa 1 lần vấn_vương thời c3 emo_joy
+6703,"em đỗ 6 trường đại học ở mỹ , còn hàng trăm thằng đổ em luôn rồi đó , em biết không . trong đó có anh 🤪",0,test,"em đỗ 6 trường đại_học ở mỹ , còn hàng trăm thằng đổ em luôn rồi đó , em biết không . trong đó có anh emo_u 1 f92a"
+6704,nên xử lý nghiêm khắc,6,test,nên xử_lý nghiêm_khắc
+6705,cười đau bụng :))),0,test,cười đau bụng emo_joy
+6706,nghe cái lời rõ đéo hỉu và cái tên cũg không liên quan,4,test,nghe cái lời rõ đéo hỉu và cái tên cũg không liên_quan
+6707,giỡn ngu kiểu đó người ta bị tim giật mình chết rồi sao . giỡn với mình kiểu đó mình đánh cho vỡ mồm luôn,3,test,giỡn ngu kiểu đó người ta bị tim giật_mình chết rồi sao . giỡn với mình kiểu đó mình đánh cho vỡ mồm luôn
+6708,kiên nhẫn với 1 con chó chứ chắc gì đã kiên nhẫn với bố mẹ hay người thân bên cạnh mình .,4,test,kiên_nhẫn với 1 con chó chứ chắc gì đã kiên_nhẫn với bố_mẹ hay người_thân bên cạnh mình .
+6709,cứ tưởng là người yêu =)),0,test,cứ tưởng là người_yêu emo_joy
+6710,đẹp trai quá ak,0,test,đẹp_trai quá ak
+6711,làm ơn đi .. đừng bám theo tao nua được không,3,test,làm_ơn đi . đừng bám theo tao nua được không
+6712,aii may mắn thì có vị ngọt còn aii thiếu may mắn thì họ chỉ toàn gặp những vị cay vị đắng của đờii :)),1,test,ai may_mắn thì có vị ngọt còn ai thiếu may_mắn thì họ chỉ toàn gặp những vị cay vị đắng của đời emo_joy
+6713,thằng đoạn cuối mặc áo hồng đang định gải đít nhưng vì thấy rắn nên anh ấy đã hết ngứa,0,test,thằng đoạn cuối mặc áo hồng đang định gải đít nhưng vì thấy rắn nên anh ấy đã hết ngứa
+6714,"eo ôi thằng nhóc áo xanh cuối cùng , sao này lớn lên chắc là sói ca haha",0,test,"eo_ôi thằng nhóc áo xanh cuối_cùng , sao này lớn lên chắc là sói ca haha"
+6715,đã dâm tâm còn biến thái 🤢,4,test,đã dâm tâm còn biến_thái emo_disgust
+6716,rất ghét bọn trộm cắp,4,test,rất ghét bọn trộm_cắp
+6717,nhìn mặt đã thấy đóng vai ác rồi,4,test,nhìn mặt đã thấy đóng vai ác rồi
+6718,per coi chừng bị vậy nha chưa haha,0,test,per coi_chừng bị vậy nha chưa haha
+6719,đây là đâu ? cái này là như nào thế ??,6,test,đây là đâu ? cái này là như nào thế ?
+6720,tuổi thơ thật đáng yêu . chỉ có người lớn dẫn sai đường các em thôi,6,test,tuổi_thơ thật đáng yêu . chỉ có người_lớn dẫn sai đường các em thôi
+6721,thua cả người ta 😞,1,test,thua cả người ta emo_sad
+6722,"per , nhơ cai thời sv ở tro , :)",0,test,"per , nhơ cai thời sv ở tro , emo_joy"
+6723,ông lão cục súc,4,test,ông lão cục_súc
+6724,"công khai và phạt thật nặng : đuổi học , cấm thi 10 năm",3,test,"công_khai và phạt thật nặng : đuổi học , cấm thi 10 năm"
+6725,cưng ghê ❤️,0,test,cưng ghê emo_love
+6726,"vị nước mắt , dù cảm xúc như nào thì khi có nó cũng thật đáng nhớ !",1,test,"vị nước_mắt , dù cảm_xúc như nào thì khi có nó cũng thật đáng nhớ !"
+6727,mặt nhỏ dễ thương vãi =)),0,test,mặt nhỏ dễ_thương vãi emo_joy
+6728,thích mấy đứa này,0,test,thích mấy đứa này
+6729,đầu độc trẻ em mà sử như vậy là nhẹ quá chuyển công tác ra khỏi nghành,4,test,đầu_độc trẻ_em mà sử như_vậy là nhẹ quá chuyển công_tác ra khỏi nghành
+6730,mày xinh thế ? tao ốm tí đã xấu hoắc,1,test,mày xinh thế ? tao ốm tí đã xấu hoắc
+6731,xịt nước là ướt rồi,6,test,xịt nước là ướt rồi
+6732,hy vọng sẽ mau tìm được anh người yêu thật tốt để 5 năm sau có một gia đình như vậy ❤️❤️,0,test,hy_vọng sẽ mau tìm được anh người_yêu thật tốt để 5 năm sau có một gia_đình như_vậy emo_love emo_love
+6733,mới ngày nào bidv còn đứng nhất mà .. haizzz,1,test,mới ngày nào bidv còn đứng nhất mà . haiz
+6734,chỉ là bạn chưa biết yêu đúng cách thoiii,6,test,chỉ là bạn chưa biết yêu đúng cách thoi
+6735,cái ảnh giống hệt mình :)),6,test,cái ảnh giống_hệt mình emo_joy
+6736,"thời gian thấm nhuần yêu thương , nếu đủ kiên nhẫn thì hạnh phúc sẽ đến bên , không sợ sệt 😁",6,test,"thời_gian thấm_nhuần yêu_thương , nếu đủ kiên_nhẫn thì hạnh_phúc sẽ đến bên , không sợ_sệt emo_joy"
+6737,nhất định sẽ làm được,6,test,nhất_định sẽ làm được
+6738,"câu nói "" ngu thì chết chứ bệnh tật gì "" tao thấy chính xác rồi đây ! dume thiệt hại tài sản còn bị phạt nữa . ngu vãi",4,test,"câu nói "" ngu thì chết chứ bệnh_tật gì "" tao thấy chính_xác rồi_đây ! dume thiệt_hại tài_sản còn bị phạt nữa . ngu vãi"
+6739,dòm sợ thiệt 🤐,2,test,dòm sợ thiệt emo_u 1 f910
+6740,"nhìn một cái rồi thôi , chuyện của những năm trước",1,test,"nhìn một cái rồi thôi , chuyện của những năm trước"
+6741,khiêp vãi,4,test,khiêp vãi
+6742,bạn trai người khác không bao giờ làm tao thất vọng =))))),0,test,bạn trai người khác không bao_giờ làm tao thất_vọng emo_joy
+6743,per =)))))))))))) tao cười không biết chỗ nín lun,0,test,per emo_joy tao cười không biết chỗ nín lun
+6744,là do mày quá ảo tưởng,4,test,là do mày quá ảo_tưởng
+6745,"dễ thương ghê =)) nói y như mấy ông ngồi nhậu trong bàn v "" đúng không "" "" đúng chưa "" "" vui rầu "" =)))",0,test,"dễ_thương ghê emo_joy nói y_như mấy ông ngồi nhậu trong bàn v "" đúng không "" "" đúng chưa "" "" vui rầu "" emo_joy"
+6746,mình rất rất muốn đi nhưng trong túi kô còn xu mẹ nào vân kiều ơi,1,test,mình rất rất muốn đi nhưng trong túi kô còn xu mẹ nào vân_kiều ơi
+6747,khi bạn muốn lầy và cũng có người lầy cùng bạn =)),0,test,khi bạn muốn lầy và cũng có người lầy cùng bạn emo_joy
+6748,"hay vãi ra , ai đi qua kiểu gì cũng phải đọc và mỉm cười , đánh mạnh vào tâm lý :))",0,test,"hay vãi ra , ai đi qua kiểu gì cũng phải đọc và mỉm cười , đánh mạnh vào tâm_lý emo_joy"
+6749,"thời chúng ta , đồ hỏng thì mua mới còn thời ông bà , đồ hỏng thì đem đi sửa . đó là lý do vì sao tình yêu của họ luôn bền lâu ....",6,test,"thời chúng_ta , đồ hỏng thì mua mới còn thời ông_bà , đồ hỏng thì đem đi sửa . đó là lý_do vì sao tình_yêu của họ luôn bền lâu ."
+6750,"mai tao ăn gà , chụp hình bình luận lại cho mày thèm chơi ??",0,test,"mai tao ăn gà , chụp hình bình_luận lại cho mày thèm chơi ?"
+6751,làm bạn với mấy thể loại này cũng nhục cả người,4,test,làm_bạn với mấy thể_loại này cũng nhục cả người
+6752,thật vậy luôn sao per ?,5,test,thật vậy luôn sao per ?
+6753,"tao vừa về xong thề là ở mẹ nhà ngủ còn sướng hơn đông đéo thể nhích nổi , toàn ngắm người ??",4,test,"tao vừa về xong thề là ở mẹ nhà ngủ còn sướng hơn đông đéo thể nhích nổi , toàn ngắm người ?"
+6754,ức chế lắm cụ ạ . đi trong phố cổ còn chưa dừng hẳn đã bị gõ cửa xua đi .,3,test,ức_chế lắm cụ ạ . đi trong phố cổ còn chưa dừng hẳn đã bị gõ_cửa xua đi .
+6755,"tội nghiệp , có rất nhiều em ở nông thôn bị như vậy 😢.",1,test,"tội_nghiệp , có rất nhiều em ở nông_thôn bị như_vậy emo_sad ."
+6756,"chuẩn luôn , áp lực công việc cũng không bằng mối quan hệ với đồng nghiệp",0,test,"chuẩn luôn , áp_lực công_việc cũng không bằng mối quan_hệ với đồng_nghiệp"
+6757,mé bọn trẻ bây giờ,4,test,mé bọn trẻ bây_giờ
+6758,rụng cả răng khi xem không nhặt được mồm kkk,0,test,rụng cả răng khi xem không nhặt được mồm k
+6759,"1 con giáo viên ngu + vài đứa lớn đầu tập làm người lớn nhưng bất thành = dạy ra 1 lũ học sinh mất dậy , 1 lũ đầu bò",4,test,"1 con giáo_viên ngu + vài đứa lớn đầu tập làm người_lớn nhưng bất_thành = dạy ra 1 lũ học_sinh mất dậy , 1 lũ đầu_bò"
+6760,những video như này chỉ khiến cho các cô gái càng thêm ảo tưởng về tình yêu thôi =))) # ngưngảotưởng,6,test,những video như này chỉ khiến cho các cô gái càng thêm ảo_tưởng về tình_yêu thôi emo_joy # ngưngảotưởng
+6761,mong là có bảo hiểm,6,test,mong là có bảo_hiểm
+6762,nếu 1 ngày per theo thằng khác và per cũng có bỏ bạn mà đi thôi huhu,1,test,nếu 1 ngày per theo thằng khác và per cũng có bỏ bạn mà đi thôi huhu
+6763,cay đắng ngọt bùi . nhưng cay đắng thì thường nhiều hơn =)),6,test,cay_đắng ngọt_bùi_. nhưng cay_đắng thì thường nhiều hơn emo_joy
+6764,tình yêu cha mẹ dành cho con cái là vô điều kiện . mình đã khóc,1,test,tình_yêu cha_mẹ dành cho con_cái là vô_điều_kiện . mình đã khóc
+6765,"đúng rồi , kiên trì thêm một chút nữa đi ! :v",0,test,"đúng rồi , kiên_trì thêm một_chút nữa đi ! emo_joy"
+6766,hên crush nay ăn chơi lành mạnh,0,test,hên crush nay ăn_chơi lành_mạnh
+6767,đau đớn hơn còn là khi làm bạn cũng khó và gặp nhau coi như người dưng nước lã,1,test,đau_đớn hơn còn là khi làm_bạn cũng khó và gặp nhau coi như người_dưng_nước_lã
+6768,cách xử lý thông minh,0,test,cách xử_lý thông_minh
+6769,"per mai cấm chọc tao cười nhé dume , tao mà không pass probation là do mày đấy =))",6,test,"per mai cấm chọc tao cười nhé dume , tao mà không pass probation là do mày đấy emo_joy"
+6770,trong phim này thấy cái thằng anh hùng đạp xa đạp phế vkl,4,test,trong phim này thấy cái thằng anh_hùng đạp xa đạp phế vkl
+6771,per sắp bị đuổi khỏi trường rồi nhé 😉😉,6,test,per sắp bị đuổi khỏi trường rồi nhé emo_joy emo_joy
+6772,không biết luôn á,5,test,không biết luôn á
+6773,tao tát cho bây giờ đấy,3,test,tao tát cho bây_giờ đấy
+6774,tao thề tao rất sợ ma quỷ nên tao rất không dám xem phim,2,test,tao thề tao rất sợ ma_quỷ nên tao rất không dám xem phim
+6775,điều tồi tệ nhất là kiểm tra code trên giấy .,1,test,điều tồi_tệ nhất là kiểm_tra code trên giấy .
+6776,"thay vì gà chuyển sang ăn lợn , tao cungc thế nên món khoái khẩu là gà chuyển sang sườn mày ạ",6,test,"thay_vì gà chuyển sang ăn lợn , tao cungc thế nên món khoái_khẩu là gà chuyển sang sườn mày ạ"
+6777,ta sao khúc cuối cậu bé xịt nói chuyện hoa làm gì vậy,6,test,ta sao khúc cuối cậu bé xịt nói_chuyện hoa làm gì vậy
+6778,t được theo mẹ ra đây những 3 lần :v . uống no nước biển đs . phải công nhận nói chuyện biển đục vãi 🙄,4,test,t được theo mẹ ra đây những 3 lần emo_joy . uống no nước_biển đs . phải công_nhận nói_chuyện biển đục vãi emo_disgust
+6779,đm mùi thế :))),4,test,đm mùi thế emo_joy
+6780,per của anh tao chứ anh mày à ??,6,test,per của anh tao chứ anh mày à ?
+6781,mày tưởng ai cũng khùng giống mày hả lo xo dau,4,test,mày tưởng ai cũng khùng giống mày hả lo xo dau
+6782,"per nam dân trí thấp , ý thức như ruồi là hợp lí .",4,test,"per nam dân_trí thấp , ý_thức như ruồi là hợp_lí ."
+6783,họ không cho ta là vì họ không có gì hihiiii,0,test,họ không cho ta là vì họ không có gì hihi
+6784,14 / 2 năm sau tau sẽ là ông già cô đơn ....,1,test,14 / 2 năm sau tau sẽ là ông_già cô_đơn .
+6785,gì thế này ? này là kiến thức đó hả ?,5,test,gì thế_này ? này là kiến_thức đó hả ?
+6786,dume xem đi xem lại vẫn đéo thể nhịn được cười :v,0,test,dume xem đi xem_lại vẫn đéo thể nhịn được cười emo_joy
+6787,"trong 1 lần tao được mẹ cho về quê ngoại , nó nhìn tao - tao nhìn nó - và dume đầu tao chôm bôm . cđ đó dữ vãi ! sao nó không đi thi đai đen cấp quốc gia cmnl đi chứ võ công cao cường như vậy mà ở vùng qê hẻo lánh thì thật là phí của giời !!!!",4,test,"trong 1 lần tao được mẹ cho về quê ngoại , nó nhìn tao - tao nhìn nó - và dume đầu tao chôm bôm . cđ đó dữ vãi ! sao nó không đi thi đai đen cấp quốc_gia cmnl đi chứ võ_công cao_cường như_vậy mà ở vùng qê hẻo_lánh thì thật là phí của giời !"
+6788,còn nhỏ mà đã như thế này lớn lên ai chịu được yêu chết đi được,0,test,còn nhỏ mà đã như thế_này lớn lên ai chịu được yêu chết đi được
+6789,cậu lái xe nói chưa thấy sai gì . ?? đỗ dưới đường chứ có đỗ vào phòng khách nhà mình đâu mà kêu .,6,test,cậu lái_xe nói chưa thấy sai gì . ? đỗ dưới đường chứ có đỗ vào phòng khách nhà mình đâu mà kêu .
+6790,"khóc không chịu được luôn , và mình cũng sẽ làm được nếu phải đánh đổi tính mạng cho 2 cô con gái bé nhỏ của gia đình mình",1,test,"khóc không chịu được luôn , và mình cũng sẽ làm được nếu phải đánh_đổi tính_mạng cho 2 cô con gái bé_nhỏ của gia_đình mình"
+6791,"per bảo nó nói chuyện đi nhưng không , chỉ nhìn thôi",6,test,"per bảo nó nói_chuyện đi nhưng không , chỉ nhìn thôi"
+6792,per đợi rụng răng rồi anh tặng quà cho em luôn háy . hhha,0,test,per đợi rụng răng rồi anh tặng quà cho em luôn háy . ha
+6793,"per giờ đi ra chỗ ăn phở cũng khó , đi bộ cũng chả chen được ??",6,test,"per giờ đi ra chỗ ăn phở cũng khó , đi bộ cũng chả chen được ?"
+6794,mấy thèn cức rảnh,4,test,mấy thèn cức rảnh
+6795,"giun xào tỏi , đỉa xào lăn , cứt nấu đông , hỉ mũi rang cơm trộn với đờm , tởm vãi",4,test,"giun xào tỏi , đỉa xào lăn , cứt nấu đông , hỉ mũi rang cơm trộn với đờm , tởm vãi"
+6796,và từ đó bà cụ sống trong hạnh phúc :)),0,test,và từ đó bà_cụ sống trong hạnh_phúc emo_joy
+6797,"video mờ thế còn xác minh được , thế còn lão per đến giờ vẫn im lặng là sao ? 🙂",5,test,"video mờ thế còn xác_minh được , thế còn lão per đến giờ vẫn im_lặng là sao ? emo_joy"
+6798,"lúc nhỏ mẹ nấu cơm bằng bếp củi , ttao thì không biết gì thấy lửa tắt thì chụm vô : )) mẹ ra quánh cho trận vì nồi cơm khét nghẹt 😑",1,test,"lúc nhỏ mẹ nấu cơm bằng bếp củi , ttao thì không biết gì thấy lửa tắt thì chụm vô : ) ) mẹ ra quánh cho trận vì nồi cơm khét nghẹt emo_neutral"
+6799,đm thằng mập mặt thoả mãn vãi . lần đầu tiên thấy con gái ah,4,test,đm thằng mập mặt thoả_mãn vãi . lần đầu_tiên thấy con gái ah
+6800,"dm lùi xuống rồi viết , suy ra là bạn để mất người ta là do bạn ngu chứ đéo phải đổ thừa cho cái gì",4,test,"dm lùi xuống rồi viết , suy ra là bạn để mất người ta là do bạn ngu chứ đéo phải đổ thừa cho cái gì"
+6801,bình dị vậy thôi .. mà sao mãi tao chưa tìm được ? hix,1,test,bình_dị vậy thôi . mà sao mãi tao chưa tìm được ? hix
+6802,tao thấy tai nạn giao thông là tao nói với mẹ .. con chạy ra đó để tối lên ti vi ... mẹ tao chửi sấp mặt luôn,1,test,tao thấy tai_nạn giao_thông là tao nói với mẹ . con chạy ra đó để tối lên ti_vi . mẹ tao chửi sấp_mặt luôn
+6803,đúng kiểu đến mùa động dục . khác gì động vật bậc thấp không,4,test,đúng kiểu đến mùa động_dục . khác gì động_vật bậc thấp không
+6804,"cười đấy , sau lưng nó đâm con mẹ nó dao vô hình cho chết mà vẫn sống nhăn răng luôn .",2,test,"cười đấy , sau lưng nó đâm con_mẹ nó dao vô_hình cho chết mà vẫn sống_nhăn răng luôn ."
+6805,"toan cao lại nữa , tao dg suy nghĩ có nên đi bằng grap về không",6,test,"toan cao lại nữa , tao dg suy_nghĩ có nên đi bằng grap về không"
+6806,bày đặt viết trên cát khắc luôn vào đá cho tạt thoải mái,0,test,bày_đặt viết trên cát khắc luôn vào đá cho tạt thoải_mái
+6807,"bài nhạc đầu tiên là nhạc phim gì nhỉ ? mình quên tên phim rồi , xin hỏi có ai biết không ạ",6,test,"bài nhạc đầu_tiên là nhạc phim gì nhỉ ? mình quên tên phim rồi , xin hỏi có ai biết không ạ"
+6808,hn đéo có đâu nhé . dăm ba cái thứ y đg vớ vẩn :)),4,test,hn đéo có đâu nhé . dăm_ba cái thứ y đg vớ_vẩn emo_joy
+6809,"các cháu thật tốt , hãy thương yêu mọi người và cả loài vật nhé , may mắn và niềm vui sẽ đến với các cháu .",0,test,"các cháu thật tốt , hãy thương_yêu mọi người và cả loài vật nhé , may_mắn và niềm vui sẽ đến với các cháu ."
+6810,cảm động vleu haha,0,test,cảm_động vleu haha
+6811,"cảm thấy thay được thì thay , giáo viên bây giờ thừa nhiều mà",3,test,"cảm_thấy thay được thì thay , giáo_viên bây_giờ thừa nhiều mà"
+6812,nghe mãi mà vẫn thấy hay,0,test,nghe mãi mà vẫn thấy hay
+6813,mèo nhà tao cũng từng đi lạc vì bị chó rượt tưởng mất rồi . sau mấy tháng thấy nó trở về nhà mừng vãi 😁,0,test,mèo nhà tao cũng từng đi lạc vì bị chó rượt tưởng mất rồi . sau mấy tháng thấy nó trở về nhà mừng vãi emo_joy
+6814,vẫn xinh đẹp dịu dàng trong mắt tao 😂,0,test,vẫn xinh_đẹp dịu_dàng trong mắt tao emo_joy
+6815,thấy per hất môg thằg đó bay hài lòng dễ sợ,0,test,thấy per hất môg thằg đó bay hài_lòng dễ_sợ
+6816,"anh sau đó , không còn là anh nữa ...",1,test,"anh sau đó , không còn là anh nữa ."
+6817,cả đời mình chỉ ước có 500tr trả nợ ngân hàng cái xe để chạy kiếm ăn ...😥😥😥,1,test,cả đời mình chỉ ước có 500tr trả nợ ngân_hàng cái xe để chạy kiếm_ăn . emo_u 1 f625 emo_u 1 f625 emo_u 1 f625
+6818,cố gắng chứ từ bỏ con cặc gì,4,test,cố_gắng chứ từ_bỏ con cặc gì
+6819,ký ức 1 thời . nhớ,0,test,ký_ức 1 thời . nhớ
+6820,gia tộc bất hạnh :vậy,4,test,gia_tộc bất_hạnh : vậy
+6821,vì lợi nhuận con người ta có thể độc ác với nhau như vậy sao ???,4,test,vì lợi_nhuận con_người ta có_thể độc_ác với nhau như_vậy sao ?
+6822,thương anh bạn kia quá .,0,test,thương anh bạn kia quá .
+6823,nhìn muốn tè ra quần rồi,2,test,nhìn muốn tè ra quần rồi
+6824,nhìn dơ vãi dume :v,4,test,nhìn dơ vãi dume emo_joy
+6825,tao cũng ăn hại nhưng chưa bao giờ ăn hại đến nỗi phí phạm thế,4,test,tao cũng ăn_hại nhưng chưa bao_giờ ăn_hại đến_nỗi phí_phạm thế
+6826,sao mày không ngủ với mẹ mày luôn,6,test,sao mày không ngủ với mẹ mày luôn
+6827,phần này dù xem lại 100 lần vẫn bật khóc tình cha thật phi thường,1,test,phần này dù xem_lại 100 lần vẫn bật khóc tình cha thật phi_thường
+6828,ăn xong mất hứng đéo nói nữa,3,test,ăn xong mất hứng đéo nói nữa
+6829,"chả có gì hay ho , vô bổ",4,test,"chả có gì hay_ho , vô_bổ"
+6830,nhìn giống hai anh đang tỉnh tò với nhau ghê ( mình là hủ đừng ném đá nha 😅😅😅),0,test,nhìn giống hai anh đang tỉnh tò với nhau ghê ( mình là hủ đừng ném đá nha emo_joy emo_joy emo_joy )
+6831,buồn nhỉ 😴😴😴,1,test,buồn nhỉ emo_u 1 f634 emo_u 1 f634 emo_u 1 f634
+6832,toàn lũ thất đức,4,test,toàn lũ thất_đức
+6833,per thế đéo nào mình chơi với toàn gái mà tính vẫn giống con trai . _ .,1,test,per thế đéo nào mình chơi với toàn gái mà tính vẫn giống con trai . _ .
+6834,cuộc sống của mình đừng hỏi ý kiến người khác,6,test,cuộc_sống của mình đừng hỏi ý_kiến người khác
+6835,mấy thằng mặt địt . chim chưa mọc đủ lông mà lông đã ăn vào tận não chúng mày rồi . đm chúng mày,3,test,mấy thằng mặt địt . chim chưa mọc đủ lông mà lông đã ăn vào tận não chúng_mày rồi . đm chúng_mày
+6836,bà về nơi phương xa mất rồi . nhưng với tớ bà là người dễ thương nhất trên đời . chỉ muốn ngả vào lòng ngoại nghe kể về những câu chuyện cổ 😘,1,test,bà về nơi phương xa mất rồi . nhưng với tớ bà là người dễ_thương nhất trên đời . chỉ muốn ngả vào lòng ngoại nghe kể về những câu_chuyện cổ emo_love
+6837,"vui vẻ chút , lạc quan chút cho đời thêm vui cũng là một cách 😂😂",0,test,"vui_vẻ chút , lạc_quan chút cho đời thêm vui cũng là một_cách emo_joy emo_joy"
+6838,hài vãi :))),0,test,hài vãi emo_joy
+6839,còn gì đau đớn hơn cảnh này :(((,1,test,còn gì đau_đớn hơn cảnh này emo_sad
+6840,"yep . chính tao . đi vệ sinh thôi cũng phải đảo qua , mà giờ thì người ta sắp đi lấy chồng rồi",1,test,"yep . chính tao . đi vệ_sinh thôi cũng phải đảo qua , mà giờ thì người ta sắp đi lấy chồng rồi"
+6841,còn mình nhìn như thằng ngu,1,test,còn mình nhìn như thằng ngu
+6842,thay đổi văn hóa tí đi . đường là tài sản chung của mọi người dân . và mọi người dân được phép làm những gì pháp luật không cấm .,6,test,thay_đổi văn_hoá tí đi . đường là tài_sản chung của mọi người_dân . và mọi người_dân được phép làm những gì pháp_luật không cấm .
+6843,ai thấy pha cuối phê vãi không,0,test,ai thấy pha cuối phê vãi không
+6844,tội em gái đó,1,test,tội em_gái đó
+6845,đứa nào nhây hơn đứa đấy thắng,6,test,đứa nào nhây hơn đứa đấy thắng
+6846,hahah thú vị ghê hen,0,test,hahah thú_vị ghê hen
+6847,ngã nhìn cũng thấy yêu 🤣,0,test,ngã nhìn cũng thấy yêu emo_joy
+6848,hồi bé tôi cũng bị chửi cả ngày từ sáng chí tối ! nhưng không phải bố tôi mà là bà nội tôi !,1,test,hồi bé tôi cũng bị chửi cả ngày từ sáng chí tối ! nhưng không phải bố tôi mà là bà nội tôi !
+6849,cung quá ak,0,test,cung quá ak
+6850,mày xinh ghê vậy :d,0,test,mày xinh ghê vậy emo_joy
+6851,"thương các bác quá , vất vả 10 năm trời mà bị như vậy 😭",1,test,"thương các bác quá , vất_vả 10 năm trời mà bị như_vậy emo_sad"
+6852,hên là đụng nhầm người chứ đụng trúng cái là rụng trứng cả bày cả lũ -)),0,test,hên là đụng nhầm người chứ đụng trúng cái là rụng trứng cả bày cả lũ - ) )
+6853,đau ghê,1,test,đau ghê
+6854,khúc mắc cười đoạn nào vậy 😑,4,test,khúc_mắc cười đoạn nào vậy emo_neutral
+6855,đếm không hết nên nó vương nó vãi ấy mà,6,test,đếm không hết nên nó vương nó vãi ấy mà
+6856,1 hình này thấy từ sáng đến giờ trên mấy page rồi 😑😑,6,test,1 hình này thấy từ sáng đến giờ trên mấy page rồi emo_neutral emo_neutral
+6857,mày ăn xong thì cút luôn dùm nha 🙂,3,test,mày ăn xong thì cút luôn dùm nha emo_joy
+6858,thôi thì giả tạo đến phút chót cho tròn chữ hãm lồn,4,test,thôi_thì giả_tạo đến phút chót cho tròn chữ hãm lồn
+6859,con bé bị quơ trúng nhìn đẹp như búp bê ấy < 3,0,test,con_bé bị quơ trúng nhìn đẹp như búp_bê ấy < 3
+6860,bạn không có lỗi sinh ra trong nghèo khó nhưng nếu chết trong nghèo khó thì đó là lỗi của bạn,6,test,bạn không có lỗi sinh ra trong nghèo_khó nhưng nếu chết trong nghèo_khó thì đó là lỗi của bạn
+6861,"lỗi tổng hợp . đường bộ mà nằm sát đường sắt , còn ông tài xế thì đậu xe cẩu thả .",4,test,"lỗi tổng_hợp . đường_bộ mà nằm sát đường_sắt , còn ông tài_xế thì đậu xe cẩu_thả ."
+6862,phim kinh dị vào cái trời âm u 😒,2,test,phim kinh_dị vào cái trời âm_u emo_u 1 f612
+6863,crush đéo bị thịt nhé :d nó cũng ế vãi vì tội chảnh chóa,3,test,crush đéo bị_thịt nhé emo_joy nó cũng ế vãi vì tội chảnh choá
+6864,tự nhiên coi tới khúc th bé kéo hết bạn bè tới chụp hình tao buồn cười vãi ! ông kia nghĩ ! thôi chết mẹ rồi ! kiểu này tối mới lau xong 😂,0,test,tự_nhiên coi tới khúc th bé kéo hết bạn_bè tới chụp hình tao buồn_cười vãi ! ông kia nghĩ ! thôi chết mẹ rồi ! kiểu này tối mới lau xong emo_joy
+6865,bếp dầu thời bao cấp cùng thời đôt đèn dầu,6,test,bếp dầu thời bao_cấp cùng thời đôt đèn dầu
+6866,mình nghĩ đợt này bà per thua rồi . đuối lý lẫn truyền thông yếu,1,test,mình nghĩ đợt này bà per thua rồi . đuối lý lẫn truyền_thông yếu
+6867,bọn trẻ trung quốc thời nay ăn gì mà cao thế nhỉ,5,test,bọn trẻ_trung quốc thời nay ăn gì mà cao_thế nhỉ
+6868,"fa lâu năm có biết 14 / 2 hay 15 / 2 là ngày gì đâu , chỉ biết là ngày đi làm về và rất mệt",1,test,"fa lâu năm có biết 14 / 2 hay 15 / 2 là ngày gì đâu , chỉ biết là ngày đi làm về và rất mệt"
+6869,kinh quá . đau lắm đây . mà nhìn nổi hết da gà ra .,4,test,kinh quá . đau lắm đây . mà nhìn nổi hết da_gà ra .
+6870,t đang thắc mắc là 2 thằng kia đéo hỏi thằng per à 🤔,6,test,t đang thắc_mắc là 2 thằng kia đéo hỏi thằng per à emo_thinking
+6871,nhìn đoạn ổng tránh nó cắn mà nhảy tưng tưng rất chi là điệu nghệ và mang trong đó cả sự tấu hài nữa 🤣🤣,0,test,nhìn đoạn ổng tránh nó cắn mà nhảy tưng_tưng rất_chi_là điệu_nghệ và mang trong đó cả sự tấu hài nữa emo_joy emo_joy
+6872,"đừng để râu , móng tay cắt gọn gàng . nếu mà thơm nữa thì 8d chuẩn mẹ rồi",6,test,"đừng để râu , móng tay cắt gọn_gàng . nếu_mà thơm nữa thì 8d chuẩn mẹ rồi"
+6873,"hôm nào đi học về cũng phải đi qa , nhà nuôi lũ này ở đỉnh dốc , đi học về tới chân dốc thôi là nghe lũ quỷ đó đứng đầu dốc đón đường bọn tao rồi . méo đạp xe lên dốc nổi , dắt xe lên dốc mà muốn vứt mẹ cái xe đạp để chạy lấy thân cho rồi :((",2,test,"hôm nào đi học về cũng phải đi qa , nhà nuôi lũ này ở đỉnh dốc , đi học về tới chân dốc thôi là nghe lũ quỷ đó đứng đầu dốc đón đường bọn tao rồi . méo đạp xe lên dốc nổi , dắt xe lên dốc mà muốn vứt mẹ cái xe_đạp để chạy lấy thân cho_rồi emo_sad"
+6874,"công ty nào nhận bạn không quan trọng , quan trọng là ai giới thiệu bạn vào công ty 🤣🤣🤣🤣",0,test,"công_ty nào nhận bạn không quan_trọng , quan_trọng là ai giới_thiệu bạn vào công_ty emo_joy emo_joy emo_joy emo_joy"
+6875,"đến cả khi nó nói thích mình , 1 phút sau nó lại nói chỉ trêu . mệt mỏi",1,test,"đến cả khi nó nói thích mình , 1 phút sau nó lại nói chỉ trêu . mệt_mỏi"
+6876,ây da 1 thời,6,test,ây da 1 thời
+6878,đỡ mua cuốn sổ 5 ngàn =)),0,test,đỡ mua cuốn sổ 5 ngàn emo_joy
+6879,chỉ dân đen là khổ thôi . chả trách được họ khi cố gắng đi tìm may mắn ở nơi chùa chiền,1,test,chỉ dân_đen là khổ thôi . chả_trách được họ khi cố_gắng đi tìm may_mắn ở nơi chùa_chiền
+6880,còn gì đau hơn,1,test,còn gì đau hơn
+6881,nó vẫn luôn hiện hữu xung quanh chúng ta . hãy dùng tình yêu thương đó và cho đi ❤,0,test,nó vẫn luôn hiện_hữu xung_quanh chúng_ta . hãy dùng tình yêu_thương đó và cho đi emo_love
+6882,3 idiots ! phim hay nhất mọi thời đại .,0,test,3 idiots ! phim hay nhất mọi thời_đại .
+6883,đi xa nó bắt cóc chết mẹ mày :),4,test,đi xa nó bắt_cóc chết mẹ mày emo_joy
+6884,ôi dume bọn súc vật,4,test,ôi dume bọn súc_vật
+6885,xuất sắc . thật sự quá đỉnh .,0,test,xuất_sắc . thật_sự quá đỉnh .
+6886,đúng là yêu tới đầu bạc răng long .,0,test,đúng là yêu tới đầu_bạc_răng_long .
+6887,cho thằng khác ăn ốc bắt bố đổ vỏ à 🤣,3,test,cho thằng khác ăn ốc bắt bố đổ vỏ à emo_joy
+6888,"động lực là tình yêu , gia đình là nơi để về hihi",0,test,"động_lực là tình_yêu , gia_đình là nơi để về hihi"
+6889,đã thất tình xem pim này khóc cả đêm mất thôi mới đề mô mà đã khóc thút thít rồi chắc xem hết thì không biết pai làm sao ..,1,test,đã thất_tình xem pim này khóc cả đêm mất thôi mới đề mô mà đã khóc thút_thít rồi chắc xem hết thì không biết pai làm_sao .
+6890,"và sau mùa vải , tàn dư còn lại là những nốt mụn 😌😌😌",1,test,"và sau mùa vải , tàn_dư còn lại là những nốt mụn emo_u 1 f60c emo_u 1 f60c emo_u 1 f60c"
+6891,mỗi lần coi lại sởn gai ốc,2,test,mỗi lần coi lại sởn gai_ốc
+6892,con người giỏi nhỉ .,5,test,con_người giỏi nhỉ .
+6893,sến đụ dễ sợ 😑,4,test,sến đụ dễ_sợ emo_neutral
+6894,tao muốn mèo nhà tao cũng tìm về được như này 😭,1,test,tao muốn mèo nhà tao cũng tìm về được như này emo_sad
+6895,"rãnh vãi , kiếm cái gì làm đi",4,test,"rãnh vãi , kiếm cái gì làm đi"
+6896,per chuẩn . gọi công an cho lành . cãi cộ chẳng may sửng cồ lên không kìm được phang vào xe nó lại mệt ??,4,test,per chuẩn . gọi công_an cho lành . cãi cộ chẳng may sửng_cồ lên không kìm được phang vào xe nó lại mệt ?
+6897,khi nào mình già rồi cũng như v nha per kkkkkkkkkk,0,test,khi nào mình già rồi cũng như v nha per k
+6898,vl gần nhà,6,test,vl gần nhà
+6899,cứu em nó với,1,test,cứu em nó với
+6900,đụ mẹ ngu à :)) có thiếu chỗ đéo nào cho mày viết khôg,4,test,đụ_mẹ ngu à emo_joy có thiếu chỗ đéo nào cho mày viết khôg
+6901,tao thì sợ nhất lúc nó mới cắt tóc,2,test,tao thì sợ nhất lúc nó mới cắt tóc
+6902,được cái công tác truyền thông tốt,0,test,được_cái công_tác truyền_thông tốt
+6903,nhìn rợn vãi,2,test,nhìn rợn vãi
+6904,đúng là ổng có vợ rồi có khác . không cần lấy áo làm tóc nữa mà có hẳn váy để mặc rồi 😂😂😂😂,5,test,đúng là ổng có vợ rồi có khác . không cần lấy áo làm tóc nữa mà có hẳn váy để mặc rồi emo_joy emo_joy emo_joy emo_joy
+6905,haha :))) nãy giờ mấy tiếng rồi mà các bác vẫn còn căng :))),0,test,haha emo_joy nãy_giờ mấy tiếng rồi mà các bác vẫn còn căng emo_joy
+6906,ngưỡng mộ ông bà á . ông bà đáng yêu ghê,0,test,ngưỡng_mộ ông_bà á . ông_bà đáng yêu ghê
+6907,thằng nào kiểu như này tao cho cạch mặt !!! đéo thích nữa 😂😂,3,test,thằng nào kiểu như này tao cho cạch mặt ! đéo thích nữa emo_joy emo_joy
+6908,:)) mọi người bị sao thế ??? thích chơi với mấy đứa như vầy nè :)) hài hước đi chung cười sấp mặt luôn =)))) nhây nhây vầy mới zui chớ ? tự nhiên chửi con nhỏ thấy tội nghiệp 😡,0,test,emo_joy mọi người bị sao thế ? thích chơi với mấy đứa như_vầy nè emo_joy hài_hước đi chung cười sấp_mặt luôn emo_joy nhây nhây vầy mới zui chớ ? tự_nhiên chửi con_nhỏ thấy tội_nghiệp emo_anger
+6909,giờ cắt bộ móng đi cái tay vẫn cứ bị phế khó mà phục hồi được,1,test,giờ cắt bộ móng đi cái tay vẫn cứ bị phế khó mà phục_hồi được
+6910,per ông đó có đôi mắt đẹp ghê,0,test,per ông đó có đôi mắt đẹp ghê
+6911,có vậy ông mới có công chuyện làm mà kiếm tiền còn la lối chửi mắng có tội nghe con .,4,test,có vậy ông mới có công_chuyện làm mà kiếm tiền còn la_lối chửi_mắng có tội nghe con .
+6912,phim gì z .. thánh nữ nào cho biết cái chủ đề dới !!,6,test,phim gì z . thánh nữ nào cho biết cái chủ_đề dới !
+6913,địt mẹ đời tao,1,test,địt_mẹ đời tao
+6914,áp dụng ở việt nam cơ mà chỉ có ăn cái đầu mày .,4,test,áp_dụng ở việt_nam cơ_mà chỉ có ăn cái đầu mày .
+6915,nó cứ sai sai thế nào ấy,6,test,nó cứ sai sai thế_nào ấy
+6916,còn chặt cả cây ổi của hàng xóm để lấy cái chạc làm súng đấy cứ,0,test,còn chặt cả cây ổi của hàng_xóm để lấy cái chạc làm súng đấy cứ
+6917,chắc là uncrush thôi . bố mẹ thì còng lưng ra làm cho con đi học .,1,test,chắc là uncrush thôi . bố_mẹ thì còng lưng ra làm cho con đi học .
+6918,chúng mày cứ cười . dm mai gần đấy có biến lại thấy anh ấy trong bộ cảnh phục thì lại tung hô quả nằm vùng quá đẳng cấp 😂😂😂,0,test,chúng_mày cứ cười . dm mai gần đấy có biến lại thấy anh ấy trong bộ cảnh_phục thì lại tung_hô quả nằm_vùng quá đẳng_cấp emo_joy emo_joy emo_joy
+6919,gửi nhầm video mình hát chế cho nó nghe,6,test,gửi nhầm video mình hát chế cho nó nghe
+6920,tự nhiên mình xem và mỉm cười theo .,0,test,tự_nhiên mình xem và mỉm cười theo .
+6921,bạn ăn cơm chưa ?,6,test,bạn ăn cơm chưa ?
+6922,lúc thì cuốc đất è cổ ra không có giun mà câu cá 😒,1,test,lúc thì cuốc đất è_cổ ra không có giun mà câu cá emo_u 1 f612
+6923,các bác dẫn crush qua cây sữa nay mà hứng nước đái ve nha haha,0,test,các bác dẫn crush qua cây sữa nay mà hứng nước_đái ve nha haha
+6924,vợ chồng rồi mà trong sáng như này chỉ có trong phim nhỉ 😂,5,test,vợ_chồng rồi mà trong_sáng như này chỉ có trong phim nhỉ emo_joy
+6925,bep này vào binh dương dùng xuất,6,test,bep này vào binh dương dùng xuất
+6926,đôi mắt đằm thắm vãi,5,test,đôi mắt đằm_thắm vãi

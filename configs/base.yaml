@@ -1,0 +1,40 @@
+# Cấu hình mặc định dùng chung cho dự án vi-emo2sent (v0 + mở rộng G1)
+backbone: vinai/phobert-base-v2
+mode: target
+stage1_ckpt: null
+head: linear3
+loss: ce
+tau: 1.0
+lr: 2.0e-5
+fraction: 5
+seed: 0
+epochs: 10
+batch_size: 16
+grad_accum: 2
+max_length: 256
+precision: fp16
+group_by_length: true
+early_stop:
+  metric: val_loss
+  min_steps: 50
+  patience: 5
+fixed_steps: null
+eval_test: false
+keep_ckpt: false
+variant: base
+official: false
+
+# Khóa bổ sung cho GESF và khởi tạo (giá trị mặc định giữ nguyên hành vi v0)
+emo_input: p_emo
+wtrans_path: null
+wtrans_norm: auto
+alpha_init: auto
+detach_emo: false
+
+# Cấu hình tiền xử lý (CV-N2 / M2)
+preprocess:
+  emoji_mode: tag          # Ánh xạ emoji/emoticon sang token ngữ nghĩa tiếng Việt (ví dụ: 😍 -> " emo_love ")
+  filter_short: false      # Bộ lọc câu <= 2 từ: TẮT mặc định theo hợp đồng M2
+  min_words: 3             # Ngưỡng từ tối thiểu khi filter_short: true (loại câu <= 2 từ)
+  segmenter: vncorenlp     # Bắt buộc dùng VnCoreNLP (py_vncorenlp) cho PhoBERT; không fallback
+  vncorenlp_dir: C:\vncorenlp

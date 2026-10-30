@@ -1,0 +1,10 @@
+split_pair,vsmec_train,vsmec_dev,vsmec_test,neuesc_train,neuesc_dev,neuesc_test,vsfc_train,vsfc_dev,vsfc_test
+vsmec_train,5544,1,0,0,0,0,0,0,0
+vsmec_dev,1,686,0,0,0,0,0,0,0
+vsmec_test,0,0,692,0,0,0,0,0,0
+neuesc_train,0,0,0,23048,0,0,0,0,0
+neuesc_dev,0,0,0,0,3305,0,0,0,0
+neuesc_test,0,0,0,0,0,6613,0,0,0
+vsfc_train,0,0,0,0,0,0,11425,0,0
+vsfc_dev,0,0,0,0,0,0,0,1583,0
+vsfc_test,0,0,0,0,0,0,0,0,3166

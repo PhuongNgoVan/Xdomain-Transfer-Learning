@@ -1,0 +1,10 @@
+dataset,split,total_rows,unique_hashes,same_label_dup_groups,same_label_extra_rows_removed,conflict_label_groups,conflict_label_rows_removed
+vsmec,train,5548,5544,3,3,1,2
+vsmec,dev,686,686,0,0,0,0
+vsmec,test,693,692,1,1,0,0
+neuesc,train,23048,23048,0,0,0,0
+neuesc,dev,3305,3305,0,0,0,0
+neuesc,test,6613,6613,0,0,0,0
+vsfc,train,11426,11425,0,0,1,2
+vsfc,dev,1583,1583,0,0,0,0
+vsfc,test,3166,3166,0,0,0,0

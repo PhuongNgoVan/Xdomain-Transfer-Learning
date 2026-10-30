@@ -1,0 +1,8 @@
+split,id,label,reason,text_hash,norm_text
+test,6877,4,same_label_duplicate,9f3db89bea72a808fb51ff1e7748700cbd70a09b8d16a29bf3175cf5bb239aac,nhìn cái bản mặt bà ta mà ghét thay . tham vô độ . dân mình nhiều nhà dăn ba tỉ còn khó .
+train,1030,5,cross_split_overlap,96ae1c4646c12c9588dd063eff6bb75c58b18dba25d68cc8cff71377d2b5c4a9,bài này hay quá
+train,1275,4,same_label_duplicate,fcf4f439eabdd042e2d96645fe2a49f63b25702be9dbbbd3b2278b6b1562801b,per bây giờ thì không nói nhưng mà cảm giác phủ nhận vai trò bà thảo ngày xưa . vl không chị đọc thấy viết khập khiễng quá :)
+train,4116,4,conflict_label,c11cef7371499e7e3eaed7b217798277e9d99fb6928406f226cd9c4a8434b164,kinh vãi
+train,4386,2,same_label_duplicate,5bf4e523007ddf571c4d918bac6ff9d4a19bc3dd6ad2a04a75a3956da93538c6,nguy hiểm lắm
+train,4987,2,conflict_label,c11cef7371499e7e3eaed7b217798277e9d99fb6928406f226cd9c4a8434b164,kinh vãi
+train,5092,6,same_label_duplicate,f42e1a14b4219ab8184d271fa02b02d3480d173e6ea283aa3c28a5b1e000690e,đã năm 2000 . người ta cho mượn 200 tr rồi . từ đó về sau nhà người ta có cần 25 tr / tháng hay không ?

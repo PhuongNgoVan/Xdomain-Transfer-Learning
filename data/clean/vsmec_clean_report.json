@@ -1,0 +1,34 @@
+{
+  "by_split": {
+    "dev": {
+      "conflict_label": 0,
+      "cross_split_overlap": 0,
+      "external_overlap": 0,
+      "kept_count": 686,
+      "original_count": 686,
+      "same_label_duplicate": 0
+    },
+    "test": {
+      "conflict_label": 0,
+      "cross_split_overlap": 0,
+      "external_overlap": 0,
+      "kept_count": 692,
+      "original_count": 693,
+      "same_label_duplicate": 1
+    },
+    "train": {
+      "conflict_label": 2,
+      "cross_split_overlap": 1,
+      "external_overlap": 0,
+      "kept_count": 5542,
+      "original_count": 5548,
+      "same_label_duplicate": 3
+    }
+  },
+  "conflict_label_total": 2,
+  "cross_split_overlap_total": 1,
+  "external_overlap_total": 0,
+  "kept_total": 6920,
+  "original_total": 6927,
+  "same_label_duplicate_total": 4
+}
