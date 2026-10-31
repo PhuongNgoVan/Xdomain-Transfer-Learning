@@ -13,9 +13,9 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Union
 import numpy as np
 from sklearn.metrics import (
     accuracy_score,
-    balanced_accuracy_score,
     confusion_matrix,
     f1_score,
+    recall_score,
 )
 
 from src.common.constants import EMOTIONS7, LABELS3, NEG, NEU, POS
@@ -40,11 +40,12 @@ def compute_ece(
     logits: Optional[np.ndarray],
     n_bins: int = 15,
     valid_logits: bool = True,
+    y_pred: Optional[Sequence[int]] = None,
 ) -> float:
     """Compute Expected Calibration Error (ECE) using `n_bins` equal-width bins on `[0, 1]`.
 
     Uses maximum softmax probability `conf_i = max_c softmax(logits_i)_c` and
-    predicted class `pred_i = argmax_c logits_i`.
+    predicted class `y_pred` (if provided) or `pred_i = argmax_c logits_i`.
 
     Binning convention (standard equal-width on `[0, 1]`):
     - Bin $b \\in \\{0, \\dots, M-1\\}$ has bounds $[l_b, u_b]$ with $l_b = b/M, u_b = (b+1)/M$.
@@ -66,7 +67,15 @@ def compute_ece(
 
     probs = softmax_2d(logit_arr)
     confidences = np.max(probs, axis=1)
-    predictions = np.argmax(probs, axis=1)
+    if y_pred is not None:
+        pred_arr = np.asarray(y_pred, dtype=np.int64)
+        if pred_arr.shape != y_arr.shape:
+            raise ValueError(
+                f"y_pred and y_true must have the same shape, got {pred_arr.shape} vs {y_arr.shape}"
+            )
+        predictions = pred_arr
+    else:
+        predictions = np.argmax(probs, axis=1)
     accuracies = (predictions == y_arr).astype(np.float64)
 
     bin_boundaries = np.linspace(0.0, 1.0, n_bins + 1)
@@ -155,7 +164,15 @@ def compute_metrics(
         zero_division=0,
     )
     acc = float(accuracy_score(y_true_arr, y_pred_arr))
-    bal_acc = float(balanced_accuracy_score(y_true_arr, y_pred_arr))
+    bal_acc = float(
+        recall_score(
+            y_true_arr,
+            y_pred_arr,
+            labels=label_list,
+            average="macro",
+            zero_division=0,
+        )
+    )
     cm = confusion_matrix(y_true_arr, y_pred_arr, labels=label_list)
 
     logit_arr = np.asarray(logits, dtype=np.float64) if logits is not None else None
@@ -164,6 +181,7 @@ def compute_metrics(
         logit_arr,
         n_bins=n_bins,
         valid_logits=valid_logits,
+        y_pred=y_pred_arr,
     )
 
     result: Dict[str, Any] = {

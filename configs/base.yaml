@@ -1,5 +1,6 @@
 # Cấu hình mặc định dùng chung cho dự án vi-emo2sent (v0 + mở rộng G1)
 backbone: vinai/phobert-base-v2
+visobert_backbone: uitnlp/visobert
 mode: target
 stage1_ckpt: null
 head: linear3

@@ -3,3 +3,7 @@ PhoBERT (vinai/phobert-base-v2),all,32966,256,3,24.7443,14.0,76.0,192.0,1431,199
 PhoBERT (vinai/phobert-base-v2),train,23048,256,4,24.4967,14.0,74.65,187.0,1303,134,0.005814
 PhoBERT (vinai/phobert-base-v2),dev,3305,256,5,24.7933,14.0,74.0,186.0,670,20,0.006051
 PhoBERT (vinai/phobert-base-v2),test,6613,256,3,25.5831,14.0,81.4,218.76,1431,45,0.006805
+ViSoBERT (uitnlp/visobert),all,32966,256,3,28.2805,15.0,89.0,238.0,1629,291,0.008827
+ViSoBERT (uitnlp/visobert),train,23048,256,4,27.9732,15.0,87.0,221.53,1629,192,0.00833
+ViSoBERT (uitnlp/visobert),dev,3305,256,4,28.4033,15.0,88.0,238.8,842,30,0.009077
+ViSoBERT (uitnlp/visobert),test,6613,256,3,29.29,15.0,96.0,259.76,1610,69,0.010434

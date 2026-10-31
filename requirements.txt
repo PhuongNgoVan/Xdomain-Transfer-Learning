@@ -8,3 +8,5 @@ PyYAML==6.0.2
 pytest==8.3.4
 vncorenlp==1.0.3
 py_vncorenlp==0.1.4
+sentencepiece==0.2.2
+protobuf==7.36.2

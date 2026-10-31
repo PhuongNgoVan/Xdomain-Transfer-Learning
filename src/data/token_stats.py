@@ -2,9 +2,9 @@
 
 Per `tasks/M2_preprocess.md`:
 - Computes token length distribution (`p95`, `p99`) and truncation rate at
-  `max_length = 256` on NEU-ESC for both PhoBERT and ViSoBERT tokenizers.
-- PhoBERT reads the word-segmented column `text_seg` (or `text` if `text_seg` is absent).
-- ViSoBERT reads the unsegmented normalized `text` (or restores spaces from `text_seg`).
+  `max_length = 256` on NEU-ESC for both PhoBERT and ViSoBERT tokenizers read from `configs/base.yaml`.
+- PhoBERT (`backbone: vinai/phobert-base-v2`) reads column `text_seg`.
+- ViSoBERT (`visobert_backbone: uitnlp/visobert`) reads column `text`.
 - Exports CSV table to `results/token_stats.csv`.
 - Unit tests use a mock / local small tokenizer without any network access.
 """
@@ -18,7 +18,6 @@ import pandas as pd
 import yaml
 
 from src.common.io import write_csv_schema
-from src.data.preprocess import preprocess_text
 
 TOKEN_STATS_COLUMNS: Tuple[str, ...] = (
     "tokenizer",
@@ -119,24 +118,20 @@ def load_hf_tokenizer(model_name: str) -> Any:
 
 def load_tokenizers_from_config(
     config_path: Union[str, Path] = "configs/base.yaml",
-    phobert_model: Optional[str] = None,
-    visobert_model: Optional[str] = None,
 ) -> Dict[str, str]:
-    """Resolve checkpoint names strictly from `configs/base.yaml` (or explicit CLI args).
-
-    Does NOT guess checkpoint names that are absent from `configs/base.yaml` and `docs/contract.md`.
-    """
-    raw_cfg: Dict[str, Any] = {}
+    """Read both PhoBERT (`backbone`) and ViSoBERT (`visobert_backbone`) checkpoints from `configs/base.yaml`."""
     cfg_file = Path(config_path)
-    if cfg_file.is_file():
-        raw_cfg = yaml.safe_load(cfg_file.read_text(encoding="utf-8")) or {}
+    if not cfg_file.is_file():
+        raise FileNotFoundError(f"Config file not found: {cfg_file}")
+
+    raw_cfg: Dict[str, Any] = yaml.safe_load(cfg_file.read_text(encoding="utf-8")) or {}
 
     resolved: Dict[str, str] = {}
-    pho_ckpt = phobert_model or raw_cfg.get("backbone")
+    pho_ckpt = raw_cfg.get("backbone")
     if pho_ckpt:
         resolved[f"PhoBERT ({pho_ckpt})"] = str(pho_ckpt)
 
-    viso_ckpt = visobert_model or raw_cfg.get("visobert_backbone")
+    viso_ckpt = raw_cfg.get("visobert_backbone")
     if viso_ckpt:
         resolved[f"ViSoBERT ({viso_ckpt})"] = str(viso_ckpt)
 
@@ -152,36 +147,26 @@ def compute_token_stats(
 ) -> pd.DataFrame:
     """Compute token length statistics (`p95`, `p99`, truncation rate at `max_length`) on `df`.
 
-    For PhoBERT (`"phobert"` in tokenizer key/name), uses `text_seg` if present, else `text`.
-    For ViSoBERT (`"visobert"` in tokenizer key/name), uses normalized unsegmented `text`
-    (replacing `_` with space if only `text_seg` is present).
+    - PhoBERT (`"phobert"` in tokenizer key/name) strictly reads column `text_seg`.
+    - ViSoBERT (`"visobert"` in tokenizer key/name) strictly reads column `text`.
     """
-    if "text" not in df.columns and "text_seg" not in df.columns:
-        raise ValueError("DataFrame must contain 'text' or 'text_seg' column")
+    missing_cols = [c for c in ("text", "text_seg") if c not in df.columns]
+    if missing_cols:
+        raise ValueError(
+            f"DataFrame must contain both 'text' and 'text_seg' columns; missing {missing_cols}"
+        )
 
-    work_df = df.copy()
-    if "text" in work_df.columns:
-        norm_texts = [preprocess_text(str(t)) for t in work_df["text"]]
-    else:
-        norm_texts = [str(t).replace("_", " ") for t in work_df["text_seg"]]
-    work_df["_norm_text"] = norm_texts
-
-    if "text_seg" in work_df.columns:
-        work_df["_seg_text"] = [str(t) for t in work_df["text_seg"]]
-    else:
-        work_df["_seg_text"] = work_df["_norm_text"]
-
-    subsets_to_eval: List[Tuple[str, pd.DataFrame]] = [("all", work_df)]
-    if include_by_subset and "subset" in work_df.columns:
+    subsets_to_eval: List[Tuple[str, pd.DataFrame]] = [("all", df)]
+    if include_by_subset and "subset" in df.columns:
         for sp in ("train", "dev", "test"):
-            sub_df = work_df[work_df["subset"] == sp]
+            sub_df = df[df["subset"] == sp]
             if not sub_df.empty:
                 subsets_to_eval.append((sp, sub_df))
 
     rows: List[Dict[str, Any]] = []
     for tok_name, tok_obj in tokenizers.items():
         use_segmented = "phobert" in tok_name.lower()
-        col_name = "_seg_text" if use_segmented else "_norm_text"
+        col_name = "text_seg" if use_segmented else "text"
 
         for sp_name, sub_df in subsets_to_eval:
             lengths = count_tokens_with_tokenizer(sub_df[col_name], tok_obj)
@@ -218,40 +203,20 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         "--config",
         type=Path,
         default=Path("configs/base.yaml"),
-        help="Path to YAML config containing official checkpoint names.",
+        help="Path to YAML config containing official PhoBERT and ViSoBERT checkpoint names.",
     )
     parser.add_argument("--max-length", type=int, default=256)
-    parser.add_argument(
-        "--phobert-model",
-        type=str,
-        default=None,
-        help="Explicit PhoBERT HuggingFace checkpoint (defaults to 'backbone' in configs/base.yaml).",
-    )
-    parser.add_argument(
-        "--visobert-model",
-        type=str,
-        default=None,
-        help="Explicit ViSoBERT HuggingFace checkpoint (if absent from configs/base.yaml, skipped per QUESTIONS.md).",
-    )
     args = parser.parse_args(argv)
 
     input_path = args.input_csv
     if not input_path.is_file():
-        fallback_path = Path("data/splits/neuesc_100.csv")
-        if fallback_path.is_file():
-            input_path = fallback_path
-        else:
-            raise FileNotFoundError(f"NEU-ESC file not found: {args.input_csv}")
+        raise FileNotFoundError(f"NEU-ESC file not found: {args.input_csv}")
 
-    ckpt_map = load_tokenizers_from_config(
-        config_path=args.config,
-        phobert_model=args.phobert_model,
-        visobert_model=args.visobert_model,
-    )
-    if not ckpt_map:
+    ckpt_map = load_tokenizers_from_config(config_path=args.config)
+    if len(ckpt_map) < 2:
         raise RuntimeError(
-            f"No tokenizer checkpoints found in {args.config}. "
-            "Record missing checkpoints in tasks/QUESTIONS.md."
+            f"Expected both 'backbone' (PhoBERT) and 'visobert_backbone' (ViSoBERT) in {args.config}, "
+            f"got {ckpt_map}"
         )
 
     df = pd.read_csv(input_path)
