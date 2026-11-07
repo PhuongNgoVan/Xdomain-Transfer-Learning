@@ -1,6 +1,7 @@
 """Stage 1 training utilities, logit prediction, CSV export, and temporary checkpoint management (`src/plm/trainer_utils.py`)."""
 
 import hashlib
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn.functional as F
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
@@ -29,6 +31,55 @@ PREDICTION_DATASETS: Tuple[str, ...] = (
     "neuesc_test",
     "vsfc_test",
 )
+
+
+VALID_PRECISIONS: Tuple[str, ...] = ("fp16", "bf16", "fp32")
+
+
+def resolve_precision(
+    precision: str,
+    device: torch.device,
+    strict_precision: bool = False,
+) -> str:
+    """Validate requested `precision` (`fp16`, `bf16`, `fp32`) and resolve effective precision on `device`.
+
+    When `strict_precision` is True, raises `RuntimeError` if the hardware/device cannot satisfy
+    the requested precision (e.g., `fp16`/`bf16` without CUDA, or `bf16` when
+    `torch.cuda.is_bf16_supported()` is False). When `strict_precision` is False, falls back to `'fp32'`.
+    """
+    p = str(precision).strip()
+    if p not in VALID_PRECISIONS:
+        raise ValueError(
+            f"Invalid precision {precision!r}. Must be one of {VALID_PRECISIONS}."
+        )
+    if p == "fp32":
+        return "fp32"
+
+    has_cuda = device.type == "cuda" and torch.cuda.is_available()
+    if p == "fp16":
+        if has_cuda:
+            return "fp16"
+        if strict_precision:
+            raise RuntimeError(
+                "strict_precision=True: precision='fp16' requires an active CUDA device, "
+                f"but running on device={device.type!r}."
+            )
+        return "fp32"
+
+    # p == "bf16"
+    bf16_ok = bool(
+        has_cuda
+        and hasattr(torch.cuda, "is_bf16_supported")
+        and torch.cuda.is_bf16_supported()
+    )
+    if bf16_ok:
+        return "bf16"
+    if strict_precision:
+        raise RuntimeError(
+            "strict_precision=True: precision='bf16' requires CUDA with bfloat16 support "
+            f"(device={device.type!r}, cuda_available={has_cuda})."
+        )
+    return "fp32"
 
 
 def format_lr(lr: float) -> str:
@@ -62,8 +113,13 @@ def build_stage1_run_id(
     config: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Construct Stage 1 `run_id` per Section 6 (`{alias}_Stage1-{variant}_s{seed}_lr{lr}`)."""
+    v_str = str(variant).strip()
+    if not v_str or "_" in v_str:
+        raise ValueError(
+            f"Stage 1 variant must be non-empty and must not contain '_' (got {variant!r})."
+        )
     alias = infer_backbone_alias(backbone, config=config)
-    return f"{alias}_Stage1-{variant}_s{int(seed)}_lr{format_lr(lr)}"
+    return f"{alias}_Stage1-{v_str}_s{int(seed)}_lr{format_lr(lr)}"
 
 
 def get_git_commit() -> str:
@@ -169,6 +225,36 @@ def write_prediction7_file(
     return df_pred
 
 
+def compute_cross_entropy_from_logits(
+    logits: np.ndarray,
+    labels: Sequence[int],
+) -> float:
+    """Compute mean cross-entropy loss in FP32 from raw logits `(N, C)` and integer labels `(N,)`."""
+    if len(labels) == 0 or logits.shape[0] == 0:
+        return 0.0
+    logits_t = torch.as_tensor(logits, dtype=torch.float32)
+    labels_t = torch.as_tensor(list(labels), dtype=torch.long)
+    loss = F.cross_entropy(logits_t, labels_t)
+    return float(loss.item())
+
+
+def write_stage1_sidecar(
+    results_dir: Union[str, Path],
+    run_id: str,
+    payload: Dict[str, Any],
+) -> Path:
+    """Atomically write Stage 1 diagnostics sidecar JSON to `<results_dir>/runs/<run_id>.json`."""
+    runs_dir = Path(results_dir) / "runs"
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    sidecar_path = runs_dir / f"{run_id}.json"
+    tmp_path = sidecar_path.with_suffix(".json.tmp")
+    tmp_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    tmp_path.replace(sidecar_path)
+    return sidecar_path
+
+
 def _save_temp_work_checkpoint(
     work_run_dir: Path,
     step: int,
@@ -180,6 +266,9 @@ def _save_temp_work_checkpoint(
     optimizer: AdamW,
     scheduler: Any,
     save_total_limit: int = 2,
+    eval_history: Optional[List[Dict[str, Any]]] = None,
+    n_skipped_optimizer_steps: int = 0,
+    n_nonfinite_loss: int = 0,
 ) -> Path:
     """Save an intermediate training state in `work_run_dir/checkpoint-{step}` and prune old ones."""
     ckpt_dir = work_run_dir / f"checkpoint-{int(step)}"
@@ -192,6 +281,9 @@ def _save_temp_work_checkpoint(
             "best_macro_f1": float(best_macro_f1),
             "best_step": int(best_step),
             "patience_counter": int(patience_counter),
+            "eval_history": list(eval_history) if eval_history is not None else [],
+            "n_skipped_optimizer_steps": int(n_skipped_optimizer_steps),
+            "n_nonfinite_loss": int(n_nonfinite_loss),
             "model_state_dict": {
                 k: v.detach().cpu() for k, v in model.state_dict().items()
             },
