@@ -113,3 +113,41 @@ PRED7_COLUMNS: Tuple[str, ...] = (
     "y_pred7",
     *PRED7_LOGIT_COLUMNS,
 )
+
+# ---------------------------------------------------------------------------
+# 2.8. Polarity annotation & key schemas (M1b / M7)
+# ---------------------------------------------------------------------------
+POLARITY_SAMPLE_COLUMNS: Tuple[str, ...] = (
+    "id",
+    "text",
+    "polarity_label",
+)
+
+POLARITY_KEY_COLUMNS: Tuple[str, ...] = (
+    "id",
+    "text",
+    "emotion_id",
+    "emotion_name",
+)
+
+POLARITY_DISAGREEMENT_COLUMNS: Tuple[str, ...] = (
+    "id",
+    "text",
+    "emotion_name",
+    "label_nhat",
+    "label_long",
+    "final_label",
+)
+
+POLARITY_DISTRIBUTION_COLUMNS: Tuple[str, ...] = (
+    "annotator",
+    "emotion_name",
+    "polarity_id",
+    "polarity_name",
+    "count",
+    "total",
+    "proportion",
+    "wilson_ci_low",
+    "wilson_ci_high",
+)
+
