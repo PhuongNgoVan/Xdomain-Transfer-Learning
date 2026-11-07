@@ -113,3 +113,20 @@ PRED7_COLUMNS: Tuple[str, ...] = (
     "y_pred7",
     *PRED7_LOGIT_COLUMNS,
 )
+
+# ---------------------------------------------------------------------------
+# 2.8. Polarity annotation sample & key schemas (`data/clean/polarity_*.csv`)
+# ---------------------------------------------------------------------------
+POLARITY_SAMPLE_COLUMNS: Tuple[str, ...] = (
+    "id",
+    "text",
+    "polarity_label",
+)
+
+POLARITY_KEY_COLUMNS: Tuple[str, ...] = (
+    "id",
+    "text",
+    "emotion_id",
+    "emotion_name",
+)
+
