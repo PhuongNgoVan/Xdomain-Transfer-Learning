@@ -143,8 +143,10 @@ def update_stage1_ckpt_hash(
     alias: str,
     ckpt_subdir: Path,
     results_dir: Path,
+    sweep: bool = False,
+    run_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Compute SHA-256 of encoder weights and `head.pt` and update `stage1_ckpt_hash.json`."""
+    """Compute SHA-256 of encoder weights and `head.pt` and update `stage1_ckpt_hash.json` (or `ckpt_hash_sweep.json` when `sweep=True`)."""
     encoder_dir = ckpt_subdir / "encoder"
     head_path = ckpt_subdir / "head.pt"
     enc_weight_file = _find_encoder_weight_file(encoder_dir)
@@ -152,7 +154,15 @@ def update_stage1_ckpt_hash(
     enc_sha = sha256_file(enc_weight_file)
     head_sha = sha256_file(head_path)
 
-    hash_file = results_dir / "stage1_ckpt_hash.json"
+    if sweep:
+        if not run_id:
+            raise ValueError("run_id is required when updating sweep checkpoint hash.")
+        hash_file = results_dir / "ckpt_hash_sweep.json"
+        key = str(run_id)
+    else:
+        hash_file = results_dir / "stage1_ckpt_hash.json"
+        key = str(alias)
+
     hash_file.parent.mkdir(parents=True, exist_ok=True)
     existing: Dict[str, Any] = {}
     if hash_file.is_file():
@@ -161,7 +171,7 @@ def update_stage1_ckpt_hash(
         except Exception:
             existing = {}
 
-    existing[alias] = {
+    existing[key] = {
         "path": ckpt_subdir.as_posix(),
         "encoder_sha256": enc_sha,
         "head_sha256": head_sha,
