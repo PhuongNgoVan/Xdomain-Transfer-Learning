@@ -1,550 +1,95 @@
 """Stage 1 PLM fine-tuning (7-class emotion on UIT-VSMEC) (`src/plm/stage1.py`).
 
-Independent implementation per `tasks/M6_stage1_vsmec.md` (CV-P8):
-- Architecture: `AutoModel` + `nn.Dropout(0.1)` + single `nn.Linear(hidden_size, 7)`
-  applied to the `<s>` token representation (`last_hidden_state[:, 0, :]`).
-  Does NOT use `AutoModelForSequenceClassification` (whose RoBERTa head has 2 layers).
-- Data discipline:
-  - PhoBERT reads `text_seg`; ViSoBERT reads `text`.
-  - Trains on `vsmec_train.csv`, selects best checkpoint by `macro_f1` on `vsmec_dev.csv`.
-  - Logs truncation rate at `max_length = 256`.
-- Fixed checkpoint format in `{ckpt_dir}/{PhoBERT|ViSoBERT}/`:
-  - `encoder/`: `encoder.save_pretrained(...)` + `tokenizer.save_pretrained(...)`
-  - `head.pt`: `{"weight": Tensor(7, hidden_size), "bias": Tensor(7)}`
-- Strict post-training order:
-  1. Write 5 raw-logit prediction files in `{results_dir}/predictions7/{run_id}_{dataset}.csv`
-     for `vsmec_dev`, `vsmec_test`, `neuesc_dev`, `neuesc_test`, `vsfc_test` (`PRED7_COLUMNS`).
-  2. Compute `vsmec_dev` metrics from the written prediction file via `compute_metrics`
-     and append 1 row to `{results_dir}/stage1.csv` (`STAGE1_COLUMNS`).
-  3. Only after steps (1) and (2) succeed, delete intermediate checkpoints in `work_dir`
-     while keeping the best checkpoint in `ckpt_dir`.
-  4. Compute SHA-256 of encoder weights and `head.pt` and update
-     `{results_dir}/stage1_ckpt_hash.json`.
+Facade and entry-point per `stage1_refactor_spec.md` & `tasks/M6_stage1_vsmec.md`:
+- Re-exports all public symbols from:
+  - `src.plm.tokenizer_dataset`
+  - `src.plm.model_ckpt`
+  - `src.plm.trainer_utils`
+- Implements `run_stage1` and CLI `main()` with:
+  1. Proper FP16 `GradScaler.unscale_` + `clip_grad_norm_` + scale-checked `scheduler.step()`.
+  2. FP32 post-training & validation inference (`use_fp16=False`) so saved CSV logits match
+     CPU/GPU checkpoint reload within `< 1e-4`.
+  3. In-RAM `best_state_dict` tracking during training and single `save_stage1_checkpoint` write
+     at the end of training to eliminate repeated Google Drive FUSE I/O stalls.
+  4. `eval_batch_size`, `pin_memory=(device.type == "cuda")`, and `non_blocking=True` tensor transfers.
 """
 
 import argparse
-import hashlib
-import json
 import math
 import shutil
-import subprocess
 import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
-import pandas as pd
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 from torch.optim import AdamW
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from transformers import (
-    AutoConfig,
-    AutoModel,
     AutoTokenizer,
     DataCollatorWithPadding,
     get_linear_schedule_with_warmup,
 )
-from transformers.modeling_outputs import SequenceClassifierOutput
-import yaml
 
 from src.common.constants import EMOTIONS7, ID_TO_EMOTION7
-from src.common.hashing import sha256_file
-from src.common.io import append_row_schema, read_csv_schema, write_csv_schema
+from src.common.io import append_row_schema, read_csv_schema
 from src.common.schema import PRED7_COLUMNS, SPLIT_COLUMNS, STAGE1_COLUMNS
 from src.common.seed import set_seed
 from src.eval.metrics import EMOTION7_IDS, compute_metrics
-
-NUM_EMOTIONS: int = len(EMOTIONS7)
-PREDICTION_DATASETS: Tuple[str, ...] = (
-    "vsmec_dev",
-    "vsmec_test",
-    "neuesc_dev",
-    "neuesc_test",
-    "vsfc_test",
+from src.plm.model_ckpt import (
+    Stage1Classifier,
+    _find_encoder_weight_file,
+    update_stage1_ckpt_hash,
+)
+from src.plm.tokenizer_dataset import (
+    TokenizedTextDataset,
+    build_length_grouped_indices,
+    resolve_input_column,
+    tokenize_with_truncation_stats,
+)
+from src.plm.trainer_utils import (
+    NUM_EMOTIONS,
+    PREDICTION_DATASETS,
+    _find_latest_work_checkpoint,
+    _load_split_dataframe,
+    _save_temp_work_checkpoint,
+    build_stage1_run_id,
+    compute_vsmec_data_hash,
+    format_lr,
+    get_git_commit,
+    infer_backbone_alias,
+    load_stage1_config,
+    predict_logits7,
+    write_prediction7_file,
 )
 
-
-def format_lr(lr: float) -> str:
-    """Format learning rate compactly for `run_id` (e.g. `2e-05` -> `2e-5`)."""
-    s = f"{float(lr):g}"
-    if "e" in s:
-        mantissa, exp = s.split("e", 1)
-        sign = "-" if exp.startswith("-") else ""
-        digits = exp.lstrip("+-").lstrip("0") or "0"
-        return f"{mantissa}e{sign}{digits}"
-    return s
-
-
-def infer_backbone_alias(backbone: str, config: Optional[Dict[str, Any]] = None) -> str:
-    """Determine canonical short alias (`PhoBERT` or `ViSoBERT`) from config or backbone."""
-    if config and config.get("model_alias"):
-        return str(config["model_alias"])
-    lower = str(backbone).lower()
-    if "phobert" in lower:
-        return "PhoBERT"
-    if "visobert" in lower:
-        return "ViSoBERT"
-    return Path(str(backbone)).name
-
-
-def resolve_input_column(backbone: str, config: Optional[Dict[str, Any]] = None) -> str:
-    """Resolve and validate the text column (`text_seg` for PhoBERT, `text` for ViSoBERT)."""
-    lower = str(backbone).lower()
-    cfg_col = config.get("input_column") if config else None
-
-    if "phobert" in lower:
-        if cfg_col is not None and cfg_col != "text_seg":
-            raise ValueError(
-                f"PhoBERT backbone ({backbone}) must use input_column='text_seg', got {cfg_col!r}."
-            )
-        return "text_seg"
-    if "visobert" in lower:
-        if cfg_col is not None and cfg_col != "text":
-            raise ValueError(
-                f"ViSoBERT backbone ({backbone}) must use input_column='text', got {cfg_col!r}."
-            )
-        return "text"
-    return str(cfg_col) if cfg_col else "text"
-
-
-def build_stage1_run_id(
-    backbone: str,
-    seed: int,
-    lr: float,
-    variant: str = "base",
-    config: Optional[Dict[str, Any]] = None,
-) -> str:
-    """Construct Stage 1 `run_id` per Section 6 (`{alias}_Stage1-{variant}_s{seed}_lr{lr}`)."""
-    alias = infer_backbone_alias(backbone, config=config)
-    return f"{alias}_Stage1-{variant}_s{int(seed)}_lr{format_lr(lr)}"
-
-
-def get_git_commit() -> str:
-    """Return full `git rev-parse HEAD` commit hash (or `'unknown'` if unavailable)."""
-    try:
-        out = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL, text=True
-        ).strip()
-        return out if out else "unknown"
-    except Exception:
-        return "unknown"
-
-
-def compute_vsmec_data_hash(data_dir: Union[str, Path]) -> str:
-    """Compute combined SHA-256 digest of `vsmec_train.csv`, `vsmec_dev.csv`, `vsmec_test.csv`."""
-    d_path = Path(data_dir)
-    combined = hashlib.sha256()
-    for sp in ("train", "dev", "test"):
-        fp = d_path / f"vsmec_{sp}.csv"
-        file_digest = sha256_file(fp)
-        combined.update(f"vsmec_{sp}.csv:{file_digest}\n".encode("utf-8"))
-    return combined.hexdigest()
-
-
-class Stage1Classifier(nn.Module):
-    """Single-linear-layer 7-class emotion classifier on top of `AutoModel` token `<s>` (index 0).
-
-    Per `tasks/M6_stage1_vsmec.md` Section 4.2:
-    - Does NOT use `AutoModelForSequenceClassification` (which has a 2-layer head in RoBERTa).
-    - Applies `nn.Dropout(dropout)` + `nn.Linear(hidden_size, 7)` directly on
-      `last_hidden_state[:, 0, :]`.
-    """
-
-    def __init__(
-        self,
-        encoder: nn.Module,
-        num_labels: int = NUM_EMOTIONS,
-        dropout: float = 0.1,
-    ) -> None:
-        super().__init__()
-        self.encoder = encoder
-        hidden_size = int(getattr(encoder.config, "hidden_size"))
-        self.hidden_size = hidden_size
-        self.num_labels = int(num_labels)
-        self.dropout = nn.Dropout(p=float(dropout))
-        self.head = nn.Linear(hidden_size, self.num_labels)
-
-    @classmethod
-    def from_pretrained_backbone(
-        cls,
-        backbone_name_or_path: Union[str, Path],
-        num_labels: int = NUM_EMOTIONS,
-        dropout: float = 0.1,
-    ) -> "Stage1Classifier":
-        """Load `AutoModel` from `backbone_name_or_path` and attach fresh 7-class linear head."""
-        encoder = AutoModel.from_pretrained(str(backbone_name_or_path))
-        return cls(encoder=encoder, num_labels=num_labels, dropout=dropout)
-
-    def forward(
-        self,
-        input_ids: Tensor,
-        attention_mask: Optional[Tensor] = None,
-        token_type_ids: Optional[Tensor] = None,
-        labels: Optional[Tensor] = None,
-        **kwargs: Any,
-    ) -> SequenceClassifierOutput:
-        encoder_kwargs: Dict[str, Any] = {
-            "input_ids": input_ids,
-            "attention_mask": attention_mask,
-        }
-        if token_type_ids is not None:
-            encoder_kwargs["token_type_ids"] = token_type_ids
-        outputs = self.encoder(**encoder_kwargs)
-        cls_repr = outputs.last_hidden_state[:, 0, :]
-        logits = self.head(self.dropout(cls_repr))
-
-        loss: Optional[Tensor] = None
-        if labels is not None:
-            loss_fn = nn.CrossEntropyLoss()
-            loss = loss_fn(logits, labels.long())
-        return SequenceClassifierOutput(loss=loss, logits=logits)
-
-    def save_stage1_checkpoint(
-        self,
-        tokenizer: Any,
-        ckpt_path: Union[str, Path],
-    ) -> Dict[str, Path]:
-        """Save `encoder/` (`save_pretrained` + tokenizer) and `head.pt` (`weight`, `bias`)."""
-        root = Path(ckpt_path)
-        encoder_dir = root / "encoder"
-        encoder_dir.mkdir(parents=True, exist_ok=True)
-
-        self.encoder.save_pretrained(encoder_dir)
-        tokenizer.save_pretrained(encoder_dir)
-
-        head_path = root / "head.pt"
-        head_state = {
-            "weight": self.head.weight.detach().cpu().clone(),
-            "bias": self.head.bias.detach().cpu().clone(),
-        }
-        torch.save(head_state, head_path)
-        return {"encoder_dir": encoder_dir, "head_path": head_path}
-
-    @classmethod
-    def load_stage1_checkpoint(
-        cls,
-        ckpt_path: Union[str, Path],
-        dropout: float = 0.1,
-        device: Optional[Union[str, torch.device]] = None,
-    ) -> Tuple["Stage1Classifier", Any]:
-        """Reload `Stage1Classifier` and tokenizer from `{ckpt_path}/encoder/` and `head.pt`."""
-        root = Path(ckpt_path)
-        encoder_dir = root / "encoder"
-        head_path = root / "head.pt"
-        if not encoder_dir.is_dir():
-            raise FileNotFoundError(f"Encoder directory not found: {encoder_dir}")
-        if not head_path.is_file():
-            raise FileNotFoundError(f"Head file not found: {head_path}")
-
-        tokenizer = AutoTokenizer.from_pretrained(str(encoder_dir))
-        encoder = AutoModel.from_pretrained(str(encoder_dir))
-        head_state = torch.load(head_path, map_location="cpu", weights_only=True)
-        weight: Tensor = head_state["weight"]
-        bias: Tensor = head_state["bias"]
-
-        model = cls(encoder=encoder, num_labels=int(weight.shape[0]), dropout=dropout)
-        with torch.no_grad():
-            model.head.weight.copy_(weight)
-            model.head.bias.copy_(bias)
-
-        if device is not None:
-            model.to(device)
-        model.eval()
-        return model, tokenizer
-
-
-class TokenizedTextDataset(Dataset):
-    """Dataset of pre-tokenized inputs (without padding; padded dynamically per batch)."""
-
-    def __init__(
-        self,
-        encodings: List[Dict[str, Any]],
-        labels: Optional[Sequence[int]] = None,
-    ) -> None:
-        self.encodings = encodings
-        self.labels = [int(x) for x in labels] if labels is not None else None
-
-    def __len__(self) -> int:
-        return len(self.encodings)
-
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
-        item = dict(self.encodings[idx])
-        if self.labels is not None:
-            item["labels"] = int(self.labels[idx])
-        return item
-
-
-def tokenize_with_truncation_stats(
-    texts: Sequence[str],
-    tokenizer: Any,
-    max_length: int = 256,
-) -> Tuple[List[Dict[str, Any]], Dict[str, Union[int, float]]]:
-    """Tokenize `texts` with `max_length` truncation and compute exact truncation statistics."""
-    str_texts = [str(t) for t in texts]
-    n_total = len(str_texts)
-    if n_total == 0:
-        return [], {"n_total": 0, "n_truncated": 0, "truncation_rate": 0.0}
-
-    # Measure full untruncated token lengths (including special tokens)
-    untruncated = tokenizer(
-        str_texts,
-        truncation=False,
-        padding=False,
-        return_attention_mask=False,
-    )
-    n_truncated = sum(
-        1 for ids in untruncated["input_ids"] if len(ids) > int(max_length)
-    )
-    trunc_rate = float(n_truncated) / float(n_total)
-
-    truncated_batch = tokenizer(
-        str_texts,
-        truncation=True,
-        max_length=int(max_length),
-        padding=False,
-    )
-    keys = list(truncated_batch.keys())
-    encodings: List[Dict[str, Any]] = []
-    for i in range(n_total):
-        encodings.append({k: truncated_batch[k][i] for k in keys})
-
-    stats: Dict[str, Union[int, float]] = {
-        "n_total": int(n_total),
-        "n_truncated": int(n_truncated),
-        "truncation_rate": trunc_rate,
-    }
-    return encodings, stats
-
-
-def build_length_grouped_indices(
-    encodings: Sequence[Dict[str, Any]],
-    batch_size: int,
-    seed: int,
-    epoch: int = 0,
-    group_by_length: bool = True,
-) -> List[int]:
-    """Produce deterministic training sample order (length-grouped mega-batches or shuffled)."""
-    n = len(encodings)
-    rng = np.random.default_rng(int(seed) + int(epoch) * 1009)
-    perm = rng.permutation(n).tolist()
-    if not group_by_length or n <= batch_size:
-        return perm
-
-    # Group into mega-batches of 50 * batch_size, sort by descending token length within mega-batch,
-    # then shuffle batch chunks deterministically.
-    mega_size = max(batch_size * 50, batch_size)
-    ordered_batches: List[List[int]] = []
-    for start in range(0, n, mega_size):
-        mega = perm[start : start + mega_size]
-        mega.sort(key=lambda idx: len(encodings[idx]["input_ids"]), reverse=True)
-        for b_start in range(0, len(mega), batch_size):
-            ordered_batches.append(mega[b_start : b_start + batch_size])
-
-    batch_perm = rng.permutation(len(ordered_batches)).tolist()
-    flat: List[int] = []
-    for b_idx in batch_perm:
-        flat.extend(ordered_batches[b_idx])
-    return flat
-
-
-@torch.no_grad()
-def predict_logits7(
-    model: Stage1Classifier,
-    encodings: Sequence[Dict[str, Any]],
-    tokenizer: Any,
-    batch_size: int,
-    device: torch.device,
-    use_fp16: bool = False,
-) -> np.ndarray:
-    """Run inference on `encodings` and return raw 7-class logits of shape `(N, 7)`."""
-    model.eval()
-    dataset = TokenizedTextDataset(list(encodings), labels=None)
-    collator = DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
-    loader = DataLoader(
-        dataset,
-        batch_size=int(batch_size),
-        shuffle=False,
-        collate_fn=collator,
-    )
-
-    all_logits: List[np.ndarray] = []
-    amp_enabled = bool(use_fp16 and device.type == "cuda")
-    for batch in loader:
-        input_ids = batch["input_ids"].to(device)
-        attention_mask = batch.get("attention_mask")
-        if attention_mask is not None:
-            attention_mask = attention_mask.to(device)
-        token_type_ids = batch.get("token_type_ids")
-        if token_type_ids is not None:
-            token_type_ids = token_type_ids.to(device)
-
-        with torch.amp.autocast(device_type=device.type, dtype=torch.float16, enabled=amp_enabled):
-            out = model(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                token_type_ids=token_type_ids,
-            )
-        logits_np = out.logits.detach().float().cpu().numpy()
-        all_logits.append(logits_np)
-
-    if not all_logits:
-        return np.zeros((0, NUM_EMOTIONS), dtype=np.float64)
-    return np.vstack(all_logits)
-
-
-def write_prediction7_file(
-    ids: Sequence[int],
-    logits: np.ndarray,
-    out_path: Path,
-    y_true7: Optional[Sequence[int]] = None,
-) -> pd.DataFrame:
-    """Build and atomically write a `PRED7_COLUMNS` CSV file."""
-    if logits.ndim != 2 or logits.shape[1] != NUM_EMOTIONS:
-        raise ValueError(
-            f"Expected logits of shape (N, {NUM_EMOTIONS}), got {logits.shape}."
-        )
-    y_pred7 = np.argmax(logits, axis=1).astype(int)
-    if y_true7 is not None:
-        y_true_col: List[Union[int, str]] = [int(x) for x in y_true7]
-    else:
-        y_true_col = ["" for _ in range(len(ids))]
-
-    data: Dict[str, Any] = {
-        "id": [int(x) for x in ids],
-        "y_true7": y_true_col,
-        "y_pred7": y_pred7.tolist(),
-    }
-    for c_idx in range(NUM_EMOTIONS):
-        data[f"logit_{c_idx}"] = logits[:, c_idx].astype(np.float64).tolist()
-
-    df_pred = pd.DataFrame(data, columns=list(PRED7_COLUMNS))
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = out_path.with_suffix(".csv.tmp")
-    write_csv_schema(df_pred, tmp_path, PRED7_COLUMNS)
-    tmp_path.replace(out_path)
-    return df_pred
-
-
-def _find_encoder_weight_file(encoder_dir: Path) -> Path:
-    """Locate the primary weight file saved by `AutoModel.save_pretrained`."""
-    for candidate in ("model.safetensors", "pytorch_model.bin"):
-        p = encoder_dir / candidate
-        if p.is_file():
-            return p
-    files = sorted(encoder_dir.glob("*.safetensors")) + sorted(encoder_dir.glob("*.bin"))
-    if files:
-        return files[0]
-    raise FileNotFoundError(f"No encoder weight file found in {encoder_dir}")
-
-
-def update_stage1_ckpt_hash(
-    alias: str,
-    ckpt_subdir: Path,
-    results_dir: Path,
-) -> Dict[str, Any]:
-    """Compute SHA-256 of encoder weights and `head.pt` and update `stage1_ckpt_hash.json`."""
-    encoder_dir = ckpt_subdir / "encoder"
-    head_path = ckpt_subdir / "head.pt"
-    enc_weight_file = _find_encoder_weight_file(encoder_dir)
-
-    enc_sha = sha256_file(enc_weight_file)
-    head_sha = sha256_file(head_path)
-
-    hash_file = results_dir / "stage1_ckpt_hash.json"
-    hash_file.parent.mkdir(parents=True, exist_ok=True)
-    existing: Dict[str, Any] = {}
-    if hash_file.is_file():
-        try:
-            existing = json.loads(hash_file.read_text(encoding="utf-8"))
-        except Exception:
-            existing = {}
-
-    existing[alias] = {
-        "path": ckpt_subdir.as_posix(),
-        "encoder_sha256": enc_sha,
-        "head_sha256": head_sha,
-    }
-    hash_file.write_text(
-        json.dumps(existing, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-    return existing
-
-
-def _save_temp_work_checkpoint(
-    work_run_dir: Path,
-    step: int,
-    epoch: int,
-    best_macro_f1: float,
-    best_step: int,
-    patience_counter: int,
-    model: Stage1Classifier,
-    optimizer: AdamW,
-    scheduler: Any,
-    save_total_limit: int = 2,
-) -> Path:
-    """Save an intermediate training state in `work_run_dir/checkpoint-{step}` and prune old ones."""
-    ckpt_dir = work_run_dir / f"checkpoint-{int(step)}"
-    ckpt_dir.mkdir(parents=True, exist_ok=True)
-    state_path = ckpt_dir / "trainer_state.pt"
-    torch.save(
-        {
-            "step": int(step),
-            "epoch": int(epoch),
-            "best_macro_f1": float(best_macro_f1),
-            "best_step": int(best_step),
-            "patience_counter": int(patience_counter),
-            "model_state_dict": {
-                k: v.detach().cpu() for k, v in model.state_dict().items()
-            },
-            "optimizer_state_dict": optimizer.state_dict(),
-            "scheduler_state_dict": scheduler.state_dict(),
-        },
-        state_path,
-    )
-
-    # Enforce save_total_limit on intermediate checkpoints
-    all_ckpts = sorted(
-        work_run_dir.glob("checkpoint-*"),
-        key=lambda p: int(p.name.split("-")[-1]) if p.name.split("-")[-1].isdigit() else -1,
-    )
-    if save_total_limit > 0 and len(all_ckpts) > save_total_limit:
-        for old_ckpt in all_ckpts[:-save_total_limit]:
-            shutil.rmtree(old_ckpt, ignore_errors=True)
-    return ckpt_dir
-
-
-def _find_latest_work_checkpoint(work_run_dir: Path) -> Optional[Path]:
-    """Return the latest `checkpoint-{step}/trainer_state.pt` in `work_run_dir` if present."""
-    if not work_run_dir.is_dir():
-        return None
-    all_ckpts = sorted(
-        work_run_dir.glob("checkpoint-*"),
-        key=lambda p: int(p.name.split("-")[-1]) if p.name.split("-")[-1].isdigit() else -1,
-    )
-    for ckpt in reversed(all_ckpts):
-        st = ckpt / "trainer_state.pt"
-        if st.is_file():
-            return st
-    return None
-
-
-def load_stage1_config(config_path: Union[str, Path]) -> Dict[str, Any]:
-    """Read and normalize Stage 1 YAML configuration."""
-    p = Path(config_path)
-    if not p.is_file():
-        raise FileNotFoundError(f"Config file not found: {p}")
-    raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
-    if not isinstance(raw, dict):
-        raise ValueError(f"YAML config must be a mapping, got {type(raw).__name__}")
-    return raw
-
-
-def _load_split_dataframe(csv_path: Path, required_cols: Sequence[str]) -> pd.DataFrame:
-    """Read a dataset CSV and verify required columns exist (`strict_order=False`)."""
-    return read_csv_schema(
-        csv_path, required_cols, strict_order=False, keep_default_na=False
-    )
+__all__ = [
+    "EMOTIONS7",
+    "ID_TO_EMOTION7",
+    "NUM_EMOTIONS",
+    "PREDICTION_DATASETS",
+    "Stage1Classifier",
+    "TokenizedTextDataset",
+    "_find_encoder_weight_file",
+    "_find_latest_work_checkpoint",
+    "_load_split_dataframe",
+    "_save_temp_work_checkpoint",
+    "build_length_grouped_indices",
+    "build_stage1_run_id",
+    "compute_vsmec_data_hash",
+    "format_lr",
+    "get_git_commit",
+    "infer_backbone_alias",
+    "load_stage1_config",
+    "main",
+    "predict_logits7",
+    "resolve_input_column",
+    "run_stage1",
+    "tokenize_with_truncation_stats",
+    "update_stage1_ckpt_hash",
+    "write_prediction7_file",
+]
 
 
 def run_stage1(
@@ -567,13 +112,16 @@ def run_stage1(
     lr = float(cfg.get("learning_rate", cfg.get("lr", 2.0e-5)))
     variant = str(cfg.get("variant", "base"))
     batch_size = int(cfg.get("batch_size", 16))
+    eval_batch_size = int(cfg.get("eval_batch_size", max(batch_size * 4, 64)))
     grad_accum = int(cfg.get("gradient_accumulation_steps", cfg.get("grad_accum", 2)))
     epochs = int(cfg.get("num_train_epochs", cfg.get("epochs", 10)))
     warmup_ratio = float(cfg.get("warmup_ratio", 0.06))
     weight_decay = float(cfg.get("weight_decay", 0.01))
+    max_grad_norm = float(cfg.get("max_grad_norm", 1.0))
     dropout = float(cfg.get("dropout", 0.1))
     max_length = int(cfg.get("max_length", 256))
     precision = str(cfg.get("precision", "fp16"))
+    eval_fp16 = bool(cfg.get("eval_fp16", False))
     group_by_length = bool(cfg.get("group_by_length", True))
     patience = int(cfg.get("early_stopping_patience", 5))
     save_total_limit = int(cfg.get("save_total_limit", 2))
@@ -583,7 +131,9 @@ def run_stage1(
         else (int(cfg["max_steps"]) if cfg.get("max_steps") is not None else None)
     )
 
-    run_id = build_stage1_run_id(backbone=backbone, seed=seed, lr=lr, variant=variant, config=cfg)
+    run_id = build_stage1_run_id(
+        backbone=backbone, seed=seed, lr=lr, variant=variant, config=cfg
+    )
 
     d_dir = Path(data_dir)
     c_dir = Path(ckpt_dir)
@@ -619,8 +169,12 @@ def run_stage1(
     neuesc_full_df = _load_split_dataframe(
         d_dir / "neuesc_100.csv", (*SPLIT_COLUMNS, input_col)
     )
-    neuesc_dev_df = neuesc_full_df[neuesc_full_df["subset"] == "dev"].reset_index(drop=True)
-    neuesc_test_df = neuesc_full_df[neuesc_full_df["subset"] == "test"].reset_index(drop=True)
+    neuesc_dev_df = neuesc_full_df[neuesc_full_df["subset"] == "dev"].reset_index(
+        drop=True
+    )
+    neuesc_test_df = neuesc_full_df[neuesc_full_df["subset"] == "test"].reset_index(
+        drop=True
+    )
     vsfc_test_df = _load_split_dataframe(
         d_dir / "vsfc_test_clean.csv", ("id", input_col)
     )
@@ -745,9 +299,9 @@ def run_stage1(
             model=model,
             encodings=dev_enc,
             tokenizer=tokenizer,
-            batch_size=batch_size,
+            batch_size=eval_batch_size,
             device=device,
-            use_fp16=use_fp16,
+            use_fp16=eval_fp16,
         )
         dev_preds = np.argmax(dev_logits, axis=1).tolist()
         dev_metrics = compute_metrics(
@@ -762,7 +316,6 @@ def run_stage1(
             best_state_dict = {
                 k: v.detach().cpu().clone() for k, v in model.state_dict().items()
             }
-            model.save_stage1_checkpoint(tokenizer=tokenizer, ckpt_path=ckpt_subdir)
         else:
             patience_counter += 1
 
@@ -805,20 +358,21 @@ def run_stage1(
             batch_size=batch_size,
             shuffle=False,
             collate_fn=collator,
+            pin_memory=(device.type == "cuda"),
         )
 
         model.train()
         optimizer.zero_grad(set_to_none=True)
 
         for b_idx, batch in enumerate(train_loader):
-            input_ids = batch["input_ids"].to(device)
+            input_ids = batch["input_ids"].to(device, non_blocking=True)
             attention_mask = batch.get("attention_mask")
             if attention_mask is not None:
-                attention_mask = attention_mask.to(device)
+                attention_mask = attention_mask.to(device, non_blocking=True)
             token_type_ids = batch.get("token_type_ids")
             if token_type_ids is not None:
-                token_type_ids = token_type_ids.to(device)
-            labels_t = batch["labels"].to(device)
+                token_type_ids = token_type_ids.to(device, non_blocking=True)
+            labels_t = batch["labels"].to(device, non_blocking=True)
 
             with torch.amp.autocast(
                 device_type=device.type, dtype=torch.float16, enabled=use_fp16
@@ -841,11 +395,23 @@ def run_stage1(
             )
             if is_accum_boundary:
                 if use_fp16:
+                    scaler.unscale_(optimizer)
+                    if max_grad_norm > 0.0:
+                        torch.nn.utils.clip_grad_norm_(
+                            model.parameters(), max_grad_norm
+                        )
+                    scale_before = scaler.get_scale()
                     scaler.step(optimizer)
                     scaler.update()
+                    if scaler.get_scale() >= scale_before:
+                        scheduler.step()
                 else:
+                    if max_grad_norm > 0.0:
+                        torch.nn.utils.clip_grad_norm_(
+                            model.parameters(), max_grad_norm
+                        )
                     optimizer.step()
-                scheduler.step()
+                    scheduler.step()
                 optimizer.zero_grad(set_to_none=True)
                 global_step += 1
 
@@ -863,21 +429,22 @@ def run_stage1(
     if last_evaluated_step != global_step:
         _evaluate_and_checkpoint(global_step, epochs)
 
-    # Load best model at end (`load_best_model_at_end: true`)
+    # Load best model at end (`load_best_model_at_end: true`) and write checkpoint once
     if best_state_dict is not None:
         model.load_state_dict(best_state_dict)
         model.to(device)
     model.eval()
-    # Ensure best checkpoint is saved cleanly in `ckpt_subdir`
     model.save_stage1_checkpoint(tokenizer=tokenizer, ckpt_path=ckpt_subdir)
 
     elapsed_sec = time.time() - t0
 
-    # 8. Post-training Step (a): Export 5 raw-logit prediction files (`PRED7_COLUMNS`)
+    # 8. Post-training Step (a): Export 5 raw-logit prediction files (`PRED7_COLUMNS`) in FP32
     pred7_dir = r_dir / "predictions7"
     pred7_dir.mkdir(parents=True, exist_ok=True)
 
-    eval_targets: List[Tuple[str, Sequence[int], List[Dict[str, Any]], Optional[Sequence[int]]]] = [
+    eval_targets: List[
+        Tuple[str, Sequence[int], List[Dict[str, Any]], Optional[Sequence[int]]]
+    ] = [
         (
             "vsmec_dev",
             vsmec_dev_df["id"].astype(int).tolist(),
@@ -916,9 +483,9 @@ def run_stage1(
             model=model,
             encodings=enc_list,
             tokenizer=tokenizer,
-            batch_size=batch_size,
+            batch_size=eval_batch_size,
             device=device,
-            use_fp16=use_fp16,
+            use_fp16=False,
         )
         out_csv = pred7_dir / f"{run_id}_{ds_name}.csv"
         write_prediction7_file(
