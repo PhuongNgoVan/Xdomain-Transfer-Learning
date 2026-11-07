@@ -1,0 +1,64 @@
+{
+  "disagreement_count": 39,
+  "metrics": {
+    "all": {
+      "bootstrap_dropped_count": 0,
+      "bootstrap_dropped_rate": 0.0,
+      "ci_high": 0.539251,
+      "ci_low": 0.273419,
+      "gwet_ac1": 0.428739,
+      "kappa": 0.410163,
+      "kappa_linear": 0.405941,
+      "n": 100,
+      "n_boot": 2000,
+      "pabak": 0.415,
+      "pe": 0.3388,
+      "po": 0.61,
+      "warning_ci_biased": false
+    },
+    "other": {
+      "bootstrap_dropped_count": 0,
+      "bootstrap_dropped_rate": 0.0,
+      "ci_high": 0.602601,
+      "ci_low": 0.208443,
+      "gwet_ac1": 0.526924,
+      "kappa": 0.40849,
+      "kappa_linear": 0.332524,
+      "n": 50,
+      "n_boot": 2000,
+      "pabak": 0.49,
+      "pe": 0.4252,
+      "po": 0.66,
+      "warning_ci_biased": false
+    },
+    "surprise": {
+      "bootstrap_dropped_count": 0,
+      "bootstrap_dropped_rate": 0.0,
+      "ci_high": 0.508016,
+      "ci_low": 0.148023,
+      "gwet_ac1": 0.367907,
+      "kappa": 0.330493,
+      "kappa_linear": 0.361493,
+      "n": 50,
+      "n_boot": 2000,
+      "pabak": 0.34,
+      "pe": 0.3428,
+      "po": 0.56,
+      "warning_ci_biased": false
+    }
+  },
+  "warnings": [
+    "kh\u00f4ng ki\u1ec3m ch\u1ee9ng \u0111\u01b0\u1ee3c ngu\u1ed3n c\u00e2u",
+    "hai \u03ba ri\u00eang n\u1eb1m hai ph\u00eda c\u1ee7a 0.400000: Other \u03ba=0.408490, Surprise \u03ba=0.330493",
+    "l\u1ec7ch ph\u00e2n b\u1ed1 c\u1ef1c t\u00ednh gi\u1eefa Nh\u1eadt v\u00e0 Long tr\u00ean nh\u00f3m All (max_diff=0.260000)",
+    "k\u1ebft lu\u1eadn y\u1ebfu: Wilson 95% CI c\u1ee7a c\u1ef1c l\u1edbn nh\u1ea5t (neutral) cho Other (nhat) ch\u1ee9a 0.60 [0.403989, 0.670303]",
+    "c\u1ef1c l\u1edbn nh\u1ea5t c\u00f3 th\u1ec3 kh\u00f4ng chi\u1ebfm \u0111a s\u1ed1: Wilson 95% CI c\u1ee7a c\u1ef1c l\u1edbn nh\u1ea5t (neutral) cho Other (nhat) ch\u1ee9a 0.50 [0.403989, 0.670303]",
+    "k\u1ebft lu\u1eadn y\u1ebfu: Wilson 95% CI c\u1ee7a c\u1ef1c l\u1edbn nh\u1ea5t (neutral) cho Other (long) ch\u1ee9a 0.60 [0.481504, 0.741372]",
+    "c\u1ef1c l\u1edbn nh\u1ea5t c\u00f3 th\u1ec3 kh\u00f4ng chi\u1ebfm \u0111a s\u1ed1: Wilson 95% CI c\u1ee7a c\u1ef1c l\u1edbn nh\u1ea5t (neutral) cho Other (long) ch\u1ee9a 0.50 [0.481504, 0.741372]",
+    "l\u1ec7ch ph\u00e2n b\u1ed1 c\u1ef1c t\u00ednh gi\u1eefa Nh\u1eadt v\u00e0 Long tr\u00ean nh\u00f3m Other (max_diff=0.180000)",
+    "k\u1ebft lu\u1eadn y\u1ebfu: Wilson 95% CI c\u1ee7a c\u1ef1c l\u1edbn nh\u1ea5t (positive) cho Surprise (nhat) ch\u1ee9a 0.60 [0.521538, 0.775631]",
+    "k\u1ebft lu\u1eadn y\u1ebfu: Wilson 95% CI c\u1ee7a c\u1ef1c l\u1edbn nh\u1ea5t (neutral) cho Surprise (long) ch\u1ee9a 0.60 [0.366445, 0.633555]",
+    "c\u1ef1c l\u1edbn nh\u1ea5t c\u00f3 th\u1ec3 kh\u00f4ng chi\u1ebfm \u0111a s\u1ed1: Wilson 95% CI c\u1ee7a c\u1ef1c l\u1edbn nh\u1ea5t (neutral) cho Surprise (long) ch\u1ee9a 0.50 [0.366445, 0.633555]",
+    "l\u1ec7ch ph\u00e2n b\u1ed1 c\u1ef1c t\u00ednh gi\u1eefa Nh\u1eadt v\u00e0 Long tr\u00ean nh\u00f3m Surprise (max_diff=0.340000)"
+  ]
+}
