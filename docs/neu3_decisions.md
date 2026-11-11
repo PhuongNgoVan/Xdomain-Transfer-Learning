@@ -65,3 +65,4 @@ Từ `configs/exp/stage1_visobert.yaml` và `src/plm/stage1.py` trên nhánh:
 1. **`early_stopping_patience`: `5` (code VSMEC Bước 1.1) so với `2` (Workflow v3.0 Mục 0)**
    - **Hiện tại:** Đang giữ `early_stopping_patience: 5` trong `configs/exp/neu3_visobert.yaml` đúng theo hướng dẫn tại Mục 3 (*"ghi chênh lệch vào `docs/neu3_decisions.md` và dùng giá trị của VSMEC cho tới khi người phụ trách trả lời"*).
    - **Câu hỏi:** Khi chạy 8 lượt thật trên Colab cho Bước 1.2, người phụ trách muốn giữ `early_stopping_patience: 5` (đồng nhất với Bước 1.1 VSMEC, tương đương 2.5 epoch khi `eval_steps = 0.5 epoch`) hay đổi sang `2`?
+

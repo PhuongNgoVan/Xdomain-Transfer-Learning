@@ -633,3 +633,4 @@ class TestNeu3ViSoBERTPipeline:
             if p.is_file()
         }
         assert hashes_after == hashes_before
+
