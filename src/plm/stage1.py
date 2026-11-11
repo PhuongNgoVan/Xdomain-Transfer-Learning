@@ -26,6 +26,7 @@ import torch
 from torch import Tensor
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
+import transformers
 from transformers import (
     AutoTokenizer,
     DataCollatorWithPadding,
@@ -51,17 +52,21 @@ from src.plm.tokenizer_dataset import (
 from src.plm.trainer_utils import (
     NUM_EMOTIONS,
     PREDICTION_DATASETS,
+    VALID_PRECISIONS,
     _find_latest_work_checkpoint,
     _load_split_dataframe,
     _save_temp_work_checkpoint,
     build_stage1_run_id,
+    compute_cross_entropy_from_logits,
     compute_vsmec_data_hash,
     format_lr,
     get_git_commit,
     infer_backbone_alias,
     load_stage1_config,
     predict_logits7,
+    resolve_precision,
     write_prediction7_file,
+    write_stage1_sidecar,
 )
 
 __all__ = [
@@ -71,12 +76,14 @@ __all__ = [
     "PREDICTION_DATASETS",
     "Stage1Classifier",
     "TokenizedTextDataset",
+    "VALID_PRECISIONS",
     "_find_encoder_weight_file",
     "_find_latest_work_checkpoint",
     "_load_split_dataframe",
     "_save_temp_work_checkpoint",
     "build_length_grouped_indices",
     "build_stage1_run_id",
+    "compute_cross_entropy_from_logits",
     "compute_vsmec_data_hash",
     "format_lr",
     "get_git_commit",
@@ -85,10 +92,12 @@ __all__ = [
     "main",
     "predict_logits7",
     "resolve_input_column",
+    "resolve_precision",
     "run_stage1",
     "tokenize_with_truncation_stats",
     "update_stage1_ckpt_hash",
     "write_prediction7_file",
+    "write_stage1_sidecar",
 ]
 
 
@@ -120,8 +129,13 @@ def run_stage1(
     max_grad_norm = float(cfg.get("max_grad_norm", 1.0))
     dropout = float(cfg.get("dropout", 0.1))
     max_length = int(cfg.get("max_length", 256))
-    precision = str(cfg.get("precision", "fp16"))
-    eval_fp16 = bool(cfg.get("eval_fp16", False))
+    precision = str(cfg.get("precision", "fp16")).strip()
+    strict_precision = bool(cfg.get("strict_precision", False))
+    emoji_mode = str(cfg.get("emoji_mode", "tag"))
+    sweep = bool(cfg.get("sweep", False))
+    save_checkpoint = bool(cfg.get("save_checkpoint", True))
+    # Dev evaluation and prediction export always run in FP32 so training precision is the sole difference
+    eval_fp16 = False
     group_by_length = bool(cfg.get("group_by_length", True))
     patience = int(cfg.get("early_stopping_patience", 5))
     save_total_limit = int(cfg.get("save_total_limit", 2))
@@ -130,6 +144,15 @@ def run_stage1(
         if max_steps_override is not None
         else (int(cfg["max_steps"]) if cfg.get("max_steps") is not None else None)
     )
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    precision_effective = resolve_precision(
+        precision=precision, device=device, strict_precision=strict_precision
+    )
+    use_fp16 = precision_effective == "fp16"
+    use_bf16 = precision_effective == "bf16"
+    amp_enabled = use_fp16 or use_bf16
+    amp_dtype = torch.bfloat16 if use_bf16 else torch.float16
 
     run_id = build_stage1_run_id(
         backbone=backbone, seed=seed, lr=lr, variant=variant, config=cfg
@@ -186,9 +209,6 @@ def run_stage1(
         num_labels=NUM_EMOTIONS,
         dropout=dropout,
     )
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    use_fp16 = bool(precision == "fp16" and device.type == "cuda")
     model.to(device)
 
     # 5. Tokenize and record truncation statistics across all datasets
@@ -273,6 +293,9 @@ def run_stage1(
     best_step = 0
     patience_counter = 0
     best_state_dict: Optional[Dict[str, Tensor]] = None
+    eval_history: List[Dict[str, Any]] = []
+    n_skipped_optimizer_steps: int = 0
+    n_nonfinite_loss: int = 0
 
     latest_resume = _find_latest_work_checkpoint(work_run_dir)
     if latest_resume is not None:
@@ -282,6 +305,9 @@ def run_stage1(
         best_macro_f1 = float(resume_data["best_macro_f1"])
         best_step = int(resume_data["best_step"])
         patience_counter = int(resume_data["patience_counter"])
+        eval_history = list(resume_data.get("eval_history", []))
+        n_skipped_optimizer_steps = int(resume_data.get("n_skipped_optimizer_steps", 0))
+        n_nonfinite_loss = int(resume_data.get("n_nonfinite_loss", 0))
         model.load_state_dict(resume_data["model_state_dict"])
         model.to(device)
         optimizer.load_state_dict(resume_data["optimizer_state_dict"])
@@ -308,6 +334,18 @@ def run_stage1(
             dev_labels, dev_preds, logits=dev_logits, labels=EMOTION7_IDS
         )
         curr_f1 = float(dev_metrics["macro_f1"])
+        curr_acc = float(dev_metrics["accuracy"])
+        curr_loss = compute_cross_entropy_from_logits(dev_logits, dev_labels)
+
+        eval_history.append(
+            {
+                "step": int(curr_step),
+                "epoch": int(curr_epoch),
+                "dev_macro_f1": curr_f1,
+                "dev_loss": curr_loss,
+                "dev_accuracy": curr_acc,
+            }
+        )
 
         if curr_f1 > best_macro_f1:
             best_macro_f1 = curr_f1
@@ -330,6 +368,9 @@ def run_stage1(
             optimizer=optimizer,
             scheduler=scheduler,
             save_total_limit=save_total_limit,
+            eval_history=eval_history,
+            n_skipped_optimizer_steps=n_skipped_optimizer_steps,
+            n_nonfinite_loss=n_nonfinite_loss,
         )
         model.train()
         return patience_counter >= patience
@@ -374,8 +415,8 @@ def run_stage1(
                 token_type_ids = token_type_ids.to(device, non_blocking=True)
             labels_t = batch["labels"].to(device, non_blocking=True)
 
-            with torch.amp.autocast(
-                device_type=device.type, dtype=torch.float16, enabled=use_fp16
+            with torch.autocast(
+                device_type=device.type, dtype=amp_dtype, enabled=amp_enabled
             ):
                 out = model(
                     input_ids=input_ids,
@@ -383,6 +424,8 @@ def run_stage1(
                     token_type_ids=token_type_ids,
                     labels=labels_t,
                 )
+                if not bool(torch.isfinite(out.loss).all().item()):
+                    n_nonfinite_loss += 1
                 loss = out.loss / float(grad_accum)
 
             if use_fp16:
@@ -405,6 +448,8 @@ def run_stage1(
                     scaler.update()
                     if scaler.get_scale() >= scale_before:
                         scheduler.step()
+                    else:
+                        n_skipped_optimizer_steps += 1
                 else:
                     if max_grad_norm > 0.0:
                         torch.nn.utils.clip_grad_norm_(
@@ -429,12 +474,13 @@ def run_stage1(
     if last_evaluated_step != global_step:
         _evaluate_and_checkpoint(global_step, epochs)
 
-    # Load best model at end (`load_best_model_at_end: true`) and write checkpoint once
+    # Load best model at end (`load_best_model_at_end: true`) and optionally write checkpoint once
     if best_state_dict is not None:
         model.load_state_dict(best_state_dict)
         model.to(device)
     model.eval()
-    model.save_stage1_checkpoint(tokenizer=tokenizer, ckpt_path=ckpt_subdir)
+    if save_checkpoint:
+        model.save_stage1_checkpoint(tokenizer=tokenizer, ckpt_path=ckpt_subdir)
 
     elapsed_sec = time.time() - t0
 
@@ -553,6 +599,40 @@ def run_stage1(
         overwrite_duplicate_key=False,
     )
 
+    # Write diagnostics sidecar (`<results_dir>/runs/<run_id>.json`) after predictions & stage1.csv
+    sidecar_payload: Dict[str, Any] = {
+        "run_id": run_id,
+        "alias": alias,
+        "backbone": backbone,
+        "lr": lr,
+        "seed": seed,
+        "variant": variant,
+        "precision": precision,
+        "precision_effective": precision_effective,
+        "emoji_mode": emoji_mode,
+        "git_commit": code_version,
+        "data_hash": data_hash,
+        "torch_version": str(torch.__version__),
+        "transformers_version": str(transformers.__version__),
+        "gpu": gpu_name,
+        "best_step": int(best_step),
+        "best_dev_macro_f1": float(dev_metrics_final["macro_f1"]),
+        "elapsed_sec": float(elapsed_sec),
+        "truncation_report": truncation_report,
+        "eval_history": eval_history,
+        "n_skipped_optimizer_steps": int(n_skipped_optimizer_steps),
+        "n_nonfinite_loss": int(n_nonfinite_loss),
+        "report_only": {
+            "dev_macro_f1": float(dev_metrics_final["macro_f1"]),
+            "test_macro_f1": float(test_metrics_final["macro_f1"]),
+        },
+    }
+    sidecar_path = write_stage1_sidecar(
+        results_dir=r_dir,
+        run_id=run_id,
+        payload=sidecar_payload,
+    )
+
     # Verify ordering invariant before deleting intermediate checkpoints
     work_dir_existed_after_results = bool(
         work_run_dir.is_dir() and any(work_run_dir.glob("checkpoint-*"))
@@ -561,6 +641,7 @@ def run_stage1(
         "run_id": run_id,
         "prediction_paths": prediction_paths,
         "stage1_csv": stage1_csv,
+        "sidecar_path": sidecar_path,
         "work_run_dir": work_run_dir,
         "work_dir_existed_after_results": work_dir_existed_after_results,
     }
@@ -571,12 +652,17 @@ def run_stage1(
     if work_run_dir.is_dir():
         shutil.rmtree(work_run_dir, ignore_errors=True)
 
-    # 11. Post-training Step (d): Hash encoder weights & `head.pt` into `stage1_ckpt_hash.json`
-    ckpt_hashes = update_stage1_ckpt_hash(
-        alias=alias,
-        ckpt_subdir=ckpt_subdir,
-        results_dir=r_dir,
-    )
+    # 11. Post-training Step (d): Hash encoder weights & `head.pt` when `save_checkpoint=True`
+    if save_checkpoint:
+        ckpt_hashes = update_stage1_ckpt_hash(
+            alias=alias,
+            ckpt_subdir=ckpt_subdir,
+            results_dir=r_dir,
+            sweep=sweep,
+            run_id=run_id,
+        )
+    else:
+        ckpt_hashes = {}
 
     print(
         f"=== [DONE] {run_id}: best_step={best_step}, "
@@ -590,11 +676,17 @@ def run_stage1(
         "run_id": run_id,
         "alias": alias,
         "best_step": best_step,
+        "precision": precision,
+        "precision_effective": precision_effective,
         "dev_metrics": dev_metrics_final,
         "test_metrics": test_metrics_final,
         "truncation_report": truncation_report,
+        "eval_history": eval_history,
+        "n_skipped_optimizer_steps": n_skipped_optimizer_steps,
+        "n_nonfinite_loss": n_nonfinite_loss,
         "prediction_paths": prediction_paths,
         "stage1_csv": stage1_csv,
+        "sidecar_path": sidecar_path,
         "ckpt_subdir": ckpt_subdir,
         "ckpt_hashes": ckpt_hashes,
         "elapsed_sec": elapsed_sec,

@@ -19,5 +19,23 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
+## Dò `lr × precision` cho Stage 1 (UIT-VSMEC 7 lớp)
+
+Nhánh `phobert-vsmec-7c` hỗ trợ dò tổ hợp `learning_rate ∈ {2e-5, 3e-5, 5e-5}` × `precision ∈ {fp16, bf16}` × `seed ∈ {0, 1, 2, 3, 4}` (30 lượt) cho PhoBERT Stage 1 trên cột đầu vào `text_seg` (không áp biến thể emoji):
+
+- **Các khóa cấu hình mới trong YAML Stage 1**:
+  - `precision`: hỗ trợ `"fp16"`, `"bf16"`, `"fp32"` (giá trị khác báo `ValueError`). Đánh giá dev và xuất dự đoán (`predictions7/`) luôn chạy ở FP32.
+  - `strict_precision` (mặc định `false`): khi `true`, nếu môi trường không đáp ứng được `precision` yêu cầu (ví dụ không có CUDA hoặc GPU không hỗ trợ `bf16` theo `torch.cuda.is_bf16_supported()`), script lập tức bắn `RuntimeError` thay vì tự hạ xuống `fp32`. Khi `false`, cho phép fallback sang `fp32` và ghi nhận độ chính xác thực tế vào `precision_effective`.
+  - `sweep` (mặc định `false`): khi `true`, không ghi đè file chính thức `results/stage1_ckpt_hash.json` mà ghi mã băm SHA-256 của checkpoint vào `results/ckpt_hash_sweep.json` (khóa theo `run_id`).
+  - `save_checkpoint` (mặc định `true`): khi `false`, bỏ qua bước lưu trọng số vật lý (`encoder/` + `head.pt`) và băm checkpoint trên đĩa, nhưng vẫn nạp `best_state_dict` trong RAM để xuất đầy đủ 5 file `predictions7/`, dòng kết quả trong `stage1.csv` và file sidecar.
+  - `variant`: định danh biến thể trong `run_id` theo mẫu `{alias}_Stage1-{variant}_s{seed}_lr{lr}` (ví dụ `PhoBERT_Stage1-bf16_s0_lr3e-5`). Giá trị `variant` không được rỗng và **không được chứa dấu gạch dưới (`_`)**.
+- **File chẩn đoán sidecar (`<results_dir>/runs/<run_id>.json`)**:
+  - Được ghi tự động sau mỗi lượt hoàn tất (sau khi đã ghi 5 file `predictions7/` và dòng `stage1.csv`).
+  - Gồm các trường: `run_id`, `alias`, `backbone`, `lr`, `seed`, `variant`, `precision`, `precision_effective`, `emoji_mode`, `git_commit`, `data_hash`, `torch_version`, `transformers_version`, `gpu`, `best_step`, `best_dev_macro_f1`, `elapsed_sec`, `truncation_report`, `eval_history` (danh sách `{step, epoch, dev_macro_f1, dev_loss, dev_accuracy}` của mọi lần đánh giá dev), `n_skipped_optimizer_steps`, `n_nonfinite_loss`, và `report_only` (`{dev_macro_f1, test_macro_f1}`).
+- **Quy tắc kỷ luật chọn mô hình**:
+  - Việc chọn tổ hợp `(lr, precision)` và chọn checkpoint tốt nhất **chỉ được dựa trên tập `vsmec_dev`** (cột `macro_f1` trong `stage1.csv` hoặc `best_dev_macro_f1` / `eval_history`).
+  - Trường `report_only.test_macro_f1` trong file sidecar chỉ phục vụ báo cáo phân tích độ lệch `dev - test` sau khi đã đóng băng lựa chọn vào `selection.json`; **tuyệt đối không dùng tập test để chọn siêu tham số hay chọn checkpoint**.
+
+
 
 
