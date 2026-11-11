@@ -130,3 +130,44 @@ POLARITY_KEY_COLUMNS: Tuple[str, ...] = (
     "emotion_name",
 )
 
+# ---------------------------------------------------------------------------
+# 2.9. NEU-3 fine-tuning result file schema (`results/neu3.csv`)
+# ---------------------------------------------------------------------------
+NEU3_COLUMNS: Tuple[str, ...] = (
+    "run_id",
+    "backbone",
+    "stage1",
+    "stage2",
+    "eval_domain",
+    "label_view",
+    "mode",
+    "fraction",
+    "seed",
+    "split",
+    "macro_f1",
+    "weighted_f1",
+    "accuracy",
+    "f1_neg",
+    "f1_neu",
+    "f1_pos",
+    "f1_per_class",
+    "ckpt_path",
+    "run_kind",
+    "variant",
+    "lr",
+    "best_step",
+    "n_train",
+    "precision",
+    "gpu",
+    "code_version",
+    "data_hash",
+    "config_path",
+    "truncation_rate",
+)
+
+NEU3_KEY_COLUMNS: Tuple[str, ...] = (
+    "run_id",
+    "split",
+)
+
+

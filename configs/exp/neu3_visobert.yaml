@@ -1,0 +1,41 @@
+# Cấu hình Bước 1.2 (NEU-3): Fine-tune ViSoBERT 3 cực tính trên NEU-ESC sạch
+backbone: uitnlp/visobert
+model_alias: ViSoBERT
+mode: neu3
+variant: base-emokeep-bf16
+run_kind: base
+save_checkpoint: true
+input_column: text
+emoji_mode: keep
+num_labels: 3
+max_length: 256
+dynamic_padding: true
+group_by_length: true
+dropout: 0.1
+max_grad_norm: 1.0
+
+loss: ce
+batch_size: 16
+gradient_accumulation_steps: 2
+grad_accum: 2
+learning_rate: 2.0e-5
+lr: 2.0e-5
+num_train_epochs: 10
+epochs: 10
+warmup_ratio: 0.06
+lr_scheduler_type: linear
+weight_decay: 0.01
+precision: bf16
+strict_precision: true
+seed: 0
+
+eval_strategy: steps
+save_strategy: steps
+save_total_limit: 2
+metric_for_best_model: macro_f1
+greater_is_better: true
+early_stopping_patience: 5
+load_best_model_at_end: true
+
+keep_ckpt: true
+official: false
