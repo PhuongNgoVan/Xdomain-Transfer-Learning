@@ -1,0 +1,12 @@
+vsmec_clean_dir: data/clean
+neuesc_file: data/clean/neuesc_100.csv
+results_dir: results
+vsmec_strict_file: null        # file gán nhãn tay; null => test E1-E3 báo MISSING
+vsmec_published_macro_f1: null # số đã công bố để so ở cổng Bước 1; null => G2 báo MISSING
+ckpt_roots:                    # thư mục chứa checkpoint Bước 1 (chỉ dùng khi --check-ckpt)
+  vsmec_phobert: null
+  vsmec_visobert: null
+  neu3_phobert: null
+  neu3_visobert: null
+seeds: [0, 1, 2, 3, 4]
+

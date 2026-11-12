@@ -1,0 +1,654 @@
+{
+  "ready": false,
+  "gate_line": "CHƯA SẴN SÀNG: E1, E2, E3, F1, F2, F3, G1, G2",
+  "blocking_unresolved": [
+    "E1",
+    "E2",
+    "E3",
+    "F1",
+    "F2",
+    "F3",
+    "G1",
+    "G2"
+  ],
+  "checks": [
+    {
+      "id": "A1",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "Đủ 10 file mục 1, đọc được UTF-8, đúng cột quy định",
+      "metrics": {}
+    },
+    {
+      "id": "A2",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "VSMEC nhãn ∈ {0..6}, NEU nhãn ∈ {0,1,2}; id duy nhất; text & text_seg không rỗng/NaN",
+      "metrics": {}
+    },
+    {
+      "id": "A3",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "VSMEC=5542/686/692; NEU=23048/3305/6613",
+      "metrics": {
+        "vsmec_train": 5542,
+        "vsmec_dev": 686,
+        "vsmec_test": 692,
+        "neuesc_train": 23048,
+        "neuesc_dev": 3305,
+        "neuesc_test": 6613
+      }
+    },
+    {
+      "id": "A4",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "EMOTIONS7 và (NEG, NEU, POS) == (0, 1, 2) khớp hằng số chuẩn",
+      "metrics": {}
+    },
+    {
+      "id": "B1",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "HARD_MERGE_RULE & HARD_MERGE_GROUPS khớp bảng v3.0 (0->2; 1,2,3,4->0; 5,6->1)",
+      "metrics": {}
+    },
+    {
+      "id": "B2",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "Hàm cộng xác suất 7->3 bảo toàn tổng hàng = 1.0, đúng thứ tự cột (neg, neu, pos)",
+      "metrics": {}
+    },
+    {
+      "id": "B3",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "NEUESC_ORIG_TO_LABEL3 khớp (toxic 3->neg 0); phân bố thực: neg=6045, neu=22773, pos=4148",
+      "metrics": {
+        "neuesc_total_label_counts": {
+          "0": 6045,
+          "1": 22773,
+          "2": 4148
+        }
+      }
+    },
+    {
+      "id": "C1",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "0 câu trùng nội bộ trong cả 3 split của VSMEC và 3 split của NEU-ESC",
+      "metrics": {}
+    },
+    {
+      "id": "C2",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "0 xung đột nhãn nội bộ và liên split trên cả VSMEC và NEU-ESC",
+      "metrics": {}
+    },
+    {
+      "id": "C3",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "train ∩ dev = 0, train ∩ test = 0, dev ∩ test = 0 cho cả VSMEC và NEU-ESC",
+      "metrics": {}
+    },
+    {
+      "id": "D1",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "0 câu trong vsmec_test xuất hiện trong NEU-ESC (train, dev, test)",
+      "metrics": {}
+    },
+    {
+      "id": "D2",
+      "level": "BLOCKER",
+      "status": "PASS",
+      "detail": "0 câu trong neuesc_test xuất hiện trong VSMEC (train, dev, test)",
+      "metrics": {}
+    },
+    {
+      "id": "D3",
+      "level": "INFO",
+      "status": "PASS",
+      "detail": "Đã ghi bảng đếm trùng chéo miền 3×2×2 (và ma trận 3×3) vào báo cáo",
+      "metrics": {
+        "d3_directional_table": [
+          {
+            "test_split": "vsmec_test",
+            "other_split": "neuesc_train",
+            "unique_overlap_hashes": 0,
+            "dir_test_to_other_rows": 0,
+            "dir_other_to_test_rows": 0
+          },
+          {
+            "test_split": "vsmec_test",
+            "other_split": "neuesc_dev",
+            "unique_overlap_hashes": 0,
+            "dir_test_to_other_rows": 0,
+            "dir_other_to_test_rows": 0
+          },
+          {
+            "test_split": "vsmec_test",
+            "other_split": "neuesc_test",
+            "unique_overlap_hashes": 0,
+            "dir_test_to_other_rows": 0,
+            "dir_other_to_test_rows": 0
+          },
+          {
+            "test_split": "neuesc_test",
+            "other_split": "vsmec_train",
+            "unique_overlap_hashes": 0,
+            "dir_test_to_other_rows": 0,
+            "dir_other_to_test_rows": 0
+          },
+          {
+            "test_split": "neuesc_test",
+            "other_split": "vsmec_dev",
+            "unique_overlap_hashes": 0,
+            "dir_test_to_other_rows": 0,
+            "dir_other_to_test_rows": 0
+          },
+          {
+            "test_split": "neuesc_test",
+            "other_split": "vsmec_test",
+            "unique_overlap_hashes": 0,
+            "dir_test_to_other_rows": 0,
+            "dir_other_to_test_rows": 0
+          }
+        ],
+        "d3_matrix_3x3": {
+          "vsmec_train": {
+            "neuesc_train": 0,
+            "neuesc_dev": 0,
+            "neuesc_test": 0
+          },
+          "vsmec_dev": {
+            "neuesc_train": 0,
+            "neuesc_dev": 0,
+            "neuesc_test": 0
+          },
+          "vsmec_test": {
+            "neuesc_train": 0,
+            "neuesc_dev": 0,
+            "neuesc_test": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "D4",
+      "level": "WARN",
+      "status": "FAIL",
+      "detail": "Phát hiện 2 câu test trùng gần khi bỏ dấu câu/emoji (vsmec_test id=6311 ↔ neuesc_dev id=25960; neuesc_test id=28482 ↔ vsmec_train id=3607; xem violations_D4_near_duplicates.csv)",
+      "metrics": {
+        "near_duplicates": [
+          {
+            "source_split": "vsmec_test",
+            "id": 6311,
+            "label": 1,
+            "matched_split": "neuesc_dev",
+            "matched_ids": "[25960]",
+            "strong_norm": "chạm đáy nỗi đau",
+            "orig_text": "chạm đáy nỗi đau 😞"
+          },
+          {
+            "source_split": "neuesc_test",
+            "id": 28482,
+            "label": 1,
+            "matched_split": "vsmec_train",
+            "matched_ids": "[3607]",
+            "strong_norm": "vật chất quyết định ý thức",
+            "orig_text": "vật chất quyết định ý thức ."
+          }
+        ]
+      }
+    },
+    {
+      "id": "E1",
+      "level": "BLOCKER",
+      "status": "MISSING",
+      "detail": "vsmec_strict_file=null trong configs/step2_data.yaml. Cần người phụ trách cung cấp đường dẫn & định dạng file gán nhãn tay VSMEC-strict trên vsmec_test (lưu ý: polarity_{nhat,long,key}.csv hiện có trong data/clean/ được lấy mẫu từ vsmec_train cho W_trans ở CV-P3)",
+      "metrics": {}
+    },
+    {
+      "id": "E2",
+      "level": "BLOCKER",
+      "status": "MISSING",
+      "detail": "vsmec_strict_file=null trong configs/step2_data.yaml. Cần người phụ trách cung cấp đường dẫn & định dạng file gán nhãn tay VSMEC-strict trên vsmec_test (lưu ý: polarity_{nhat,long,key}.csv hiện có trong data/clean/ được lấy mẫu từ vsmec_train cho W_trans ở CV-P3)",
+      "metrics": {}
+    },
+    {
+      "id": "E3",
+      "level": "BLOCKER",
+      "status": "MISSING",
+      "detail": "vsmec_strict_file=null và chưa có tài liệu quy tắc dựng tập VSMEC-strict trong docs/",
+      "metrics": {}
+    },
+    {
+      "id": "F1",
+      "level": "BLOCKER",
+      "status": "MISSING",
+      "detail": "Chưa có file kết quả Bước 1 tại results/stage1.csv, results/neu3.csv trên nhánh hiện tại (hash hiện tại: vsmec_data_hash=680bfc0f241e..., neuesc_data_hash=9b0e3f42c2b7...); cần người phụ trách đồng bộ results/stage1.csv và results/neu3.csv từ Drive",
+      "metrics": {
+        "current_vsmec_data_hash": "680bfc0f241ea47d4fed57638af07a3744911168b9efbffabdccd1911555d588",
+        "current_neuesc_data_hash": "9b0e3f42c2b7fa279e6887d15b522c566dd30d1c28430741972ed6d86ab03ac1"
+      }
+    },
+    {
+      "id": "F2",
+      "level": "BLOCKER",
+      "status": "FAIL",
+      "detail": "Lệch MANIFEST.json: polarity_long.csv (MANIFEST=bba9a68c2a... != thực tế=054ffc6808...); polarity_nhat.csv (MANIFEST=bba9a68c2a... != thực tế=a22f50bcd2...); CSV chưa có trong MANIFEST.json: ['polarity_key.csv']",
+      "metrics": {
+        "mismatches": [
+          "polarity_long.csv (MANIFEST=bba9a68c2a... != thực tế=054ffc6808...)",
+          "polarity_nhat.csv (MANIFEST=bba9a68c2a... != thực tế=a22f50bcd2...)",
+          "CSV chưa có trong MANIFEST.json: ['polarity_key.csv']"
+        ]
+      }
+    },
+    {
+      "id": "F3",
+      "level": "BLOCKER",
+      "status": "MISSING",
+      "detail": "Chưa có results/stage1.csv, results/neu3.csv để kiểm tra tính duy nhất của data_hash và code_version",
+      "metrics": {}
+    },
+    {
+      "id": "G1",
+      "level": "BLOCKER",
+      "status": "MISSING",
+      "detail": "Chưa có results/stage1.csv, results/neu3.csv; cần người phụ trách cung cấp kết quả 20 lượt baseline Bước 1 (5 seed × 2 backbone × 2 miền)",
+      "metrics": {}
+    },
+    {
+      "id": "G2",
+      "level": "BLOCKER",
+      "status": "MISSING",
+      "detail": "vsmec_published_macro_f1=null trong configs/step2_data.yaml; cần người phụ trách cung cấp số macro-F1 test VSMEC đã công bố để đối chiếu",
+      "metrics": {}
+    },
+    {
+      "id": "G3",
+      "level": "WARN",
+      "status": "MISSING",
+      "detail": "Chưa có đủ results/stage1.csv và results/neu3.csv để kiểm tra std giữa các seed và F1 từng lớp >= 0.30",
+      "metrics": {}
+    },
+    {
+      "id": "H1",
+      "level": "INFO",
+      "status": "PASS",
+      "detail": "vsmec_test 3c={'negative': 333, 'neutral': 166, 'positive': 193}; neuesc_test 3c={'negative': 1221, 'neutral': 4558, 'positive': 834}",
+      "metrics": {
+        "vsmec_7class": {
+          "train": {
+            "Enjoyment": 1558,
+            "Sadness": 947,
+            "Fear": 316,
+            "Anger": 391,
+            "Disgust": 1069,
+            "Surprise": 241,
+            "Other": 1020
+          },
+          "dev": {
+            "Enjoyment": 214,
+            "Sadness": 86,
+            "Fear": 31,
+            "Anger": 49,
+            "Disgust": 135,
+            "Surprise": 30,
+            "Other": 141
+          },
+          "test": {
+            "Enjoyment": 193,
+            "Sadness": 116,
+            "Fear": 46,
+            "Anger": 40,
+            "Disgust": 131,
+            "Surprise": 37,
+            "Other": 129
+          }
+        },
+        "vsmec_3class_b1": {
+          "train": {
+            "negative": 2723,
+            "neutral": 1261,
+            "positive": 1558
+          },
+          "dev": {
+            "negative": 301,
+            "neutral": 171,
+            "positive": 214
+          },
+          "test": {
+            "negative": 333,
+            "neutral": 166,
+            "positive": 193
+          }
+        },
+        "neuesc_3class": {
+          "train": {
+            "negative": 4215,
+            "neutral": 15936,
+            "positive": 2897
+          },
+          "dev": {
+            "negative": 609,
+            "neutral": 2279,
+            "positive": 417
+          },
+          "test": {
+            "negative": 1221,
+            "neutral": 4558,
+            "positive": 834
+          }
+        }
+      }
+    },
+    {
+      "id": "H2",
+      "level": "WARN",
+      "status": "PASS",
+      "detail": "JS(3c train)=0.1633 bits (0.1132 nats), JS(3c test)=0.1524 bits; lớp nhỏ nhất vsmec_test 7c là Surprise=37 (>=30)",
+      "metrics": {
+        "js_divergence_3class": {
+          "train": {
+            "js_bits": 0.16328739170695478,
+            "js_nats": 0.11318219518266306
+          },
+          "dev": {
+            "js_bits": 0.14542645065115656,
+            "js_nats": 0.10080193424768918
+          },
+          "test": {
+            "js_bits": 0.15244049326238474,
+            "js_nats": 0.10566369810798934
+          }
+        },
+        "vsmec_test_7c_counts": {
+          "Enjoyment": 193,
+          "Sadness": 116,
+          "Fear": 46,
+          "Anger": 40,
+          "Disgust": 131,
+          "Surprise": 37,
+          "Other": 129
+        },
+        "vsmec_test_3c_counts": {
+          "negative": 333,
+          "neutral": 166,
+          "positive": 193
+        },
+        "neuesc_test_3c_counts": {
+          "negative": 1221,
+          "neutral": 4558,
+          "positive": 834
+        },
+        "small_classes_lt_30": []
+      }
+    },
+    {
+      "id": "H3",
+      "level": "INFO",
+      "status": "PASS",
+      "detail": "Trong vsmec_test (n=692): Surprise=37 (5.35%), Other=129 (18.64%), tổng gộp vào neutral theo B1 = 166 (23.99%)",
+      "metrics": {
+        "vsmec_test_total": 692,
+        "surprise_count": 37,
+        "other_count": 129,
+        "neutral_b1_total": 166
+      }
+    },
+    {
+      "id": "I1",
+      "level": "WARN",
+      "status": "PASS",
+      "detail": "Cả vsmec_test (692 câu) và neuesc_test (6613 câu) đều có cột text_seg đầy đủ, không rỗng",
+      "metrics": {}
+    },
+    {
+      "id": "I2",
+      "level": "WARN",
+      "status": "SKIP",
+      "detail": "Bỏ qua nạp tokenizer (truyền --with-tokenizer để đo tỉ lệ cắt cụt ở max_length=256)",
+      "metrics": {}
+    },
+    {
+      "id": "I3",
+      "level": "WARN",
+      "status": "PASS",
+      "detail": "normalize_text(normalize_text(x)) == normalize_text(x) trên toàn bộ 7305 câu test",
+      "metrics": {}
+    },
+    {
+      "id": "I4",
+      "level": "WARN",
+      "status": "PASS",
+      "detail": "ViSoBERT emoji_mode='keep' (preprocess_text(..., emoji_mode='keep') trên cột text) đồng nhất, idempotent và không sinh chuỗi rỗng trên cả vsmec_test và neuesc_test",
+      "metrics": {}
+    },
+    {
+      "id": "J1",
+      "level": "BLOCKER",
+      "status": "SKIP",
+      "detail": "Bỏ qua kiểm tra checkpoint (chỉ chạy khi truyền --check-ckpt)",
+      "metrics": {}
+    },
+    {
+      "id": "J2",
+      "level": "BLOCKER",
+      "status": "SKIP",
+      "detail": "Bỏ qua kiểm tra checkpoint (chỉ chạy khi truyền --check-ckpt)",
+      "metrics": {}
+    },
+    {
+      "id": "J3",
+      "level": "BLOCKER",
+      "status": "SKIP",
+      "detail": "Bỏ qua kiểm tra checkpoint (chỉ chạy khi truyền --check-ckpt)",
+      "metrics": {}
+    }
+  ],
+  "d3_overlap": {
+    "d3_directional_table": [
+      {
+        "test_split": "vsmec_test",
+        "other_split": "neuesc_train",
+        "unique_overlap_hashes": 0,
+        "dir_test_to_other_rows": 0,
+        "dir_other_to_test_rows": 0
+      },
+      {
+        "test_split": "vsmec_test",
+        "other_split": "neuesc_dev",
+        "unique_overlap_hashes": 0,
+        "dir_test_to_other_rows": 0,
+        "dir_other_to_test_rows": 0
+      },
+      {
+        "test_split": "vsmec_test",
+        "other_split": "neuesc_test",
+        "unique_overlap_hashes": 0,
+        "dir_test_to_other_rows": 0,
+        "dir_other_to_test_rows": 0
+      },
+      {
+        "test_split": "neuesc_test",
+        "other_split": "vsmec_train",
+        "unique_overlap_hashes": 0,
+        "dir_test_to_other_rows": 0,
+        "dir_other_to_test_rows": 0
+      },
+      {
+        "test_split": "neuesc_test",
+        "other_split": "vsmec_dev",
+        "unique_overlap_hashes": 0,
+        "dir_test_to_other_rows": 0,
+        "dir_other_to_test_rows": 0
+      },
+      {
+        "test_split": "neuesc_test",
+        "other_split": "vsmec_test",
+        "unique_overlap_hashes": 0,
+        "dir_test_to_other_rows": 0,
+        "dir_other_to_test_rows": 0
+      }
+    ],
+    "d3_matrix_3x3": {
+      "vsmec_train": {
+        "neuesc_train": 0,
+        "neuesc_dev": 0,
+        "neuesc_test": 0
+      },
+      "vsmec_dev": {
+        "neuesc_train": 0,
+        "neuesc_dev": 0,
+        "neuesc_test": 0
+      },
+      "vsmec_test": {
+        "neuesc_train": 0,
+        "neuesc_dev": 0,
+        "neuesc_test": 0
+      }
+    }
+  },
+  "d4_near_duplicates": {
+    "near_duplicates": [
+      {
+        "source_split": "vsmec_test",
+        "id": 6311,
+        "label": 1,
+        "matched_split": "neuesc_dev",
+        "matched_ids": "[25960]",
+        "strong_norm": "chạm đáy nỗi đau",
+        "orig_text": "chạm đáy nỗi đau 😞"
+      },
+      {
+        "source_split": "neuesc_test",
+        "id": 28482,
+        "label": 1,
+        "matched_split": "vsmec_train",
+        "matched_ids": "[3607]",
+        "strong_norm": "vật chất quyết định ý thức",
+        "orig_text": "vật chất quyết định ý thức ."
+      }
+    ]
+  },
+  "h1_distributions": {
+    "vsmec_7class": {
+      "train": {
+        "Enjoyment": 1558,
+        "Sadness": 947,
+        "Fear": 316,
+        "Anger": 391,
+        "Disgust": 1069,
+        "Surprise": 241,
+        "Other": 1020
+      },
+      "dev": {
+        "Enjoyment": 214,
+        "Sadness": 86,
+        "Fear": 31,
+        "Anger": 49,
+        "Disgust": 135,
+        "Surprise": 30,
+        "Other": 141
+      },
+      "test": {
+        "Enjoyment": 193,
+        "Sadness": 116,
+        "Fear": 46,
+        "Anger": 40,
+        "Disgust": 131,
+        "Surprise": 37,
+        "Other": 129
+      }
+    },
+    "vsmec_3class_b1": {
+      "train": {
+        "negative": 2723,
+        "neutral": 1261,
+        "positive": 1558
+      },
+      "dev": {
+        "negative": 301,
+        "neutral": 171,
+        "positive": 214
+      },
+      "test": {
+        "negative": 333,
+        "neutral": 166,
+        "positive": 193
+      }
+    },
+    "neuesc_3class": {
+      "train": {
+        "negative": 4215,
+        "neutral": 15936,
+        "positive": 2897
+      },
+      "dev": {
+        "negative": 609,
+        "neutral": 2279,
+        "positive": 417
+      },
+      "test": {
+        "negative": 1221,
+        "neutral": 4558,
+        "positive": 834
+      }
+    }
+  },
+  "h2_js_and_counts": {
+    "js_divergence_3class": {
+      "train": {
+        "js_bits": 0.16328739170695478,
+        "js_nats": 0.11318219518266306
+      },
+      "dev": {
+        "js_bits": 0.14542645065115656,
+        "js_nats": 0.10080193424768918
+      },
+      "test": {
+        "js_bits": 0.15244049326238474,
+        "js_nats": 0.10566369810798934
+      }
+    },
+    "vsmec_test_7c_counts": {
+      "Enjoyment": 193,
+      "Sadness": 116,
+      "Fear": 46,
+      "Anger": 40,
+      "Disgust": 131,
+      "Surprise": 37,
+      "Other": 129
+    },
+    "vsmec_test_3c_counts": {
+      "negative": 333,
+      "neutral": 166,
+      "positive": 193
+    },
+    "neuesc_test_3c_counts": {
+      "negative": 1221,
+      "neutral": 4558,
+      "positive": 834
+    },
+    "small_classes_lt_30": []
+  },
+  "h3_surprise_other": {
+    "vsmec_test_total": 692,
+    "surprise_count": 37,
+    "other_count": 129,
+    "neutral_b1_total": 166
+  },
+  "e2_kappa": {},
+  "g2_published_diff": {},
+  "f1_hashes": {
+    "current_vsmec_data_hash": "680bfc0f241ea47d4fed57638af07a3744911168b9efbffabdccd1911555d588",
+    "current_neuesc_data_hash": "9b0e3f42c2b7fa279e6887d15b522c566dd30d1c28430741972ed6d86ab03ac1"
+  }
+}

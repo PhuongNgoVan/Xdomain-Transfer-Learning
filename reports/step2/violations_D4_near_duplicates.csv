@@ -1,0 +1,3 @@
+source_split,id,label,matched_split,matched_ids,strong_norm,orig_text
+vsmec_test,6311,1,neuesc_dev,[25960],chạm đáy nỗi đau,chạm đáy nỗi đau 😞
+neuesc_test,28482,1,vsmec_train,[3607],vật chất quyết định ý thức,vật chất quyết định ý thức .
