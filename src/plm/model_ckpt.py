@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 from torch import Tensor, nn
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoConfig, AutoModel, AutoTokenizer
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 from src.common.constants import EMOTIONS7
@@ -22,7 +22,16 @@ class Stage1Classifier(nn.Module):
     - Does NOT use `AutoModelForSequenceClassification` (which has a 2-layer head in RoBERTa).
     - Applies `nn.Dropout(dropout)` + `nn.Linear(hidden_size, 7)` directly on
       `last_hidden_state[:, 0, :]`.
+
+    Designed to be passed directly to `transformers.Trainer`:
+    - `forward` returns `SequenceClassifierOutput(loss, logits)` and accepts `labels`.
+    - `accepts_loss_kwargs = False` tells `Trainer` that this model does NOT consume
+      `num_items_in_batch`, so `Trainer` itself divides the loss by `gradient_accumulation_steps`
+      (otherwise the effective learning rate would be multiplied by the accumulation factor).
     """
+
+    # Read by `Trainer` (transformers >= 4.46) to decide whether it must scale the loss itself.
+    accepts_loss_kwargs: bool = False
 
     def __init__(
         self,
@@ -44,9 +53,20 @@ class Stage1Classifier(nn.Module):
         backbone_name_or_path: Union[str, Path],
         num_labels: int = NUM_EMOTIONS,
         dropout: float = 0.1,
+        load_pretrained_weights: bool = True,
     ) -> "Stage1Classifier":
-        """Load `AutoModel` from `backbone_name_or_path` and attach fresh 7-class linear head."""
-        encoder = AutoModel.from_pretrained(str(backbone_name_or_path))
+        """Load `AutoModel` from `backbone_name_or_path` and attach fresh 7-class linear head.
+
+        With `load_pretrained_weights=False` only `AutoConfig` is fetched and the encoder is
+        randomly initialised (`AutoModel.from_config`); used to rebuild an identical architecture
+        into which a trained `state_dict` is then loaded.
+        """
+        if load_pretrained_weights:
+            encoder = AutoModel.from_pretrained(str(backbone_name_or_path))
+        else:
+            encoder = AutoModel.from_config(
+                AutoConfig.from_pretrained(str(backbone_name_or_path))
+            )
         return cls(encoder=encoder, num_labels=num_labels, dropout=dropout)
 
     def forward(
@@ -55,7 +75,6 @@ class Stage1Classifier(nn.Module):
         attention_mask: Optional[Tensor] = None,
         token_type_ids: Optional[Tensor] = None,
         labels: Optional[Tensor] = None,
-        **kwargs: Any,
     ) -> SequenceClassifierOutput:
         encoder_kwargs: Dict[str, Any] = {
             "input_ids": input_ids,

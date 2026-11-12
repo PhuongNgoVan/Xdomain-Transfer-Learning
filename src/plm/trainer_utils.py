@@ -1,9 +1,10 @@
-"""Stage 1 training utilities, logit prediction, CSV export, and temporary checkpoint management (`src/plm/trainer_utils.py`)."""
+"""Stage 1 training utilities built on HF `Trainer`, logit prediction, CSV export (`src/plm/trainer_utils.py`)."""
 
 import hashlib
+import inspect
 import json
-import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
@@ -11,9 +12,16 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn.functional as F
-from torch.optim import AdamW
-from torch.utils.data import DataLoader
-from transformers import DataCollatorWithPadding
+from datasets import Dataset
+from transformers import (
+    DataCollatorWithPadding,
+    EarlyStoppingCallback,
+    EvalPrediction,
+    Trainer,
+    TrainerCallback,
+    TrainingArguments,
+)
+from transformers.trainer_utils import get_last_checkpoint
 import yaml
 
 from src.common.constants import EMOTIONS7
@@ -144,52 +152,264 @@ def compute_vsmec_data_hash(data_dir: Union[str, Path]) -> str:
     return combined.hexdigest()
 
 
+# ---------------------------------------------------------------------------
+# HF Trainer integration
+# ---------------------------------------------------------------------------
+
+
+def _init_params(cls: Any) -> Sequence[str]:
+    """Names of `cls.__init__` parameters (used for transformers cross-version compatibility)."""
+    return tuple(inspect.signature(cls.__init__).parameters)
+
+
+def _tokenizer_kwarg(tokenizer: Any) -> Dict[str, Any]:
+    """`Trainer(processing_class=...)` on new transformers, `Trainer(tokenizer=...)` on old ones."""
+    key = "processing_class" if "processing_class" in _init_params(Trainer) else "tokenizer"
+    return {key: tokenizer}
+
+
+def build_training_arguments(
+    output_dir: Union[str, Path],
+    *,
+    learning_rate: float,
+    batch_size: int,
+    eval_batch_size: int,
+    grad_accum: int,
+    num_train_epochs: int,
+    max_steps: int,
+    warmup_steps: int,
+    weight_decay: float,
+    max_grad_norm: float,
+    eval_steps: int,
+    save_total_limit: int,
+    seed: int,
+    group_by_length: bool,
+    precision_effective: str,
+    device: torch.device,
+) -> TrainingArguments:
+    """Create `TrainingArguments` equivalent to the former hand-written Stage 1 loop.
+
+    - AdamW (`adamw_torch`, no weight decay on bias/LayerNorm) + linear warmup/decay schedule.
+    - fp16 (GradScaler + unscale + clip) / bf16 handled by `Trainer`/`accelerate`.
+    - Evaluate + save every `eval_steps`; best checkpoint chosen by dev `macro_f1`
+      (`load_best_model_at_end=True`).
+    """
+    params = _init_params(TrainingArguments)
+    kwargs: Dict[str, Any] = dict(
+        output_dir=str(output_dir),
+        per_device_train_batch_size=int(batch_size),
+        per_device_eval_batch_size=int(eval_batch_size),
+        gradient_accumulation_steps=int(grad_accum),
+        num_train_epochs=float(num_train_epochs),
+        max_steps=int(max_steps),
+        learning_rate=float(learning_rate),
+        weight_decay=float(weight_decay),
+        warmup_steps=int(warmup_steps),
+        lr_scheduler_type="linear",
+        optim="adamw_torch",
+        max_grad_norm=float(max_grad_norm),
+        fp16=(precision_effective == "fp16"),
+        bf16=(precision_effective == "bf16"),
+        seed=int(seed),
+        data_seed=int(seed),
+        group_by_length=bool(group_by_length),
+        logging_strategy="steps",
+        logging_steps=int(eval_steps),
+        save_strategy="steps",
+        save_steps=int(eval_steps),
+        eval_steps=int(eval_steps),
+        save_total_limit=int(save_total_limit) if int(save_total_limit) > 0 else None,
+        load_best_model_at_end=True,
+        metric_for_best_model="macro_f1",
+        greater_is_better=True,
+        report_to="none",
+        remove_unused_columns=True,
+    )
+    # `evaluation_strategy` was renamed to `eval_strategy` in transformers 4.46.
+    kwargs["eval_strategy" if "eval_strategy" in params else "evaluation_strategy"] = "steps"
+    if device.type != "cuda":
+        kwargs["use_cpu"] = True
+    return TrainingArguments(**kwargs)
+
+
+def compute_stage1_metrics(eval_pred: EvalPrediction) -> Dict[str, float]:
+    """`Trainer.compute_metrics` callback: dev macro-F1 / accuracy / weighted-F1 via `src.eval.metrics`."""
+    from src.eval.metrics import EMOTION7_IDS, compute_metrics
+
+    logits = eval_pred.predictions
+    if isinstance(logits, (tuple, list)):
+        logits = logits[0]
+    logits = np.asarray(logits, dtype=np.float64)
+    y_true = np.asarray(eval_pred.label_ids).astype(int).tolist()
+    y_pred = np.argmax(logits, axis=1).tolist()
+    m = compute_metrics(y_true, y_pred, logits=logits, labels=EMOTION7_IDS)
+    return {
+        "macro_f1": float(m["macro_f1"]),
+        "accuracy": float(m["accuracy"]),
+        "weighted_f1": float(m["weighted_f1"]),
+    }
+
+
+class Stage1Trainer(Trainer):
+    """`Trainer` that additionally counts non-finite training losses and skipped optimizer steps.
+
+    Counters are kept for the sidecar diagnostics (`n_nonfinite_loss`, `n_skipped_optimizer_steps`);
+    they restart from 0 when training is resumed from a checkpoint.
+    """
+
+    n_nonfinite_loss: int = 0
+    n_skipped_optimizer_steps: int = 0
+
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):  # type: ignore[override]
+        result = super().compute_loss(
+            model, inputs, return_outputs=return_outputs, **kwargs
+        )
+        if model.training:
+            loss = result[0] if return_outputs else result
+            if not bool(torch.isfinite(loss).all().item()):
+                self.n_nonfinite_loss += 1
+        return result
+
+
+class _EvalAtEndCallback(TrainerCallback):
+    """Force one evaluation + checkpoint on the final optimizer step (even if off the `eval_steps` grid)."""
+
+    def on_step_end(self, args, state, control, **kwargs):
+        if state.max_steps > 0 and state.global_step >= state.max_steps:
+            control.should_evaluate = True
+            control.should_save = True
+        return control
+
+
+class _SkippedStepCallback(TrainerCallback):
+    """Count optimizer steps skipped by the fp16 `GradScaler` (inf/NaN gradients)."""
+
+    def __init__(self, trainer: Stage1Trainer) -> None:
+        self._trainer = trainer
+
+    def on_step_end(self, args, state, control, **kwargs):
+        accelerator = getattr(self._trainer, "accelerator", None)
+        if accelerator is not None and bool(
+            getattr(accelerator, "optimizer_step_was_skipped", False)
+        ):
+            self._trainer.n_skipped_optimizer_steps += 1
+        return control
+
+
+def build_stage1_trainer(
+    model: Stage1Classifier,
+    args: TrainingArguments,
+    train_dataset: Dataset,
+    eval_dataset: Dataset,
+    tokenizer: Any,
+    early_stopping_patience: int = 0,
+) -> Stage1Trainer:
+    """Assemble `Stage1Trainer` with dynamic padding, metrics, final-step eval and early stopping."""
+    trainer = Stage1Trainer(
+        model=model,
+        args=args,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        data_collator=DataCollatorWithPadding(tokenizer=tokenizer, padding=True),
+        compute_metrics=compute_stage1_metrics,
+        **_tokenizer_kwarg(tokenizer),
+    )
+    trainer.add_callback(_EvalAtEndCallback())
+    trainer.add_callback(_SkippedStepCallback(trainer))
+    if int(early_stopping_patience) > 0:
+        trainer.add_callback(
+            EarlyStoppingCallback(early_stopping_patience=int(early_stopping_patience))
+        )
+    return trainer
+
+
+def extract_eval_history(log_history: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Convert `Trainer.state.log_history` eval records into the sidecar `eval_history` format."""
+    history: List[Dict[str, Any]] = []
+    for rec in log_history:
+        if "eval_macro_f1" not in rec:
+            continue
+        history.append(
+            {
+                "step": int(rec.get("step", 0)),
+                "epoch": float(rec.get("epoch", 0.0)),
+                "dev_macro_f1": float(rec["eval_macro_f1"]),
+                "dev_loss": float(rec.get("eval_loss", float("nan"))),
+                "dev_accuracy": float(rec.get("eval_accuracy", float("nan"))),
+            }
+        )
+    return history
+
+
+def resolve_best_step(state: Any) -> int:
+    """Global step of the best checkpoint from `TrainerState` (falls back to the checkpoint dir name)."""
+    step = getattr(state, "best_global_step", None)
+    if step:
+        return int(step)
+    ckpt = getattr(state, "best_model_checkpoint", None)
+    if ckpt:
+        tail = Path(str(ckpt)).name.split("-")[-1]
+        if tail.isdigit():
+            return int(tail)
+    return 0
+
+
+def _find_latest_work_checkpoint(work_run_dir: Path) -> Optional[Path]:
+    """Return the latest HF `checkpoint-{step}` directory in `work_run_dir` (or `None`)."""
+    if not work_run_dir.is_dir():
+        return None
+    latest = get_last_checkpoint(str(work_run_dir))
+    return Path(latest) if latest else None
+
+
 @torch.no_grad()
 def predict_logits7(
     model: Stage1Classifier,
-    encodings: Sequence[Dict[str, Any]],
+    encodings: Union[Dataset, Sequence[Dict[str, Any]]],
     tokenizer: Any,
     batch_size: int,
     device: torch.device,
     use_fp16: bool = False,
 ) -> np.ndarray:
-    """Run inference on `encodings` and return raw 7-class logits of shape `(N, 7)`."""
-    model.eval()
-    dataset = TokenizedTextDataset(list(encodings), labels=None)
-    collator = DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
-    loader = DataLoader(
-        dataset,
-        batch_size=int(batch_size),
-        shuffle=False,
-        collate_fn=collator,
-        pin_memory=(device.type == "cuda"),
+    """Run `Trainer.predict` on `encodings` and return raw 7-class logits of shape `(N, 7)`.
+
+    `encodings` is a tokenized `datasets.Dataset` (a list of encodings is also accepted). Any `labels`
+    column is dropped. Inference is FP32 unless `use_fp16=True` and `device` is CUDA.
+    """
+    dataset = (
+        encodings
+        if isinstance(encodings, Dataset)
+        else TokenizedTextDataset(list(encodings))
     )
-
-    all_logits: List[np.ndarray] = []
-    amp_enabled = bool(use_fp16 and device.type == "cuda")
-    for batch in loader:
-        input_ids = batch["input_ids"].to(device, non_blocking=True)
-        attention_mask = batch.get("attention_mask")
-        if attention_mask is not None:
-            attention_mask = attention_mask.to(device, non_blocking=True)
-        token_type_ids = batch.get("token_type_ids")
-        if token_type_ids is not None:
-            token_type_ids = token_type_ids.to(device, non_blocking=True)
-
-        with torch.amp.autocast(
-            device_type=device.type, dtype=torch.float16, enabled=amp_enabled
-        ):
-            out = model(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                token_type_ids=token_type_ids,
-            )
-        logits_np = out.logits.detach().float().cpu().numpy()
-        all_logits.append(logits_np)
-
-    if not all_logits:
+    if "labels" in dataset.column_names:
+        dataset = dataset.remove_columns("labels")
+    if len(dataset) == 0:
         return np.zeros((0, NUM_EMOTIONS), dtype=np.float64)
-    return np.vstack(all_logits)
+
+    on_cuda = device.type == "cuda"
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        pred_kwargs: Dict[str, Any] = dict(
+            output_dir=tmp_dir,
+            per_device_eval_batch_size=int(batch_size),
+            fp16=bool(use_fp16 and on_cuda),
+            report_to="none",
+            disable_tqdm=True,
+            remove_unused_columns=True,
+        )
+        if not on_cuda:
+            pred_kwargs["use_cpu"] = True
+        predictor = Trainer(
+            model=model,
+            args=TrainingArguments(**pred_kwargs),
+            data_collator=DataCollatorWithPadding(tokenizer=tokenizer, padding=True),
+            **_tokenizer_kwarg(tokenizer),
+        )
+        output = predictor.predict(dataset)
+
+    logits = output.predictions
+    if isinstance(logits, (tuple, list)):
+        logits = logits[0]
+    return np.asarray(logits, dtype=np.float32)
 
 
 def write_prediction7_file(
@@ -253,70 +473,6 @@ def write_stage1_sidecar(
     )
     tmp_path.replace(sidecar_path)
     return sidecar_path
-
-
-def _save_temp_work_checkpoint(
-    work_run_dir: Path,
-    step: int,
-    epoch: int,
-    best_macro_f1: float,
-    best_step: int,
-    patience_counter: int,
-    model: Stage1Classifier,
-    optimizer: AdamW,
-    scheduler: Any,
-    save_total_limit: int = 2,
-    eval_history: Optional[List[Dict[str, Any]]] = None,
-    n_skipped_optimizer_steps: int = 0,
-    n_nonfinite_loss: int = 0,
-) -> Path:
-    """Save an intermediate training state in `work_run_dir/checkpoint-{step}` and prune old ones."""
-    ckpt_dir = work_run_dir / f"checkpoint-{int(step)}"
-    ckpt_dir.mkdir(parents=True, exist_ok=True)
-    state_path = ckpt_dir / "trainer_state.pt"
-    torch.save(
-        {
-            "step": int(step),
-            "epoch": int(epoch),
-            "best_macro_f1": float(best_macro_f1),
-            "best_step": int(best_step),
-            "patience_counter": int(patience_counter),
-            "eval_history": list(eval_history) if eval_history is not None else [],
-            "n_skipped_optimizer_steps": int(n_skipped_optimizer_steps),
-            "n_nonfinite_loss": int(n_nonfinite_loss),
-            "model_state_dict": {
-                k: v.detach().cpu() for k, v in model.state_dict().items()
-            },
-            "optimizer_state_dict": optimizer.state_dict(),
-            "scheduler_state_dict": scheduler.state_dict(),
-        },
-        state_path,
-    )
-
-    # Enforce save_total_limit on intermediate checkpoints
-    all_ckpts = sorted(
-        work_run_dir.glob("checkpoint-*"),
-        key=lambda p: int(p.name.split("-")[-1]) if p.name.split("-")[-1].isdigit() else -1,
-    )
-    if save_total_limit > 0 and len(all_ckpts) > save_total_limit:
-        for old_ckpt in all_ckpts[:-save_total_limit]:
-            shutil.rmtree(old_ckpt, ignore_errors=True)
-    return ckpt_dir
-
-
-def _find_latest_work_checkpoint(work_run_dir: Path) -> Optional[Path]:
-    """Return the latest `checkpoint-{step}/trainer_state.pt` in `work_run_dir` if present."""
-    if not work_run_dir.is_dir():
-        return None
-    all_ckpts = sorted(
-        work_run_dir.glob("checkpoint-*"),
-        key=lambda p: int(p.name.split("-")[-1]) if p.name.split("-")[-1].isdigit() else -1,
-    )
-    for ckpt in reversed(all_ckpts):
-        st = ckpt / "trainer_state.pt"
-        if st.is_file():
-            return st
-    return None
 
 
 def load_stage1_config(config_path: Union[str, Path]) -> Dict[str, Any]:
