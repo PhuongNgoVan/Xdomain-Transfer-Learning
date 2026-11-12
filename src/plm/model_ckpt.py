@@ -1,5 +1,18 @@
-"""Stage 1 classifier architecture, checkpoint persistence, and SHA-256 hashing (`src/plm/model_ckpt.py`)."""
+"""Stage 1 classifier architecture, checkpoint persistence, and SHA-256 hashing (`src/plm/model_ckpt.py`).
 
+Hugging Face integration notes:
+- `Stage1Classifier` stays a plain `nn.Module` (custom single-linear head; checkpoint contract is
+  `encoder/` via `save_pretrained` + `head.pt`), but exposes the attributes `transformers.Trainer`
+  looks for (`config`, `main_input_name`, `accepts_loss_kwargs`, `_keys_to_ignore_on_save`,
+  `gradient_checkpointing_enable`).
+- `accepts_loss_kwargs = False` is important: the model returns a *mean* cross-entropy, so the
+  Trainer must divide the loss by `gradient_accumulation_steps` itself (otherwise newer
+  `transformers` versions assume a sum-normalized loss and the gradient is scaled by `grad_accum`).
+- In `eval()` mode the forward pass is forced to FP32 (autocast disabled) regardless of the
+  Trainer's AMP setting, so dev selection metrics are computed in FP32 as in the original design.
+"""
+
+import contextlib
 import json
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union
@@ -16,13 +29,20 @@ NUM_EMOTIONS: int = len(EMOTIONS7)
 
 
 class Stage1Classifier(nn.Module):
-    """Single-linear-layer 7-class emotion classifier on top of `AutoModel` token `<s>` (index 0).
+    """Single-linear-layer classifier on top of `AutoModel` token `<s>` (index 0).
 
     Per `tasks/M6_stage1_vsmec.md` Section 4.2:
     - Does NOT use `AutoModelForSequenceClassification` (which has a 2-layer head in RoBERTa).
-    - Applies `nn.Dropout(dropout)` + `nn.Linear(hidden_size, 7)` directly on
+    - Applies `nn.Dropout(dropout)` + `nn.Linear(hidden_size, num_labels)` directly on
       `last_hidden_state[:, 0, :]`.
     """
+
+    # --- attributes read by `transformers.Trainer` -------------------------------------------
+    main_input_name: str = "input_ids"
+    supports_gradient_checkpointing: bool = True
+    # Mean-reduced loss: let Trainer divide by grad_accum (do NOT pass `num_items_in_batch`).
+    accepts_loss_kwargs: bool = False
+    _keys_to_ignore_on_save: Optional[list] = None
 
     def __init__(
         self,
@@ -32,11 +52,14 @@ class Stage1Classifier(nn.Module):
     ) -> None:
         super().__init__()
         self.encoder = encoder
+        self.config = encoder.config
         hidden_size = int(getattr(encoder.config, "hidden_size"))
         self.hidden_size = hidden_size
         self.num_labels = int(num_labels)
         self.dropout = nn.Dropout(p=float(dropout))
         self.head = nn.Linear(hidden_size, self.num_labels)
+        # When True, `eval()` forward runs with autocast disabled (pure FP32 inference).
+        self.force_fp32_eval: bool = True
 
     @classmethod
     def from_pretrained_backbone(
@@ -45,9 +68,22 @@ class Stage1Classifier(nn.Module):
         num_labels: int = NUM_EMOTIONS,
         dropout: float = 0.1,
     ) -> "Stage1Classifier":
-        """Load `AutoModel` from `backbone_name_or_path` and attach fresh 7-class linear head."""
+        """Load `AutoModel` from `backbone_name_or_path` and attach fresh linear head."""
         encoder = AutoModel.from_pretrained(str(backbone_name_or_path))
         return cls(encoder=encoder, num_labels=num_labels, dropout=dropout)
+
+    def gradient_checkpointing_enable(self, **kwargs: Any) -> None:
+        """Delegate to the encoder so `TrainingArguments(gradient_checkpointing=True)` works."""
+        self.encoder.gradient_checkpointing_enable(**kwargs)
+
+    def gradient_checkpointing_disable(self) -> None:
+        self.encoder.gradient_checkpointing_disable()
+
+    def _precision_guard(self, device_type: str):
+        """Disable autocast in eval mode (FP32 dev evaluation) when `force_fp32_eval` is set."""
+        if (not self.training) and self.force_fp32_eval and device_type in ("cuda", "cpu"):
+            return torch.autocast(device_type=device_type, enabled=False)
+        return contextlib.nullcontext()
 
     def forward(
         self,
@@ -63,14 +99,16 @@ class Stage1Classifier(nn.Module):
         }
         if token_type_ids is not None:
             encoder_kwargs["token_type_ids"] = token_type_ids
-        outputs = self.encoder(**encoder_kwargs)
-        cls_repr = outputs.last_hidden_state[:, 0, :]
-        logits = self.head(self.dropout(cls_repr))
+
+        with self._precision_guard(input_ids.device.type):
+            outputs = self.encoder(**encoder_kwargs)
+            cls_repr = outputs.last_hidden_state[:, 0, :]
+            logits = self.head(self.dropout(cls_repr))
 
         loss: Optional[Tensor] = None
         if labels is not None:
             loss_fn = nn.CrossEntropyLoss()
-            loss = loss_fn(logits, labels.long())
+            loss = loss_fn(logits.float(), labels.long())
         return SequenceClassifierOutput(loss=loss, logits=logits)
 
     def save_stage1_checkpoint(

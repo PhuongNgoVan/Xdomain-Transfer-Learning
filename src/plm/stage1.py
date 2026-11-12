@@ -5,13 +5,19 @@ Facade and entry-point per `stage1_refactor_spec.md` & `tasks/M6_stage1_vsmec.md
   - `src.plm.tokenizer_dataset`
   - `src.plm.model_ckpt`
   - `src.plm.trainer_utils`
-- Implements `run_stage1` and CLI `main()` with:
-  1. Proper FP16 `GradScaler.unscale_` + `clip_grad_norm_` + scale-checked `scheduler.step()`.
-  2. FP32 post-training & validation inference (`use_fp16=False`) so saved CSV logits match
-     CPU/GPU checkpoint reload within `< 1e-4`.
-  3. In-RAM `best_state_dict` tracking during training and single `save_stage1_checkpoint` write
-     at the end of training to eliminate repeated Google Drive FUSE I/O stalls.
-  4. `eval_batch_size`, `pin_memory=(device.type == "cuda")`, and `non_blocking=True` tensor transfers.
+- Implements `run_stage1` and CLI `main()` on top of Hugging Face `Trainer`:
+  1. `TrainingArguments` + `Trainer` handle AMP (fp16/bf16), gradient accumulation, grad clipping,
+     AdamW (no decay on bias/LayerNorm), linear warmup scheduler, step-wise dev evaluation,
+     `EarlyStoppingCallback`, best-model restore (`load_best_model_at_end`) and resume.
+  2. FP32 evaluation: `Stage1Classifier` disables autocast in `eval()`, and post-training prediction
+     export runs through `Trainer.predict` in FP32 so saved CSV logits match CPU/GPU checkpoint
+     reload within `< 1e-4`.
+  3. The best model is written ONCE at the end via `save_stage1_checkpoint` (`encoder/` + `head.pt`),
+     avoiding repeated Google Drive FUSE I/O stalls; Trainer's intermediate `checkpoint-*` live in
+     `work_dir` and are removed after results are written.
+  4. Model selection and early stopping use `vsmec_dev` ONLY.
+
+Requires `transformers >= 4.41` (`eval_strategy`, `warmup_steps`).
 """
 
 import argparse
@@ -23,15 +29,9 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
-from torch import Tensor
-from torch.optim import AdamW
-from torch.utils.data import DataLoader
 import transformers
-from transformers import (
-    AutoTokenizer,
-    DataCollatorWithPadding,
-    get_linear_schedule_with_warmup,
-)
+from transformers import AutoTokenizer, EarlyStoppingCallback
+from transformers.trainer_utils import get_last_checkpoint
 
 from src.common.constants import EMOTIONS7, ID_TO_EMOTION7
 from src.common.io import append_row_schema, read_csv_schema
@@ -50,6 +50,7 @@ from src.plm.model_ckpt import (
 )
 from src.plm.tokenizer_dataset import (
     TokenizedTextDataset,
+    build_data_collator,
     build_length_grouped_indices,
     resolve_input_column,
     tokenize_with_truncation_stats,
@@ -58,12 +59,16 @@ from src.plm.trainer_utils import (
     NUM_EMOTIONS,
     PREDICTION_DATASETS,
     VALID_PRECISIONS,
+    Stage1Trainer,
     _find_latest_work_checkpoint,
     _load_split_dataframe,
-    _save_temp_work_checkpoint,
+    best_step_from_trainer,
+    build_compute_metrics,
     build_stage1_run_id,
+    build_training_arguments,
     compute_cross_entropy_from_logits,
     compute_vsmec_data_hash,
+    extract_eval_history,
     format_lr,
     get_git_commit,
     infer_backbone_alias,
@@ -80,15 +85,18 @@ __all__ = [
     "NUM_EMOTIONS",
     "PREDICTION_DATASETS",
     "Stage1Classifier",
+    "Stage1Trainer",
     "TokenizedTextDataset",
     "VALID_PRECISIONS",
     "_find_encoder_weight_file",
     "_find_latest_work_checkpoint",
     "_load_split_dataframe",
-    "_save_temp_work_checkpoint",
+    "build_compute_metrics",
+    "build_data_collator",
     "build_input_texts",
     "build_length_grouped_indices",
     "build_stage1_run_id",
+    "build_training_arguments",
     "compute_cross_entropy_from_logits",
     "compute_texts_sha256",
     "compute_vsmec_data_hash",
@@ -143,8 +151,6 @@ def run_stage1(
     emoji_mode = normalize_emoji_mode(raw_emoji_mode)
     sweep = bool(cfg.get("sweep", False))
     save_checkpoint = bool(cfg.get("save_checkpoint", True))
-    # Dev evaluation and prediction export always run in FP32 so training precision is the sole difference
-    eval_fp16 = False
     group_by_length = bool(cfg.get("group_by_length", True))
     patience = int(cfg.get("early_stopping_patience", 5))
     save_total_limit = int(cfg.get("save_total_limit", 2))
@@ -158,10 +164,6 @@ def run_stage1(
     precision_effective = resolve_precision(
         precision=precision, device=device, strict_precision=strict_precision
     )
-    use_fp16 = precision_effective == "fp16"
-    use_bf16 = precision_effective == "bf16"
-    amp_enabled = use_fp16 or use_bf16
-    amp_dtype = torch.bfloat16 if use_bf16 else torch.float16
 
     run_id = build_stage1_run_id(
         backbone=backbone, seed=seed, lr=lr, variant=variant, config=cfg
@@ -218,7 +220,6 @@ def run_stage1(
         num_labels=NUM_EMOTIONS,
         dropout=dropout,
     )
-    model.to(device)
 
     # 5. Transform input texts in-memory across all 6 splits (`T4`) and tokenize (`max_length`)
     split_dfs: Dict[str, Any] = {
@@ -269,248 +270,73 @@ def run_stage1(
     train_labels = vsmec_train_df["label"].astype(int).tolist()
     dev_labels = vsmec_dev_df["label"].astype(int).tolist()
 
-    # 6. Optimizer & linear warmup scheduler
-    no_decay = ("bias", "LayerNorm.weight", "layer_norm.weight")
-    optimizer_grouped_parameters = [
-        {
-            "params": [
-                p
-                for n, p in model.named_parameters()
-                if p.requires_grad and not any(nd in n for nd in no_decay)
-            ],
-            "weight_decay": weight_decay,
-        },
-        {
-            "params": [
-                p
-                for n, p in model.named_parameters()
-                if p.requires_grad and any(nd in n for nd in no_decay)
-            ],
-            "weight_decay": 0.0,
-        },
-    ]
-    optimizer = AdamW(optimizer_grouped_parameters, lr=lr)
+    train_ds = TokenizedTextDataset(train_enc, labels=train_labels)
+    dev_ds = TokenizedTextDataset(dev_enc, labels=dev_labels)
 
+    # 6. Step counts -> warmup + eval cadence (identical formulas to the former manual loop)
     num_batches_per_epoch = max(1, math.ceil(len(train_enc) / batch_size))
     steps_per_epoch = max(1, math.ceil(num_batches_per_epoch / grad_accum))
     total_optim_steps = (
         int(max_steps) if max_steps is not None else steps_per_epoch * epochs
     )
     warmup_steps = int(math.ceil(total_optim_steps * warmup_ratio))
-    scheduler = get_linear_schedule_with_warmup(
-        optimizer,
-        num_warmup_steps=warmup_steps,
-        num_training_steps=total_optim_steps,
-    )
-
     eval_steps = int(cfg.get("eval_steps", max(1, steps_per_epoch // 2)))
     if max_steps is not None:
         eval_steps = min(eval_steps, max(1, max_steps))
-
-    collator = DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
-    scaler = torch.amp.GradScaler("cuda", enabled=use_fp16)
 
     ckpt_subdir = c_dir / alias
     work_run_dir = w_dir / run_id
     work_run_dir.mkdir(parents=True, exist_ok=True)
 
-    # Optional resume from latest intermediate checkpoint in work_run_dir
-    global_step = 0
-    start_epoch = 0
-    best_macro_f1 = -1.0
-    best_step = 0
-    patience_counter = 0
-    best_state_dict: Optional[Dict[str, Tensor]] = None
-    eval_history: List[Dict[str, Any]] = []
-    n_skipped_optimizer_steps: int = 0
-    n_nonfinite_loss: int = 0
+    training_args = build_training_arguments(
+        work_run_dir,
+        batch_size=batch_size,
+        eval_batch_size=eval_batch_size,
+        grad_accum=grad_accum,
+        epochs=epochs,
+        max_steps=max_steps,
+        learning_rate=lr,
+        weight_decay=weight_decay,
+        warmup_steps=warmup_steps,
+        max_grad_norm=max_grad_norm,
+        precision_effective=precision_effective,
+        eval_steps=eval_steps,
+        save_total_limit=save_total_limit,
+        group_by_length=group_by_length,
+        seed=seed,
+        pin_memory=(device.type == "cuda"),
+    )
 
-    latest_resume = _find_latest_work_checkpoint(work_run_dir)
-    if latest_resume is not None:
-        resume_data = torch.load(latest_resume, map_location="cpu", weights_only=False)
-        global_step = int(resume_data["step"])
-        start_epoch = int(resume_data["epoch"])
-        best_macro_f1 = float(resume_data["best_macro_f1"])
-        best_step = int(resume_data["best_step"])
-        patience_counter = int(resume_data["patience_counter"])
-        eval_history = list(resume_data.get("eval_history", []))
-        n_skipped_optimizer_steps = int(resume_data.get("n_skipped_optimizer_steps", 0))
-        n_nonfinite_loss = int(resume_data.get("n_nonfinite_loss", 0))
-        model.load_state_dict(resume_data["model_state_dict"])
-        model.to(device)
-        optimizer.load_state_dict(resume_data["optimizer_state_dict"])
-        scheduler.load_state_dict(resume_data["scheduler_state_dict"])
-        best_state_dict = {
-            k: v.detach().cpu().clone() for k, v in model.state_dict().items()
-        }
-        print(
-            f"=== Resumed from {latest_resume} at step={global_step}, best_macro_f1={best_macro_f1:.4f} ==="
-        )
+    trainer = Stage1Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_ds,
+        eval_dataset=dev_ds,  # `vsmec_dev` ONLY drives selection / early stopping
+        data_collator=build_data_collator(tokenizer),
+        compute_metrics=build_compute_metrics(EMOTION7_IDS),
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=patience)],
+    )
 
-    def _evaluate_and_checkpoint(curr_step: int, curr_epoch: int) -> bool:
-        nonlocal best_macro_f1, best_step, patience_counter, best_state_dict
-        dev_logits = predict_logits7(
-            model=model,
-            encodings=dev_enc,
-            tokenizer=tokenizer,
-            batch_size=eval_batch_size,
-            device=device,
-            use_fp16=eval_fp16,
-        )
-        dev_preds = np.argmax(dev_logits, axis=1).tolist()
-        dev_metrics = compute_metrics(
-            dev_labels, dev_preds, logits=dev_logits, labels=EMOTION7_IDS
-        )
-        curr_f1 = float(dev_metrics["macro_f1"])
-        curr_acc = float(dev_metrics["accuracy"])
-        curr_loss = compute_cross_entropy_from_logits(dev_logits, dev_labels)
-
-        eval_history.append(
-            {
-                "step": int(curr_step),
-                "epoch": int(curr_epoch),
-                "dev_macro_f1": curr_f1,
-                "dev_loss": curr_loss,
-                "dev_accuracy": curr_acc,
-            }
-        )
-
-        if curr_f1 > best_macro_f1:
-            best_macro_f1 = curr_f1
-            best_step = int(curr_step)
-            patience_counter = 0
-            best_state_dict = {
-                k: v.detach().cpu().clone() for k, v in model.state_dict().items()
-            }
-        else:
-            patience_counter += 1
-
-        _save_temp_work_checkpoint(
-            work_run_dir=work_run_dir,
-            step=curr_step,
-            epoch=curr_epoch,
-            best_macro_f1=best_macro_f1,
-            best_step=best_step,
-            patience_counter=patience_counter,
-            model=model,
-            optimizer=optimizer,
-            scheduler=scheduler,
-            save_total_limit=save_total_limit,
-            eval_history=eval_history,
-            n_skipped_optimizer_steps=n_skipped_optimizer_steps,
-            n_nonfinite_loss=n_nonfinite_loss,
-        )
-        model.train()
-        return patience_counter >= patience
-
-    # 7. Training loop
+    # 7. Train (auto-resume from the latest intermediate checkpoint in work_run_dir)
     t0 = time.time()
-    stop_early = False
-    last_evaluated_step = -1
+    latest_resume = get_last_checkpoint(str(work_run_dir))
+    if latest_resume is not None:
+        print(f"=== Resumed from {latest_resume} ===")
+    trainer.train(resume_from_checkpoint=latest_resume)
+    elapsed_sec = time.time() - t0
 
-    for epoch in range(start_epoch, epochs):
-        if stop_early or (max_steps is not None and global_step >= max_steps):
-            break
+    n_skipped_optimizer_steps = int(trainer.n_skipped_optimizer_steps)
+    n_nonfinite_loss = int(trainer.n_nonfinite_loss)
+    best_step = best_step_from_trainer(trainer)
+    eval_history = extract_eval_history(trainer)
 
-        ordered_indices = build_length_grouped_indices(
-            train_enc,
-            batch_size=batch_size,
-            seed=seed,
-            epoch=epoch,
-            group_by_length=group_by_length,
-        )
-        epoch_enc = [train_enc[i] for i in ordered_indices]
-        epoch_labels = [train_labels[i] for i in ordered_indices]
-        train_ds = TokenizedTextDataset(epoch_enc, labels=epoch_labels)
-        train_loader = DataLoader(
-            train_ds,
-            batch_size=batch_size,
-            shuffle=False,
-            collate_fn=collator,
-            pin_memory=(device.type == "cuda"),
-        )
-
-        model.train()
-        optimizer.zero_grad(set_to_none=True)
-
-        for b_idx, batch in enumerate(train_loader):
-            input_ids = batch["input_ids"].to(device, non_blocking=True)
-            attention_mask = batch.get("attention_mask")
-            if attention_mask is not None:
-                attention_mask = attention_mask.to(device, non_blocking=True)
-            token_type_ids = batch.get("token_type_ids")
-            if token_type_ids is not None:
-                token_type_ids = token_type_ids.to(device, non_blocking=True)
-            labels_t = batch["labels"].to(device, non_blocking=True)
-
-            with torch.autocast(
-                device_type=device.type, dtype=amp_dtype, enabled=amp_enabled
-            ):
-                out = model(
-                    input_ids=input_ids,
-                    attention_mask=attention_mask,
-                    token_type_ids=token_type_ids,
-                    labels=labels_t,
-                )
-                if not bool(torch.isfinite(out.loss).all().item()):
-                    n_nonfinite_loss += 1
-                loss = out.loss / float(grad_accum)
-
-            if use_fp16:
-                scaler.scale(loss).backward()
-            else:
-                loss.backward()
-
-            is_accum_boundary = ((b_idx + 1) % grad_accum == 0) or (
-                (b_idx + 1) == len(train_loader)
-            )
-            if is_accum_boundary:
-                if use_fp16:
-                    scaler.unscale_(optimizer)
-                    if max_grad_norm > 0.0:
-                        torch.nn.utils.clip_grad_norm_(
-                            model.parameters(), max_grad_norm
-                        )
-                    scale_before = scaler.get_scale()
-                    scaler.step(optimizer)
-                    scaler.update()
-                    if scaler.get_scale() >= scale_before:
-                        scheduler.step()
-                    else:
-                        n_skipped_optimizer_steps += 1
-                else:
-                    if max_grad_norm > 0.0:
-                        torch.nn.utils.clip_grad_norm_(
-                            model.parameters(), max_grad_norm
-                        )
-                    optimizer.step()
-                    scheduler.step()
-                optimizer.zero_grad(set_to_none=True)
-                global_step += 1
-
-                if global_step % eval_steps == 0 or (
-                    max_steps is not None and global_step >= max_steps
-                ):
-                    last_evaluated_step = global_step
-                    should_stop = _evaluate_and_checkpoint(global_step, epoch)
-                    if should_stop or (
-                        max_steps is not None and global_step >= max_steps
-                    ):
-                        stop_early = True
-                        break
-
-    if last_evaluated_step != global_step:
-        _evaluate_and_checkpoint(global_step, epochs)
-
-    # Load best model at end (`load_best_model_at_end: true`) and optionally write checkpoint once
-    if best_state_dict is not None:
-        model.load_state_dict(best_state_dict)
-        model.to(device)
+    # `load_best_model_at_end=True` already restored the best model; write checkpoint once
+    model = trainer.model
     model.eval()
     if save_checkpoint:
         model.save_stage1_checkpoint(tokenizer=tokenizer, ckpt_path=ckpt_subdir)
 
-    elapsed_sec = time.time() - t0
+    pred_device = trainer.args.device
 
     # 8. Post-training Step (a): Export 5 raw-logit prediction files (`PRED7_COLUMNS`) in FP32
     pred7_dir = r_dir / "predictions7"
@@ -558,7 +384,7 @@ def run_stage1(
             encodings=enc_list,
             tokenizer=tokenizer,
             batch_size=eval_batch_size,
-            device=device,
+            device=pred_device,
             use_fp16=False,
         )
         out_csv = pred7_dir / f"{run_id}_{ds_name}.csv"

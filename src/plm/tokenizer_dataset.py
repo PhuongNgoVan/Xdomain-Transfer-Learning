@@ -1,9 +1,20 @@
-"""Tokenization, truncation statistics, dataset, and length-grouped sampling (`src/plm/tokenizer_dataset.py`)."""
+"""Tokenization, truncation statistics, dataset, and collation (`src/plm/tokenizer_dataset.py`).
+
+Hugging Face integration notes:
+- Tokenization is done with the model's own `AutoTokenizer` (fast batch call).
+- `TokenizedTextDataset` yields `input_ids` / `attention_mask` (+ `labels`), so `transformers.Trainer`
+  can consume it directly, including its `LengthGroupedSampler` (`group_by_length=True`), which reads
+  `input_ids` lengths straight from the items.
+- `build_data_collator` returns the standard `DataCollatorWithPadding` (dynamic per-batch padding).
+- `build_length_grouped_indices` is the legacy hand-written sampler; the Trainer-based training
+  path no longer uses it (kept for backward compatibility with older imports/tests).
+"""
 
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from torch.utils.data import Dataset
+from transformers import DataCollatorWithPadding
 
 
 def resolve_input_column(backbone: str, config: Optional[Dict[str, Any]] = None) -> str:
@@ -45,6 +56,16 @@ class TokenizedTextDataset(Dataset):
         if self.labels is not None:
             item["labels"] = int(self.labels[idx])
         return item
+
+
+def build_data_collator(
+    tokenizer: Any,
+    pad_to_multiple_of: Optional[int] = None,
+) -> DataCollatorWithPadding:
+    """Standard HF dynamic-padding collator (`labels` are stacked into a LongTensor)."""
+    return DataCollatorWithPadding(
+        tokenizer=tokenizer, padding=True, pad_to_multiple_of=pad_to_multiple_of
+    )
 
 
 def tokenize_with_truncation_stats(
@@ -96,7 +117,10 @@ def build_length_grouped_indices(
     epoch: int = 0,
     group_by_length: bool = True,
 ) -> List[int]:
-    """Produce deterministic training sample order (length-grouped mega-batches or shuffled)."""
+    """Legacy: deterministic training sample order (length-grouped mega-batches or shuffled).
+
+    Not used by the Trainer-based pipeline (`TrainingArguments(group_by_length=...)` is used instead).
+    """
     n = len(encodings)
     rng = np.random.default_rng(int(seed) + int(epoch) * 1009)
     perm = rng.permutation(n).tolist()
