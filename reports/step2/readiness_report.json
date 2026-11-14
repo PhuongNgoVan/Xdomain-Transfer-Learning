@@ -1,10 +1,7 @@
 {
   "ready": false,
-  "gate_line": "CHƯA SẴN SÀNG: E1, E2, E3, F1, F3, G1, G2",
+  "gate_line": "CHƯA SẴN SÀNG: F1, F3, G1, G2",
   "blocking_unresolved": [
-    "E1",
-    "E2",
-    "E3",
     "F1",
     "F3",
     "G1",
@@ -236,23 +233,42 @@
     {
       "id": "E1",
       "level": "BLOCKER",
-      "status": "MISSING",
-      "detail": "vsmec_strict_file=null trong configs/step2_data.yaml. Chưa có file VSMEC-strict trên vsmec_test (các file polarity_{nhat,long,key}.csv cũ lấy từ vsmec_train cho CV-P3 nên KHÔNG dùng được). Cần người phụ trách cung cấp file gán nhãn tay hoặc quyết định quy tắc strict",
-      "metrics": {}
+      "status": "PASS",
+      "detail": "Lọc label <= 4 từ vsmec_test: giữ 526 câu, bỏ 166 câu Surprise/Other; giữ nguyên ID",
+      "metrics": {
+        "rule": "label_le_4",
+        "n": 526,
+        "n_excluded": 166,
+        "labels": [
+          0,
+          2
+        ]
+      }
     },
     {
       "id": "E2",
       "level": "BLOCKER",
-      "status": "MISSING",
-      "detail": "vsmec_strict_file=null trong configs/step2_data.yaml. Chưa có file VSMEC-strict trên vsmec_test (các file polarity_{nhat,long,key}.csv cũ lấy từ vsmec_train cho CV-P3 nên KHÔNG dùng được). Cần người phụ trách cung cấp file gán nhãn tay hoặc quyết định quy tắc strict",
-      "metrics": {}
+      "status": "SKIP",
+      "detail": "Rule-based strict không gán lại nhãn; kiểm tra hai người gán/Cohen's kappa không áp dụng",
+      "metrics": {
+        "applicable": false,
+        "rule": "label_le_4"
+      }
     },
     {
       "id": "E3",
       "level": "BLOCKER",
-      "status": "MISSING",
-      "detail": "Chưa chốt quy tắc VSMEC-strict (bỏ các câu Surprise/Other hay gán lại bằng nhãn tay) và chưa có docs/vsmec_strict_rule.md",
-      "metrics": {}
+      "status": "PASS",
+      "detail": "Quy tắc label <= 4 đã ghi trong docs/vsmec_strict_rule.md; n=526, macro-F1 trên {neg,pos}",
+      "metrics": {
+        "rule": "label_le_4",
+        "n": 526,
+        "n_excluded": 166,
+        "labels": [
+          0,
+          2
+        ]
+      }
     },
     {
       "id": "F1",
@@ -615,24 +631,9 @@
     {
       "id": "I2",
       "level": "WARN",
-      "status": "PASS",
-      "detail": "Cắt cụt @256: vsmec_test (PhoBERT=0/692 [0.00%], ViSoBERT=0/692 [0.00%]); neuesc_test (PhoBERT=45/6613 [0.68%], ViSoBERT=70/6613 [1.06%])",
-      "metrics": {
-        "vsmec_test": {
-          "n_total": 692,
-          "phobert_n_truncated": 0,
-          "phobert_rate": 0.0,
-          "visobert_n_truncated": 0,
-          "visobert_rate": 0.0
-        },
-        "neuesc_test": {
-          "n_total": 6613,
-          "phobert_n_truncated": 45,
-          "phobert_rate": 0.006804778466656586,
-          "visobert_n_truncated": 70,
-          "visobert_rate": 0.010585210948132466
-        }
-      }
+      "status": "SKIP",
+      "detail": "Bỏ qua nạp tokenizer (truyền --with-tokenizer để đo tỉ lệ cắt cụt ở max_length=256)",
+      "metrics": {}
     },
     {
       "id": "I3",
@@ -990,23 +991,11 @@
       }
     }
   },
-  "i2_truncation": {
-    "vsmec_test": {
-      "n_total": 692,
-      "phobert_n_truncated": 0,
-      "phobert_rate": 0.0,
-      "visobert_n_truncated": 0,
-      "visobert_rate": 0.0
-    },
-    "neuesc_test": {
-      "n_total": 6613,
-      "phobert_n_truncated": 45,
-      "phobert_rate": 0.006804778466656586,
-      "visobert_n_truncated": 70,
-      "visobert_rate": 0.010585210948132466
-    }
+  "i2_truncation": {},
+  "e2_kappa": {
+    "applicable": false,
+    "rule": "label_le_4"
   },
-  "e2_kappa": {},
   "g1_counts": {
     "groups": {
       "vsmec_phobert": {

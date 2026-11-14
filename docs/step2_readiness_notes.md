@@ -1,4 +1,4 @@
-# Ghi chú kiểm chứng & hướng dẫn hoàn tất Step 2 Data Readiness (`p1`)
+# Ghi chú kiểm chứng & hướng dẫn hoàn tất Step 2 Data Readiness (`zscdt-core`)
 
 Tài liệu này tổng hợp các quyết định đã chốt, kết quả tự kiểm chứng mới nhất theo `configs/step2_data.yaml` và `scripts/check_step2_data.py`, đề xuất xử lý `VSMEC-strict`, và danh sách chính xác các đầu vào người phụ trách cần cung cấp trước khi chạy **Bước 2** (Zero-shot `VSMEC ↔ NEU-ESC`).
 
@@ -6,13 +6,13 @@ Tài liệu này tổng hợp các quyết định đã chốt, kết quả tự
 
 ## 1. Trạng thái tổng thể & các quyết định đã chốt
 
-**Kết luận cổng hiện tại (`--with-tokenizer`, chưa truyền CSV Bước 1 và `--check-ckpt`):**
+**Kết luận cổng sau khi chốt strict theo quy tắc (chưa truyền CSV Bước 1 và `--check-ckpt`):**
 
-- `CHƯA SẴN SÀNG: E1, E2, E3, F1, F3, G1, G2`
-- **Đã `PASS`:** `A1`–`A4`, `B1`–`B3`, `C1`–`C3`, `D1`–`D3`, `F2`, `H1`–`H4`, `I1`–`I4`.
+- `CHƯA SẴN SÀNG: F1, F3, G1, G2`
+- **Đã `PASS`:** `A1`–`A4`, `B1`–`B3`, `C1`–`C3`, `D1`–`D3`, `E1`, `E3`, `F2`, `H1`–`H4`, `I1`, `I3`, `I4`. `I2` chỉ kiểm tra lại khi có `--with-tokenizer`; số đo tokenizer ở mục 2.3 là kết quả trước đó.
 - **`WARN` (`FAIL` đã biết / kiểm soát được):** `D4` (2 cặp near-duplicate), `F2b` (6 artifact cũ/ngoài phạm vi Bước 2 trong `data/clean/`).
-- **`SKIP`:** `J1`–`J3` (chỉ chạy khi truyền `--check-ckpt` và đường dẫn checkpoint trên Drive/Colab).
-- **`MISSING`:** `E1`, `E2`, `E3`, `F1`, `F3`, `G1`, `G2`, `G3` (`WARN`).
+- **`SKIP`:** `E2` (không gán lại nhãn nên Cohen's kappa không áp dụng), `I2` nếu không truyền `--with-tokenizer`, `J1`–`J3` (chỉ chạy khi truyền `--check-ckpt` và đường dẫn checkpoint trên Drive/Colab).
+- **`MISSING`:** `F1`, `F3`, `G1`, `G2`, `G3` (`WARN`).
 
 ### Quyết định 1: Giữ nguyên `data/clean/MANIFEST.json`, tách `F2` (`BLOCKER`) và `F2b` (`WARN`)
 - **`MANIFEST.json` KHÔNG cập nhật.** Toàn bộ `data/clean/`, `data/splits/` giữ nguyên trạng thái đóng băng.
@@ -82,15 +82,18 @@ Hiệu ứng này cần được xét ở phần "độ lệch nội tại" củ
 
 ---
 
-## 3. Đề xuất `scripts/make_strict_template.py` cho `VSMEC-strict` (`E1`–`E3`)
+## 3. Quy tắc VSMEC-strict đã chốt (`E1`–`E3`)
 
-Hiện tại `E1`–`E3` đang ở trạng thái **`MISSING`** vì chưa chốt quy tắc `VSMEC-strict` và `vsmec_strict_file: null` trong `configs/step2_data.yaml`.
-Script **`scripts/make_strict_template.py`** được tạo sẵn **chỉ như một đề xuất** (mặc định chạy dry-run, **không** ghi file ra đĩa trừ khi truyền `--generate`):
-- Nếu chạy với `--generate`, script lấy mẫu ngẫu nhiên **100 câu** (với `seed=42`) trong tổng số **166 câu** thuộc lớp `Surprise` (5) và `Other` (6) của `data/clean/vsmec_test.csv`, xuất 4 cột `id, text, annotator_1, annotator_2` để gán nhãn cực tính độc lập (`0=neg, 1=neu, 2=pos`).
+Theo kế hoạch v3.0 mục 3.2 và chỉ đạo của người phụ trách, dùng
+`vsmec_strict_rule: label_le_4`; xem [vsmec_strict_rule.md](vsmec_strict_rule.md).
+Lọc nhãn gốc 0..4 trên `vsmec_test`, bỏ 37 Surprise và 129 Other, giữ **526 câu**;
+không sửa file dữ liệu hay ID. Macro-F1 strict tính trên hai lớp `{neg,pos}`;
+dự đoán neutral vẫn sai. `E1=PASS`, `E3=PASS`, `E2=SKIP` vì không gán lại nhãn.
 
-Người phụ trách cần chốt 1 trong 2 phương án sau và ghi vào `docs/vsmec_strict_rule.md`:
-1. **Phương án 1 (rule-based strict):** Loại bỏ toàn bộ 166 câu `Surprise`/`Other` khỏi tập đánh giá `VSMEC-strict` (giữ lại **526 câu** thuộc 5 cảm xúc có cực tính rõ ràng trên `vsmec_test`). Không cần sinh phiếu gán nhãn tay.
-2. **Phương án 2 (manual polarity annotation):** Chạy `.venv\Scripts\python.exe scripts/make_strict_template.py --generate` (hoặc gán toàn bộ 166 câu `Surprise`/`Other`), 2 người gán nhãn độc lập đạt Cohen's $\kappa \ge 0.60$, hòa giải tạo file CSV đích, và khai báo đường dẫn vào `vsmec_strict_file` trong `configs/step2_data.yaml`.
+`scripts/make_strict_template.py` vẫn có thể dùng cho phân tích kiểm chứng thủ công
+Other/Surprise riêng biệt. Nhãn gán tay và Cohen's kappa không phải điều kiện
+để dựng tập strict theo quy tắc này. Luồng kiểm tra CSV gán tay cũ vẫn được giữ
+cho cấu hình không chọn `vsmec_strict_rule`.
 
 ---
 
@@ -105,8 +108,6 @@ Người phụ trách cần chốt 1 trong 2 phương án sau và ghi vào `docs
    - Điền 2 con số thực `macro-F1` vào `configs/step2_data.yaml`:
      - `vsmec_published_macro_f1.phobert`
      - `vsmec_published_macro_f1.visobert`
-3. **Quyết định & dữ liệu `VSMEC-strict` (`E1`–`E3`):**
-   - Chốt quy tắc dựng `VSMEC-strict` vào `docs/vsmec_strict_rule.md` (Phương án 1 hoặc Phương án 2).
-   - Điền đường dẫn `vsmec_strict_file` trong `configs/step2_data.yaml` (cùng cột/file gán nhãn 2 người nếu áp dụng Phương án 2 để kiểm tra $\kappa \ge 0.60$).
+3. **`VSMEC-strict` (`E1`–`E3`): đã hoàn tất.** Quy tắc `label_le_4` và tài liệu đã có; không cần cung cấp file gán nhãn tay để mở cổng strict.
 4. **Đường dẫn 4 nhóm checkpoint Bước 1 trên Google Drive / local (`J1`–`J3`):**
    - Cung cấp 4 đường dẫn tương ứng với `--ckpt-root-vsmec-phobert`, `--ckpt-root-vsmec-visobert`, `--ckpt-root-neu3-phobert`, `--ckpt-root-neu3-visobert` (hoặc điền vào mục `ckpt_roots` của `configs/step2_data.yaml`), rồi chạy đoạn mã Colab ở Mục 5 của `reports/step2/readiness_report.md` với `--check-ckpt --reload-check` để kiểm tra tải lại trọng số và độ lệch logits FP32 ≤ `2e-3`.

@@ -13,7 +13,8 @@ step2_files:
   - internal_stats.csv
   - excluded_records.csv
 
-vsmec_strict_file: null        # file gán nhãn tay trên vsmec_test; null => test E1-E3 báo MISSING
+vsmec_strict_rule: label_le_4  # giữ nhãn gốc 0..4; xem docs/vsmec_strict_rule.md
+vsmec_strict_file: null        # rule-based strict không cần file gán nhãn tay
 vsmec_published_macro_f1:      # số macro-F1 đã công bố theo từng backbone; null => G2 báo MISSING
   phobert: null
   visobert: null

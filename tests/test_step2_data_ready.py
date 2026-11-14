@@ -416,8 +416,9 @@ def test_E1_E2_E3_vsmec_strict_missing_and_synthetic_cases(
     vsmec_splits, _ = real_data
     vsmec_test = vsmec_splits["test"].copy()
 
-    # 1. Config thực tế null -> MISSING
-    res_real = {r.id: r for r in check_group_e(cfg, vsmec_splits)}
+    # 1. Chưa chọn rule và không có file gán nhãn -> MISSING
+    cfg_unconfigured = {**cfg, "vsmec_strict_rule": None, "vsmec_strict_file": None}
+    res_real = {r.id: r for r in check_group_e(cfg_unconfigured, vsmec_splits)}
     assert res_real["E1"].status == "MISSING"
     assert res_real["E2"].status == "MISSING"
     assert res_real["E3"].status == "MISSING"
@@ -434,7 +435,7 @@ def test_E1_E2_E3_vsmec_strict_missing_and_synthetic_cases(
     (docs_dir / "vsmec_strict_rule.md").write_text("# Rule\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
 
-    cfg_pass = dict(cfg)
+    cfg_pass = dict(cfg_unconfigured)
     cfg_pass["vsmec_strict_file"] = str(strict_path)
     res_pass = {r.id: r for r in check_group_e(cfg_pass, vsmec_splits)}
     assert res_pass["E1"].status == "PASS"
@@ -869,7 +870,12 @@ def test_end_to_end_report_generation(tmp_path: Path) -> None:
     assert by_id["F2"]["status"] == "PASS"
     assert by_id["F2b"]["level"] == "WARN"
     assert by_id["H4"]["level"] == "INFO" and by_id["H4"]["status"] == "PASS"
-    for blk in ("E1", "E2", "E3", "F1", "F3", "G1", "G2"):
+    assert by_id["E1"]["status"] == "PASS"
+    assert by_id["E2"]["status"] == "SKIP"
+    assert by_id["E3"]["status"] == "PASS"
+    for blk in ("E1", "E2", "E3"):
+        assert blk not in payload["blocking_unresolved"]
+    for blk in ("F1", "F3", "G1", "G2"):
         assert blk in payload["blocking_unresolved"]
     assert "F2" not in payload["blocking_unresolved"]
 

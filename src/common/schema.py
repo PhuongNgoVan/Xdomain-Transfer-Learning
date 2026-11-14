@@ -151,3 +151,15 @@ POLARITY_DISTRIBUTION_COLUMNS: Tuple[str, ...] = (
     "wilson_ci_high",
 )
 
+# Workflow v3.0 zero-shot exports; existing schemas above remain unchanged.
+ZS_COLUMNS: Tuple[str, ...] = (
+    "run_id", "backbone", "stage1", "stage2", "eval_domain", "label_view", "mode",
+    "fraction", "seed", "split", "map_method", "n_eval", "macro_f1", "weighted_f1",
+    "accuracy", "f1_per_class", "f1_neg", "f1_neu", "f1_pos", "ckpt_path",
+    "src_domain", "tgt_domain", "precision", "code_version", "data_hash", "config_path",
+)
+ZS_PRED_COLUMNS: Tuple[str, ...] = (
+    "id", "y_true3", "y_true7", "y_pred3_sum", "y_pred3_argmax", "y_pred7",
+    "p3_neg", "p3_neu", "p3_pos", *(f"p7_{i}" for i in range(7)), "in_strict",
+)
+

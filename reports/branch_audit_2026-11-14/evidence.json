@@ -1,0 +1,636 @@
+{
+  "method": "AST + tracked Git blob checks; no pytest or model training",
+  "branches": {
+    "Neu3-phobert": {
+      "commit": "79a70f609ba5461810f6058073d423fca7625f98",
+      "python_files": 38,
+      "syntax_errors": [],
+      "missing_local_modules": [
+        {
+          "file": "tests/test_build_wtrans.py",
+          "line": 32,
+          "module": "src.data.build_wtrans"
+        },
+        {
+          "file": "tests/test_build_wtrans.py",
+          "line": 37,
+          "module": "src.data.polarity_kappa"
+        },
+        {
+          "file": "tests/test_heads_init_gesf.py",
+          "line": 43,
+          "module": "src.plm.heads"
+        },
+        {
+          "file": "tests/test_losses.py",
+          "line": 18,
+          "module": "src.plm.losses"
+        },
+        {
+          "file": "tests/test_polarity_kappa.py",
+          "line": 28,
+          "module": "src.data.polarity_kappa"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 41,
+          "module": "src.plm.callbacks"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 42,
+          "module": "src.plm.predict"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 43,
+          "module": "src.plm.train_plm"
+        }
+      ],
+      "missing_imported_symbols": [
+        {
+          "file": "tests/test_neu3.py",
+          "line": 41,
+          "module": "src.plm.train_neu3",
+          "symbol": "run_neu3"
+        }
+      ],
+      "self_imports": [
+        {
+          "file": "src/plm/train_neu3.py",
+          "line": 54,
+          "module": "src.plm.train_neu3",
+          "symbols": [
+            "NUM_LABELS3",
+            "_format_label_distribution",
+            "_resolve_run_kind",
+            "build_neu3_run_id",
+            "load_neuesc_splits",
+            "predict_logits3",
+            "update_neu3_ckpt_hash",
+            "write_prediction3_file"
+          ],
+          "locally_defined_functions": [
+            "_make_compute_metrics",
+            "main",
+            "run_neu3_hf"
+          ]
+        }
+      ],
+      "requirements": [
+        "torch==2.9.0",
+        "transformers==4.57.1",
+        "huggingface-hub==0.36.2",
+        "scikit-learn==1.6.1",
+        "pandas==3.1.0",
+        "numpy==2.1.3",
+        "PyYAML==6.0.2",
+        "pytest==8.3.4",
+        "vncorenlp==1.0.3",
+        "py_vncorenlp==0.1.4",
+        "sentencepiece==0.2.2",
+        "protobuf==7.36.2"
+      ],
+      "manifests": {
+        "data/clean": {
+          "entries": 12,
+          "mismatches": [
+            {
+              "file": "data/clean/polarity_long.csv",
+              "actual": "483e21d224c8c40978578623880b14c5f2185f22eb754076133137dbc9916ced",
+              "expected": "a2906beef8b4198247f4c21262d31337f36bc01b7fa384a077805051a4d14582"
+            },
+            {
+              "file": "data/clean/polarity_nhat.csv",
+              "actual": "f1cfeda46a81aee4f03786be287eca5e4a8b95495f216a6f54c518b000e216c2",
+              "expected": "a2906beef8b4198247f4c21262d31337f36bc01b7fa384a077805051a4d14582"
+            }
+          ]
+        },
+        "data/splits": {
+          "entries": 12,
+          "mismatches": []
+        }
+      }
+    },
+    "Neu3-visobert": {
+      "commit": "763440a0685e14c02cc0cd5eaefca90550d952cf",
+      "python_files": 40,
+      "syntax_errors": [],
+      "missing_local_modules": [
+        {
+          "file": "tests/test_build_wtrans.py",
+          "line": 32,
+          "module": "src.data.build_wtrans"
+        },
+        {
+          "file": "tests/test_build_wtrans.py",
+          "line": 37,
+          "module": "src.data.polarity_kappa"
+        },
+        {
+          "file": "tests/test_heads_init_gesf.py",
+          "line": 43,
+          "module": "src.plm.heads"
+        },
+        {
+          "file": "tests/test_losses.py",
+          "line": 18,
+          "module": "src.plm.losses"
+        },
+        {
+          "file": "tests/test_polarity_kappa.py",
+          "line": 28,
+          "module": "src.data.polarity_kappa"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 41,
+          "module": "src.plm.callbacks"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 42,
+          "module": "src.plm.predict"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 43,
+          "module": "src.plm.train_plm"
+        }
+      ],
+      "missing_imported_symbols": [
+        {
+          "file": "tests/test_neu3.py",
+          "line": 45,
+          "module": "src.plm.train_neu3",
+          "symbol": "run_neu3"
+        }
+      ],
+      "self_imports": [
+        {
+          "file": "src/plm/train_neu3.py",
+          "line": 59,
+          "module": "src.plm.train_neu3",
+          "symbols": [
+            "NUM_LABELS3",
+            "_format_label_distribution",
+            "_resolve_run_kind",
+            "build_neu3_run_id",
+            "load_neuesc_splits",
+            "predict_logits3",
+            "update_neu3_ckpt_hash",
+            "write_prediction3_file"
+          ],
+          "locally_defined_functions": [
+            "_make_compute_metrics",
+            "main",
+            "run_neu3_hf"
+          ]
+        }
+      ],
+      "requirements": [
+        "torch==2.9.0",
+        "transformers==4.57.1",
+        "huggingface-hub==0.36.2",
+        "scikit-learn==1.6.1",
+        "pandas==3.1.0",
+        "numpy==2.1.3",
+        "PyYAML==6.0.2",
+        "pytest==8.3.4",
+        "vncorenlp==1.0.3",
+        "py_vncorenlp==0.1.4",
+        "sentencepiece==0.2.2",
+        "protobuf==7.36.2"
+      ],
+      "manifests": {
+        "data/clean": {
+          "entries": 12,
+          "mismatches": [
+            {
+              "file": "data/clean/polarity_long.csv",
+              "actual": "483e21d224c8c40978578623880b14c5f2185f22eb754076133137dbc9916ced",
+              "expected": "a2906beef8b4198247f4c21262d31337f36bc01b7fa384a077805051a4d14582"
+            },
+            {
+              "file": "data/clean/polarity_nhat.csv",
+              "actual": "f1cfeda46a81aee4f03786be287eca5e4a8b95495f216a6f54c518b000e216c2",
+              "expected": "a2906beef8b4198247f4c21262d31337f36bc01b7fa384a077805051a4d14582"
+            }
+          ]
+        },
+        "data/splits": {
+          "entries": 12,
+          "mismatches": []
+        }
+      }
+    },
+    "main": {
+      "commit": "b4c5bbb5d489be0f5ef8daf924301de3f72c37a4",
+      "python_files": 35,
+      "syntax_errors": [],
+      "missing_local_modules": [
+        {
+          "file": "tests/test_build_wtrans.py",
+          "line": 32,
+          "module": "src.data.build_wtrans"
+        },
+        {
+          "file": "tests/test_build_wtrans.py",
+          "line": 37,
+          "module": "src.data.polarity_kappa"
+        },
+        {
+          "file": "tests/test_heads_init_gesf.py",
+          "line": 43,
+          "module": "src.plm.heads"
+        },
+        {
+          "file": "tests/test_losses.py",
+          "line": 18,
+          "module": "src.plm.losses"
+        },
+        {
+          "file": "tests/test_polarity_kappa.py",
+          "line": 28,
+          "module": "src.data.polarity_kappa"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 41,
+          "module": "src.plm.callbacks"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 42,
+          "module": "src.plm.predict"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 43,
+          "module": "src.plm.train_plm"
+        }
+      ],
+      "missing_imported_symbols": [],
+      "self_imports": [],
+      "requirements": [
+        "torch==2.9.0",
+        "transformers==4.57.1",
+        "huggingface-hub==0.36.2",
+        "scikit-learn==1.6.1",
+        "pandas==3.1.0",
+        "numpy==2.1.3",
+        "PyYAML==6.0.2",
+        "pytest==8.3.4",
+        "vncorenlp==1.0.3",
+        "py_vncorenlp==0.1.4",
+        "sentencepiece==0.2.2",
+        "protobuf==7.36.2"
+      ],
+      "manifests": {
+        "data/clean": {
+          "entries": 12,
+          "mismatches": [
+            {
+              "file": "data/clean/polarity_long.csv",
+              "actual": "483e21d224c8c40978578623880b14c5f2185f22eb754076133137dbc9916ced",
+              "expected": "a2906beef8b4198247f4c21262d31337f36bc01b7fa384a077805051a4d14582"
+            },
+            {
+              "file": "data/clean/polarity_nhat.csv",
+              "actual": "f1cfeda46a81aee4f03786be287eca5e4a8b95495f216a6f54c518b000e216c2",
+              "expected": "a2906beef8b4198247f4c21262d31337f36bc01b7fa384a077805051a4d14582"
+            }
+          ]
+        },
+        "data/splits": {
+          "entries": 12,
+          "mismatches": []
+        }
+      }
+    },
+    "p1": {
+      "commit": "85c36278ef5736c4c67a827dd62a7489db491060",
+      "python_files": 29,
+      "syntax_errors": [],
+      "missing_local_modules": [],
+      "missing_imported_symbols": [],
+      "self_imports": [],
+      "requirements": [
+        "torch==2.9.0",
+        "transformers==4.57.1",
+        "huggingface-hub==0.36.2",
+        "scikit-learn==1.6.1",
+        "pandas==3.1.0",
+        "numpy==2.1.3",
+        "PyYAML==6.0.2",
+        "pytest==8.3.4",
+        "vncorenlp==1.0.3",
+        "py_vncorenlp==0.1.4",
+        "sentencepiece==0.2.2",
+        "protobuf==7.36.2"
+      ],
+      "manifests": {
+        "data/clean": {
+          "entries": 11,
+          "mismatches": [
+            {
+              "file": "data/clean/polarity_long.csv",
+              "actual": "4efa016b53480d1507d15e2067cfc5d02723f6208a25a55d02b799887731b0fa",
+              "expected": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834"
+            },
+            {
+              "file": "data/clean/polarity_nhat.csv",
+              "actual": "f1cfeda46a81aee4f03786be287eca5e4a8b95495f216a6f54c518b000e216c2",
+              "expected": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834"
+            }
+          ]
+        },
+        "data/splits": {
+          "entries": 12,
+          "mismatches": []
+        }
+      }
+    },
+    "phobert-vsmec-7c": {
+      "commit": "f3e07c27cfa2daa15005ac45b7c02941d9a4f021",
+      "python_files": 34,
+      "syntax_errors": [],
+      "missing_local_modules": [
+        {
+          "file": "tests/test_heads_init_gesf.py",
+          "line": 43,
+          "module": "src.plm.heads"
+        },
+        {
+          "file": "tests/test_losses.py",
+          "line": 18,
+          "module": "src.plm.losses"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 41,
+          "module": "src.plm.callbacks"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 42,
+          "module": "src.plm.predict"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 43,
+          "module": "src.plm.train_plm"
+        }
+      ],
+      "missing_imported_symbols": [],
+      "self_imports": [],
+      "requirements": [
+        "torch==2.9.0",
+        "transformers==4.57.1",
+        "huggingface-hub==0.36.2",
+        "scikit-learn==1.6.1",
+        "pandas==3.1.0",
+        "numpy==2.1.3",
+        "PyYAML==6.0.2",
+        "pytest==8.3.4",
+        "vncorenlp==1.0.3",
+        "py_vncorenlp==0.1.4",
+        "sentencepiece==0.2.2",
+        "protobuf==7.36.2"
+      ],
+      "manifests": {
+        "data/clean": {
+          "entries": 12,
+          "mismatches": [
+            {
+              "file": "data/clean/polarity_long.csv",
+              "actual": "483e21d224c8c40978578623880b14c5f2185f22eb754076133137dbc9916ced",
+              "expected": "a2906beef8b4198247f4c21262d31337f36bc01b7fa384a077805051a4d14582"
+            },
+            {
+              "file": "data/clean/polarity_nhat.csv",
+              "actual": "f1cfeda46a81aee4f03786be287eca5e4a8b95495f216a6f54c518b000e216c2",
+              "expected": "a2906beef8b4198247f4c21262d31337f36bc01b7fa384a077805051a4d14582"
+            }
+          ]
+        },
+        "data/splits": {
+          "entries": 12,
+          "mismatches": []
+        }
+      }
+    },
+    "visobert-vsmec-7c": {
+      "commit": "845d6b76a47979a3737f2501bd872a4f3e7437a7",
+      "python_files": 36,
+      "syntax_errors": [],
+      "missing_local_modules": [
+        {
+          "file": "tests/test_heads_init_gesf.py",
+          "line": 43,
+          "module": "src.plm.heads"
+        },
+        {
+          "file": "tests/test_losses.py",
+          "line": 18,
+          "module": "src.plm.losses"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 41,
+          "module": "src.plm.callbacks"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 42,
+          "module": "src.plm.predict"
+        },
+        {
+          "file": "tests/test_train_plm_smoke.py",
+          "line": 43,
+          "module": "src.plm.train_plm"
+        }
+      ],
+      "missing_imported_symbols": [],
+      "self_imports": [],
+      "requirements": [
+        "torch==2.9.0",
+        "transformers==4.57.1",
+        "huggingface-hub==0.36.2",
+        "scikit-learn==1.6.1",
+        "pandas==3.1.0",
+        "numpy==2.1.3",
+        "PyYAML==6.0.2",
+        "pytest==8.3.4",
+        "vncorenlp==1.0.3",
+        "py_vncorenlp==0.1.4",
+        "sentencepiece==0.2.2",
+        "protobuf==7.36.2"
+      ],
+      "manifests": {
+        "data/clean": {
+          "entries": 12,
+          "mismatches": [
+            {
+              "file": "data/clean/polarity_long.csv",
+              "actual": "483e21d224c8c40978578623880b14c5f2185f22eb754076133137dbc9916ced",
+              "expected": "a2906beef8b4198247f4c21262d31337f36bc01b7fa384a077805051a4d14582"
+            },
+            {
+              "file": "data/clean/polarity_nhat.csv",
+              "actual": "f1cfeda46a81aee4f03786be287eca5e4a8b95495f216a6f54c518b000e216c2",
+              "expected": "a2906beef8b4198247f4c21262d31337f36bc01b7fa384a077805051a4d14582"
+            }
+          ]
+        },
+        "data/splits": {
+          "entries": 12,
+          "mismatches": []
+        }
+      }
+    },
+    "zscdt-core": {
+      "commit": "85c36278ef5736c4c67a827dd62a7489db491060",
+      "python_files": 29,
+      "syntax_errors": [],
+      "missing_local_modules": [],
+      "missing_imported_symbols": [],
+      "self_imports": [],
+      "requirements": [
+        "torch==2.9.0",
+        "transformers==4.57.1",
+        "huggingface-hub==0.36.2",
+        "scikit-learn==1.6.1",
+        "pandas==3.1.0",
+        "numpy==2.1.3",
+        "PyYAML==6.0.2",
+        "pytest==8.3.4",
+        "vncorenlp==1.0.3",
+        "py_vncorenlp==0.1.4",
+        "sentencepiece==0.2.2",
+        "protobuf==7.36.2"
+      ],
+      "manifests": {
+        "data/clean": {
+          "entries": 11,
+          "mismatches": [
+            {
+              "file": "data/clean/polarity_long.csv",
+              "actual": "4efa016b53480d1507d15e2067cfc5d02723f6208a25a55d02b799887731b0fa",
+              "expected": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834"
+            },
+            {
+              "file": "data/clean/polarity_nhat.csv",
+              "actual": "f1cfeda46a81aee4f03786be287eca5e4a8b95495f216a6f54c518b000e216c2",
+              "expected": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834"
+            }
+          ]
+        },
+        "data/splits": {
+          "entries": 12,
+          "mismatches": []
+        }
+      }
+    }
+  },
+  "shared_data": {
+    "vsmec_train.csv": {
+      "n": 5542,
+      "columns": [
+        "id",
+        "text",
+        "label",
+        "subset",
+        "text_seg"
+      ],
+      "labels": {
+        "6": 1020,
+        "4": 1069,
+        "0": 1558,
+        "3": 391,
+        "5": 241,
+        "1": 947,
+        "2": 316
+      },
+      "duplicate_ids": 0,
+      "same_blob_all_branches": true
+    },
+    "vsmec_dev.csv": {
+      "n": 686,
+      "columns": [
+        "id",
+        "text",
+        "label",
+        "subset",
+        "text_seg"
+      ],
+      "labels": {
+        "6": 141,
+        "0": 214,
+        "1": 86,
+        "3": 49,
+        "2": 31,
+        "4": 135,
+        "5": 30
+      },
+      "duplicate_ids": 0,
+      "same_blob_all_branches": true
+    },
+    "vsmec_test.csv": {
+      "n": 692,
+      "columns": [
+        "id",
+        "text",
+        "label",
+        "subset",
+        "text_seg"
+      ],
+      "labels": {
+        "1": 116,
+        "5": 37,
+        "4": 131,
+        "2": 46,
+        "3": 40,
+        "6": 129,
+        "0": 193
+      },
+      "duplicate_ids": 0,
+      "same_blob_all_branches": true
+    },
+    "neuesc_100.csv": {
+      "n": 32966,
+      "columns": [
+        "id",
+        "text",
+        "label",
+        "subset",
+        "text_seg"
+      ],
+      "labels": {
+        "1": 22773,
+        "0": 6045,
+        "2": 4148
+      },
+      "duplicate_ids": 0,
+      "same_blob_all_branches": true
+    },
+    "vsfc_test_clean.csv": {
+      "n": 3166,
+      "columns": [
+        "id",
+        "text",
+        "label",
+        "subset",
+        "text_seg"
+      ],
+      "labels": {
+        "2": 1590,
+        "0": 1409,
+        "1": 167
+      },
+      "duplicate_ids": 0,
+      "same_blob_all_branches": true
+    }
+  }
+}

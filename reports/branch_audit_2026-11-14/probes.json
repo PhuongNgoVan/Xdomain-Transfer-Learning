@@ -1,0 +1,54 @@
+{
+  "Neu3-phobert:self_import": {
+    "confirmed": true,
+    "error": "cannot import name 'NUM_LABELS3' from 'src.plm.train_neu3' (unknown location)",
+    "line": 54
+  },
+  "Neu3-visobert:self_import": {
+    "confirmed": true,
+    "error": "cannot import name 'NUM_LABELS3' from 'src.plm.train_neu3' (unknown location)",
+    "line": 59
+  },
+  "p1:encoder_hash_not_verified": {
+    "confirmed": true,
+    "before": {
+      "J1": "PASS",
+      "J2": "PASS",
+      "J3": "PASS"
+    },
+    "after_encoder_changes": {
+      "J1": "PASS",
+      "J2": "PASS",
+      "J3": "PASS"
+    },
+    "head_loader": "shape-only stub; real file bytes are hashed"
+  },
+  "p1:empty_hash_manifest_passes": {
+    "confirmed": true,
+    "checks": {
+      "J1": "PASS",
+      "J2": "PASS",
+      "J3": "PASS"
+    }
+  },
+  "p1:prediction_seed_mismatch": {
+    "confirmed": true,
+    "checkpoint_seed": 4,
+    "selected_csv": "PhoBERT_Stage1-base_s0_lr2e-5_vsmec_dev.csv"
+  },
+  "p1:dev_class_f1_copied_to_test": {
+    "confirmed": true,
+    "record": {
+      "f1_anger": 0.9,
+      "split": "test",
+      "macro_f1": 0.1
+    },
+    "line": 508
+  },
+  "Neu3:merge_discovers_incompatible_neu3_csv": {
+    "confirmed": true,
+    "files": [
+      "neu3.csv"
+    ]
+  }
+}

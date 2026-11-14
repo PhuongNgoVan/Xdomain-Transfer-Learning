@@ -1,0 +1,17 @@
+backbones:
+  PhoBERT:
+    alias: PhoBERT
+    model_name: vinai/phobert-base-v2
+    text_col: text_seg
+    emoji_mode: keep
+  ViSoBERT:
+    alias: ViSoBERT
+    model_name: uitnlp/visobert
+    text_col: text
+    emoji_mode: keep
+seeds: [0, 1, 2, 3, 4]
+batch_size: 128
+max_length: 256
+boot: 10000
+boot_seed: 0
+ci: 0.95

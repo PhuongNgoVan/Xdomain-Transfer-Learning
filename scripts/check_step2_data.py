@@ -116,6 +116,7 @@ def load_step2_config(
         "results_dir": "results",
         "results_inputs_dir": "reports/step2/inputs",
         "step2_files": [],
+        "vsmec_strict_rule": None,
         "vsmec_strict_file": None,
         "vsmec_published_macro_f1": {
             "phobert": None,
@@ -1548,6 +1549,54 @@ def check_group_e(
     cfg: Dict[str, Any],
     vsmec_dfs: Dict[str, pd.DataFrame],
 ) -> List[CheckResult]:
+    rule = cfg.get("vsmec_strict_rule")
+    if rule == "label_le_4":
+        test_df = vsmec_dfs.get("test")
+        errors: List[str] = []
+        n_strict = 0
+        n_excluded = 0
+        if test_df is None or not {"id", "label", "subset"}.issubset(test_df.columns):
+            errors.append("Thiếu vsmec_test hoặc cột id, label, subset")
+        else:
+            labels = pd.to_numeric(test_df["label"], errors="coerce")
+            if not labels.isin(range(7)).all():
+                errors.append("Nhãn gốc vsmec_test phải thuộc {0..6}")
+            if test_df["id"].isna().any() or test_df["id"].duplicated().any():
+                errors.append("ID vsmec_test bị thiếu hoặc trùng")
+            if not test_df["subset"].eq("test").all():
+                errors.append("VSMEC-strict chỉ được lấy từ subset=test")
+            n_strict = int(labels.isin(range(5)).sum())
+            n_excluded = int(labels.isin([5, 6]).sum())
+            if n_strict == 0:
+                errors.append("Kích thước tập VSMEC-strict = 0")
+        has_rule_doc = Path("docs/vsmec_strict_rule.md").is_file()
+        metrics = {"rule": rule, "n": n_strict, "n_excluded": n_excluded, "labels": [NEG, POS]}
+        return [
+            CheckResult(
+                "E1", LEVEL_BLOCKER, STATUS_FAIL if errors else STATUS_PASS,
+                "; ".join(errors) if errors else
+                f"Lọc label <= 4 từ vsmec_test: giữ {n_strict} câu, bỏ {n_excluded} câu Surprise/Other; giữ nguyên ID",
+                metrics=metrics,
+            ),
+            CheckResult(
+                "E2", LEVEL_BLOCKER, STATUS_SKIP,
+                "Rule-based strict không gán lại nhãn; kiểm tra hai người gán/Cohen's kappa không áp dụng",
+                metrics={"applicable": False, "rule": rule},
+            ),
+            CheckResult(
+                "E3", LEVEL_BLOCKER,
+                STATUS_FAIL if errors else (STATUS_PASS if has_rule_doc else STATUS_MISSING),
+                "; ".join(errors) if errors else
+                (f"Quy tắc label <= 4 đã ghi trong docs/vsmec_strict_rule.md; n={n_strict}, macro-F1 trên {{neg,pos}}"
+                 if has_rule_doc else "Thiếu docs/vsmec_strict_rule.md cho quy tắc label_le_4"),
+                metrics=metrics,
+            ),
+        ]
+    if rule:
+        return [
+            CheckResult(check_id, LEVEL_BLOCKER, STATUS_FAIL, f"Không hỗ trợ vsmec_strict_rule={rule!r}")
+            for check_id in ("E1", "E2", "E3")
+        ]
     strict_file = cfg.get("vsmec_strict_file")
     if not strict_file:
         msg_missing = (

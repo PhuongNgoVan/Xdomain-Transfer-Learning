@@ -1,6 +1,6 @@
 # Báo cáo Kiểm tra Sẵn sàng Dữ liệu & Checkpoint cho Bước 2 (Zero-Shot VSMEC ↔ NEU-ESC)
 
-**Kết luận cổng:** `CHƯA SẴN SÀNG: E1, E2, E3, F1, F3, G1, G2`
+**Kết luận cổng:** `CHƯA SẴN SÀNG: F1, F3, G1, G2`
 
 ## 1. Bảng tổng hợp kết quả kiểm tra (A1 – J3)
 
@@ -20,9 +20,9 @@
 | `D2` | BLOCKER | **PASS** | 0 câu trong neuesc_test xuất hiện trong VSMEC (train, dev, test) |
 | `D3` | INFO | **PASS** | Đã ghi bảng đếm trùng chéo miền 3×2×2 (và ma trận 3×3) vào báo cáo |
 | `D4` | WARN | **FAIL** | Giữ dữ liệu đóng băng; 2 cặp trùng gần: vsmec_test id=6311 (Sadness→negative) ↔ neuesc_dev id=[25960] (negative→negative, khớp=True); neuesc_test id=28482 (neutral→neutral) ↔ vsmec_train id=[3607] (Other→neutral, khớp=True). Ảnh hưởng độ nhạy: vsmec_test 1/692 (0.1445%), neuesc_test 1/6613 (0.0151%) — đã xuất sensitivity_exclude_ids.csv |
-| `E1` | BLOCKER | **MISSING** | vsmec_strict_file=null trong configs/step2_data.yaml. Chưa có file VSMEC-strict trên vsmec_test (các file polarity_{nhat,long,key}.csv cũ lấy từ vsmec_train cho CV-P3 nên KHÔNG dùng được). Cần người phụ trách cung cấp file gán nhãn tay hoặc quyết định quy tắc strict |
-| `E2` | BLOCKER | **MISSING** | vsmec_strict_file=null trong configs/step2_data.yaml. Chưa có file VSMEC-strict trên vsmec_test (các file polarity_{nhat,long,key}.csv cũ lấy từ vsmec_train cho CV-P3 nên KHÔNG dùng được). Cần người phụ trách cung cấp file gán nhãn tay hoặc quyết định quy tắc strict |
-| `E3` | BLOCKER | **MISSING** | Chưa chốt quy tắc VSMEC-strict (bỏ các câu Surprise/Other hay gán lại bằng nhãn tay) và chưa có docs/vsmec_strict_rule.md |
+| `E1` | BLOCKER | **PASS** | Lọc label <= 4 từ vsmec_test: giữ 526 câu, bỏ 166 câu Surprise/Other; giữ nguyên ID |
+| `E2` | BLOCKER | **SKIP** | Rule-based strict không gán lại nhãn; kiểm tra hai người gán/Cohen's kappa không áp dụng |
+| `E3` | BLOCKER | **PASS** | Quy tắc label <= 4 đã ghi trong docs/vsmec_strict_rule.md; n=526, macro-F1 trên {neg,pos} |
 | `F1` | BLOCKER | **MISSING** | Chưa có CSV kết quả Bước 1 trong reports/step2/inputs/ hoặc qua --results-file (hash hiện tại: vsmec_data_hash=680bfc0f241e..., neuesc_data_hash=9b0e3f42c2b7...) |
 | `F2` | BLOCKER | **PASS** | Tất cả 8 file Bước 2 trong step2_files khớp SHA-256 trong MANIFEST.json |
 | `F2b` | WARN | **FAIL** | Artifact cũ ngoài phạm vi Bước 2 (lệch MANIFEST đã biết, không dùng cho Bước 2): manifest_run1.json: thực=80a19181ad2c..., MANIFEST=không có; polarity_key.csv: thực=4c5587afe006..., MANIFEST=không có; polarity_long.csv: thực=054ffc680881..., MANIFEST=bba9a68c2af3...; polarity_nhat.csv: thực=a22f50bcd290..., MANIFEST=bba9a68c2af3...; vsfc_test_clean.csv: thực=e6873a782eb1..., MANIFEST=e6873a782eb1...; vsmec_clean_report.json: thực=7071ea3ec51d..., MANIFEST=không có |
@@ -35,7 +35,7 @@
 | `H3` | INFO | **PASS** | Trong vsmec_test (n=692): Surprise=37 (5.35%), Other=129 (18.64%), tổng gộp vào neutral theo B1 = 166 (23.99%) |
 | `H4` | INFO | **PASS** | Lệch bề mặt test: vsmec_test (' .'=6.65%, emoji=19.08%, words=13.80/p95=31.0, lower=100.00%) vs neuesc_test (' .'=98.53%, emoji=0.00%, words=26.02/p95=89.0, lower=100.00%) |
 | `I1` | WARN | **PASS** | Cả vsmec_test (692 câu) và neuesc_test (6613 câu) đều có cột text_seg đầy đủ, không rỗng |
-| `I2` | WARN | **PASS** | Cắt cụt @256: vsmec_test (PhoBERT=0/692 [0.00%], ViSoBERT=0/692 [0.00%]); neuesc_test (PhoBERT=45/6613 [0.68%], ViSoBERT=70/6613 [1.06%]) |
+| `I2` | WARN | **SKIP** | Bỏ qua nạp tokenizer (truyền --with-tokenizer để đo tỉ lệ cắt cụt ở max_length=256) |
 | `I3` | WARN | **PASS** | normalize_text(normalize_text(x)) == normalize_text(x) trên toàn bộ 7305 câu test |
 | `I4` | WARN | **PASS** | ViSoBERT emoji_mode='keep' (preprocess_text(..., emoji_mode='keep') trên cột text) đồng nhất, idempotent và không sinh chuỗi rỗng trên cả vsmec_test và neuesc_test |
 | `J1` | BLOCKER | **SKIP** | Bỏ qua kiểm tra checkpoint (chỉ chạy khi truyền --check-ckpt) |
