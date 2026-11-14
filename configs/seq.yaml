@@ -1,0 +1,35 @@
+protocol_version: seq-v1
+backbones:
+  PhoBERT: {text_col: text_seg, emoji_mode: keep}
+  ViSoBERT: {text_col: text, emoji_mode: keep}
+seeds: [0, 1, 2, 3, 4]
+c0_seeds: [0, 1, 2]
+c0_lr_mode: reuse
+lr_grid: [1.0e-5, 2.0e-5, 3.0e-5]
+sweep_seed: 0
+training:
+  batch_size: 16
+  gradient_accumulation_steps: 2
+  epochs: 10
+  patience: 5
+  warmup_ratio: 0.06
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  dropout: 0.1
+  max_length: 256
+  precision: bf16
+  strict_precision: true
+  evals_per_epoch: 2
+baseline_provenance:
+  status: repository_config_only
+  source: Neu3-phobert/Neu3-visobert configs at 79a70f6/763440a
+  actual_run_verified: false
+boot: 10000
+boot_seed: 0
+ci: 0.95
+alpha: 0.05
+primary:
+  - {id: P1, backbone: PhoBERT, direction: SA, label_view: V3-NEU, stat: macro_f1}
+  - {id: P2, backbone: ViSoBERT, direction: SA, label_view: V3-NEU, stat: macro_f1}
+  - {id: P3, backbone: PhoBERT, direction: SB, label_view: V7-VSMEC, stat: macro_f1}
+  - {id: P4, backbone: ViSoBERT, direction: SB, label_view: V7-VSMEC, stat: macro_f1}

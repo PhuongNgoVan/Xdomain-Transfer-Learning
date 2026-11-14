@@ -163,3 +163,11 @@ ZS_PRED_COLUMNS: Tuple[str, ...] = (
     "p3_neg", "p3_neu", "p3_pos", *(f"p7_{i}" for i in range(7)), "in_strict",
 )
 
+SEQ_COLUMNS: Tuple[str, ...] = (
+    "run_id", "backbone", "direction", "stage1", "stage2", "eval_domain", "label_view",
+    "mode", "fraction", "seed", "split", "map_method", "n_eval", "macro_f1", "weighted_f1",
+    "accuracy", "f1_per_class", "f1_neg", "f1_neu", "f1_pos", "lr", "variant",
+    "best_epoch", "best_step", "n_train", "trunc_rate", "train_seconds", "src_ckpt_path",
+    "ckpt_path", "precision", "code_version", "data_hash", "config_path",
+)
+

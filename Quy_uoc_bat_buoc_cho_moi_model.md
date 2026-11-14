@@ -1,3 +1,5 @@
+> ARCHIVED v2.x: current protocol is configs/seq.yaml and docs/seq_notes.md.
+
 
 # Quy ước bắt buộc cho mọi model
 

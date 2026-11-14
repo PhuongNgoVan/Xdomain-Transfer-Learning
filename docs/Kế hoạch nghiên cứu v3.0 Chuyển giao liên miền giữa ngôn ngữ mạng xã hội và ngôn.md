@@ -4,6 +4,8 @@
 
 ## 1. Hướng mới và khác biệt so với kế hoạch cũ
 
+> Bổ sung seq-v1, 15/11/2026: [configs/seq.yaml](../configs/seq.yaml) là cấu hình thực thi duy nhất; [seq_notes.md](seq_notes.md) ghi quyết định. Patience 5, warmup 6% lấy từ config baseline trong Git, chưa chứng nhận log các lượt thật. Trainer sạch trong src/seq; sweep chỉ train/dev. Những điểm baseline lịch sử chỉ được coi tương đương giao thức sau đối chiếu config/log thật.
+
 Đề tài chuyển từ việc đề xuất kiến trúc mới (GESF + Logit Adjustment) sang **nghiên cứu thực nghiệm có hệ thống về chuyển giao hai chiều giữa hai miền**, theo ba bước: Baseline → Zero-shot cross-domain → Sequential transfer. Trọng tâm là các mô hình ngôn ngữ tiền huấn luyện (PLM) PhoBERT và ViSoBERT. Các mô hình đơn giản (TF-IDF + LR/SVM, BiLSTM) chỉ là phần học tập của thành viên mới (mục 11).
 
 | Hạng mục | Kế hoạch cũ (v2.2) | Kế hoạch mới (v3.0) |
@@ -72,9 +74,9 @@ Mô hình 7 lớp được đưa về 3 lớp bằng cách **cộng xác suất 
 | Mục | Quy định |
 | --- | --- |
 | Backbone chính | PhoBERT (vinai/phobert-base-v2) và ViSoBERT (uitnlp/visobert); kiểm tra lại tên trên Hugging Face. Mở rộng: PhoBERT-large nếu còn GPU |
-| Đầu phân loại | Đầu tuyến tính chuẩn của AutoModelForSequenceClassification |
+| Đầu phân loại | AutoModel encoder + Dropout + Linear dùng chung trong src/plm/model_ckpt.py, giữ tương thích checkpoint Bước 1 |
 | Hàm mất mát | Cross-entropy chuẩn ở mọi cấu hình chính; class-weighted CE làm kiểm tra độ nhạy (NEU-ESC lệch 69% neutral) |
-| Siêu tham số | Dò learning rate {2e-5, 3e-5, 5e-5} trên dev (1 seed) cho từng cặp (backbone, miền), batch hiệu dụng 32, tối đa 10 epoch, dừng sớm theo macro-F1 dev (patience 2), warmup 10%, weight decay 0,01, bf16 (A100) hoặc fp16 (Kaggle) |
+| Siêu tham số | Bước 1 dò LR {2e-5, 3e-5, 5e-5}; Bước 3 dò {1e-5, 2e-5, 3e-5}, chỉ trên dev. Batch hiệu dụng 32, tối đa 10 epoch, macro-F1 dev, patience 5, warmup 6%, weight decay 0,01 theo seq-v1. Sequential dùng bf16 CUDA strict; không fallback âm thầm. Cấu hình baseline thật cần đối chiếu log trước kết luận tương đương. |
 | Seed | 5 seed cố định cho mọi cấu hình lõi; 3 seed cho cấu hình mở rộng |
 | Chọn mô hình | Chỉ dùng dev của miền **đang được huấn luyện**. Ở Bước 2 tuyệt đối không dùng dữ liệu (kể cả dev) của miền đích |
 | Độ đo chính | macro-F1; phụ: weighted-F1 (thường dùng trong các công bố về VSMEC), accuracy, F1 từng lớp, ma trận nhầm lẫn |

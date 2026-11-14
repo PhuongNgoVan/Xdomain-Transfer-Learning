@@ -1,5 +1,8 @@
 # Workflow v3.0: Chuyển giao liên miền VSMEC ↔ NEU-ESC
 
+> Bổ sung seq-v1, 15/11/2026: cấu hình thực thi ở [configs/seq.yaml](../configs/seq.yaml), quyết định ở [seq_notes.md](seq_notes.md). Patience 5, warmup 6% theo config baseline trong Git; chưa xác nhận log lượt thật. Sweep chỉ train/dev, test chỉ sau chọn best. Dùng trainer sạch, không phụ thuộc train_neu3.py cũ.
+
+
 *Bản rút gọn của kế hoạch v3.0 (10/11/2026). Chỉ cần làm theo file này; chi tiết tra lại kế hoạch đầy đủ khi cần.*
 
 ## 0. Cố định (không bàn lại)
@@ -7,7 +10,7 @@
 - **Câu hỏi:** chuyển giao hai chiều VSMEC → NEU và NEU → VSMEC có hiệu quả không, theo chiều nào, vì sao.
 - **Backbone:** PhoBERT (vinai/phobert-base-v2), ViSoBERT (uitnlp/visobert).
 - **Nhãn:** so sánh liên miền luôn trong không gian **3 nhãn**. Enjoyment → Positive; Sadness, Fear, Anger, Disgust → Negative; Surprise, Other → Neutral. NEU-ESC gộp toxic vào negative.
-- **Cấu hình:** cross-entropy chuẩn, LR dò {2e-5, 3e-5, 5e-5}, batch 32, tối đa 10 epoch, early stop theo macro-F1 dev (patience 2), 5 seed.
+- **Cấu hình:** cross-entropy chuẩn, LR dò {2e-5, 3e-5, 5e-5}, batch 32, tối đa 10 epoch, early stop theo macro-F1 dev (patience 5), 5 seed.
 - **Độ đo chính:** macro-F1 (phụ: weighted-F1, accuracy, F1 từng lớp).
 - **Chọn mô hình:** chỉ dùng dev của miền đang huấn luyện. Test chỉ để báo cáo.
 

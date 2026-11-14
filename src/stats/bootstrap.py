@@ -192,8 +192,9 @@ def bootstrap_contrast(
     boot_seed: int = 0,
     ci: float = 0.95,
     chunk_size: int = 500,
+    share_seeds: bool = False,
 ) -> dict[str, Any]:
-    """Bootstrap a scalar function of arm means, pairing rows but not model seeds.
+    """Bootstrap arm contrasts; model seeds are independent unless share_seeds=True.
 
     ``fn`` accepts a mapping of arm names to scalars for the point estimate,
     and to vectors for resamples. ``share_test`` maps names to test-set group IDs,
@@ -203,6 +204,15 @@ def bootstrap_contrast(
     if not arms:
         raise ValueError("At least one arm is required")
     prepared = {name: _validate_arm(arm) for name, arm in arms.items()}
+    if share_seeds:
+        identities = []
+        for name, arm in arms.items():
+            seed_ids = list(arm["seeds"]) if "seeds" in arm else (sorted(arm["preds_by_seed"]) if isinstance(arm["preds_by_seed"], Mapping) else None)
+            if seed_ids is None or len(seed_ids) != len(prepared[name]["preds_by_seed"]) or len(set(seed_ids)) != len(seed_ids):
+                raise ValueError("Paired bootstrap requires unique explicit seed IDs for every arm")
+            identities.append(seed_ids)
+        if any(ids != identities[0] for ids in identities[1:]):
+            raise ValueError("Paired arms require identical ordered seed IDs")
     _groups(prepared, share_test)
     points = {name: float(_weighted_statistics(arm, np.ones(len(arm["y_true"])))[0].mean())
               for name, arm in prepared.items()}
@@ -213,10 +223,16 @@ def bootstrap_contrast(
         size = min(chunk_size, boot - start)
         weights = _draw_shared_test_weights(rng, prepared, share_test, size)
         values = {}
+        shared_indices = None
         for name, arm in prepared.items():
             per_seed = _weighted_statistics(arm, weights[name])
             n_seeds = arm["preds_by_seed"].shape[0]
-            seed_indices = rng.integers(0, n_seeds, size=(size, n_seeds))
+            if share_seeds:
+                if shared_indices is None:
+                    shared_indices = rng.integers(0, n_seeds, size=(size, n_seeds))
+                seed_indices = shared_indices
+            else:
+                seed_indices = rng.integers(0, n_seeds, size=(size, n_seeds))
             values[name] = np.take_along_axis(per_seed, seed_indices, axis=1).mean(axis=1)
         result = np.asarray(fn(values), dtype=float)
         if result.ndim == 0:

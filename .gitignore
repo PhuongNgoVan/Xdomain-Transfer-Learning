@@ -3,8 +3,12 @@ tests/*
 !tests/test_model_ckpt.py
 !tests/test_vsmec_strict_rule.py
 !tests/test_zs_*.py
+!tests/test_seq_*.py
 tasks/*
 !tasks/AGENT_zscdt_core.md
+!tasks/AGENT_step3_seq.md
+!tasks/AGENT_step3_seq (1).md
+!tasks/README.md
 # *.md
 !README.md
 .venv/
