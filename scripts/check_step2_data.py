@@ -1,24 +1,31 @@
 """Step 2 data and checkpoint readiness verification script (`scripts/check_step2_data.py`).
 
-Implements checks A1–A4, B1–B3, C1–C3, D1–D4, E1–E3, F1–F3, G1–G3, H1–H3, I1–I4, J1–J3
-per `tasks/AGENT_step2_data_readiness.md`.
-- Strictly read-only with respect to `data/clean/` and `data/splits/`.
-- Exports `reports/step2/readiness_report.md`, `reports/step2/readiness_report.json`, and
-  `reports/step2/violations_*.csv`.
-- Prints summary table `ID | mức | trạng thái | chi tiết` and final gate line
-  `SẴN SÀNG` or `CHƯA SẴN SÀNG: <danh sách test BLOCKER FAIL hoặc MISSING>`.
+Implements checks A1–A4, B1–B3, C1–C3, D1–D4, E1–E3, F1–F3 (including F2b),
+G1–G3, H1–H4, I1–I4, and J1–J3 per `tasks/AGENT_step2_data_readiness.md` and
+updated readiness requirements.
+
+Strict boundaries:
+- Read-only with respect to `data/clean/`, `data/splits/`, `MANIFEST.json`,
+  and `src/common/constants.py` (`HARD_MERGE_RULE`).
+- Does not train models or score zero-shot test predictions.
+- Writes all outputs only under `reports/step2/` (or custom `--reports-dir`).
 """
 
 import argparse
 from dataclasses import asdict, dataclass, field
+import glob
 import hashlib
 import json
 import math
 from pathlib import Path
 import re
 import sys
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 import unicodedata
+
+_ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(_ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(_ROOT_DIR))
 
 import numpy as np
 import pandas as pd
@@ -41,7 +48,7 @@ from src.common.hashing import hash_text, sha256_file
 from src.common.schema import SPLIT_COLUMNS
 from src.common.textnorm import normalize_text
 from src.data.polarity_kappa import compute_po_and_kappa
-from src.data.preprocess import preprocess_text
+from src.data.preprocess import _GENERIC_EMOJI_RE, UNICODE_EMOJI_MAP, preprocess_text
 
 LEVEL_BLOCKER = "BLOCKER"
 LEVEL_WARN = "WARN"
@@ -55,6 +62,39 @@ STATUS_SKIP = "SKIP"
 VSMEC_SPLITS: Tuple[str, ...] = ("train", "dev", "test")
 NEUESC_SPLITS: Tuple[str, ...] = ("train", "dev", "test")
 
+GROUP_ORDER: Tuple[str, ...] = (
+    "vsmec_phobert",
+    "vsmec_visobert",
+    "neu3_phobert",
+    "neu3_visobert",
+)
+GROUP_LABELS: Dict[str, str] = {
+    "vsmec_phobert": "VSMEC PhoBERT",
+    "vsmec_visobert": "VSMEC ViSoBERT",
+    "neu3_phobert": "NEU-3 PhoBERT",
+    "neu3_visobert": "NEU-3 ViSoBERT",
+}
+GROUP_SPECS: Dict[str, Tuple[str, str, int]] = {
+    "vsmec_phobert": ("vsmec", "PhoBERT", 7),
+    "vsmec_visobert": ("vsmec", "ViSoBERT", 7),
+    "neu3_phobert": ("neuesc", "PhoBERT", 3),
+    "neu3_visobert": ("neuesc", "ViSoBERT", 3),
+}
+
+_ANNOTATOR_STR_MAP: Dict[str, int] = {
+    "0": 0,
+    "1": 1,
+    "2": 2,
+    "neg": 0,
+    "negative": 0,
+    "neu": 1,
+    "neutral": 1,
+    "pos": 2,
+    "positive": 2,
+}
+
+RELOAD_MAX_ABS_DIFF_TOL: float = 2e-3
+
 
 @dataclass
 class CheckResult:
@@ -65,15 +105,22 @@ class CheckResult:
     metrics: Dict[str, Any] = field(default_factory=dict)
 
 
-def load_step2_config(config_path: Union[str, Path] = "configs/step2_data.yaml") -> Dict[str, Any]:
+def load_step2_config(
+    config_path: Union[str, Path] = "configs/step2_data.yaml",
+) -> Dict[str, Any]:
     """Load `configs/step2_data.yaml` with safe defaults."""
     p = Path(config_path)
     default_cfg: Dict[str, Any] = {
         "vsmec_clean_dir": "data/clean",
         "neuesc_file": "data/clean/neuesc_100.csv",
         "results_dir": "results",
+        "results_inputs_dir": "reports/step2/inputs",
+        "step2_files": [],
         "vsmec_strict_file": None,
-        "vsmec_published_macro_f1": None,
+        "vsmec_published_macro_f1": {
+            "phobert": None,
+            "visobert": None,
+        },
         "ckpt_roots": {
             "vsmec_phobert": None,
             "vsmec_visobert": None,
@@ -89,11 +136,24 @@ def load_step2_config(config_path: Union[str, Path] = "configs/step2_data.yaml")
     merged.update(raw)
     if not isinstance(merged.get("ckpt_roots"), dict):
         merged["ckpt_roots"] = dict(default_cfg["ckpt_roots"])
+    else:
+        cr = dict(default_cfg["ckpt_roots"])
+        cr.update(merged["ckpt_roots"])
+        merged["ckpt_roots"] = cr
+
+    pub = merged.get("vsmec_published_macro_f1")
+    if pub is None:
+        merged["vsmec_published_macro_f1"] = dict(default_cfg["vsmec_published_macro_f1"])
+    elif isinstance(pub, dict):
+        merged["vsmec_published_macro_f1"] = {
+            "phobert": pub.get("phobert"),
+            "visobert": pub.get("visobert"),
+        }
     return merged
 
 
 def compute_vsmec_data_hash(clean_dir: Union[str, Path]) -> str:
-    """Compute combined SHA-256 digest of `vsmec_train.csv`, `vsmec_dev.csv`, `vsmec_test.csv` (matches `stage1.py`)."""
+    """Compute combined SHA-256 digest of `vsmec_{train,dev,test}.csv` (matches `src/plm/stage1.py`)."""
     d_path = Path(clean_dir)
     combined = hashlib.sha256()
     for sp in VSMEC_SPLITS:
@@ -104,7 +164,7 @@ def compute_vsmec_data_hash(clean_dir: Union[str, Path]) -> str:
 
 
 def compute_neuesc_data_hash(neuesc_file: Union[str, Path]) -> str:
-    """Compute SHA-256 digest of `neuesc_100.csv` (matches `train_neu3.py`)."""
+    """Compute SHA-256 digest of `neuesc_100.csv` (matches `src/plm/train_neu3.py`)."""
     return sha256_file(neuesc_file)
 
 
@@ -121,7 +181,7 @@ def aggregate_probs_7to3(probs7: np.ndarray) -> np.ndarray:
     if single_1d:
         arr = arr[np.newaxis, :]
     if arr.ndim != 2 or arr.shape[1] != 7:
-        raise ValueError(f"Expected probs7 of shape (N, 7) or (7,), got {probs7.shape}")
+        raise ValueError(f"Expected probs7 of shape (N, 7) or (7,), got {arr.shape}")
 
     out = np.zeros((arr.shape[0], 3), dtype=np.float64)
     for sent_id in (0, 1, 2):
@@ -142,8 +202,18 @@ def strong_normalize_text(text: str) -> str:
     return s
 
 
-def jensen_shannon_divergence(p: Sequence[float], q: Sequence[float]) -> Dict[str, float]:
-    """Compute Jensen-Shannon divergence between two probability distributions in bits (base 2) and nats (base e)."""
+def contains_unicode_emoji(text: str) -> bool:
+    """Return True if `text` contains at least one Unicode emoji character."""
+    s = str(text)
+    if _GENERIC_EMOJI_RE.search(s):
+        return True
+    return any(ch in UNICODE_EMOJI_MAP for ch in s)
+
+
+def jensen_shannon_divergence(
+    p: Sequence[float], q: Sequence[float]
+) -> Dict[str, float]:
+    """Compute Jensen-Shannon divergence between two distributions in bits (base 2) and nats (base e)."""
     p_arr = np.asarray(p, dtype=np.float64)
     q_arr = np.asarray(q, dtype=np.float64)
     p_arr = p_arr / np.sum(p_arr)
@@ -163,6 +233,307 @@ def jensen_shannon_divergence(p: Sequence[float], q: Sequence[float]) -> Dict[st
 
 
 # ---------------------------------------------------------------------------
+# Step 1 Result Loader (supports STAGE1_COLUMNS, RESULT_COLUMNS, NEU3_COLUMNS)
+# ---------------------------------------------------------------------------
+def discover_result_input_files(
+    results_files: Optional[Sequence[Union[str, Path]]] = None,
+    results_globs: Optional[Sequence[str]] = None,
+    default_inputs_dir: Union[str, Path] = "reports/step2/inputs",
+    fallback_results_dir: Optional[Union[str, Path]] = None,
+) -> List[Path]:
+    """Collect candidate Step 1 result CSV paths from CLI flags or default inputs folder."""
+    collected: List[Path] = []
+    seen_resolved: set[Path] = set()
+
+    def _add(p: Path) -> None:
+        if p.is_file():
+            rp = p.resolve()
+            if rp not in seen_resolved:
+                seen_resolved.add(rp)
+                collected.append(p)
+
+    has_explicit = bool(results_files) or bool(results_globs)
+    if results_files:
+        for item in results_files:
+            _add(Path(item))
+    if results_globs:
+        for pat in results_globs:
+            for m in sorted(glob.glob(str(pat), recursive=True)):
+                _add(Path(m))
+
+    if not has_explicit:
+        in_dir = Path(default_inputs_dir)
+        if in_dir.is_dir():
+            for p in sorted(in_dir.rglob("*.csv")):
+                _add(p)
+        if not collected and fallback_results_dir is not None:
+            fb_dir = Path(fallback_results_dir)
+            for fname in ("stage1.csv", "neu3.csv"):
+                _add(fb_dir / fname)
+
+    return collected
+
+
+def _infer_backbone_key(text_val: str) -> Optional[str]:
+    low = str(text_val).lower()
+    if "phobert" in low:
+        return "phobert"
+    if "visobert" in low:
+        return "visobert"
+    return None
+
+
+def _normalize_split_tag(val: Any) -> str:
+    s = str(val).strip().lower()
+    if s in ("dev", "val", "valid", "validation", "vsmec_dev", "neuesc_dev"):
+        return "dev"
+    if s in ("test", "vsmec_test", "neuesc_test"):
+        return "test"
+    if s in ("train", "vsmec_train", "neuesc_train"):
+        return "train"
+    return s
+
+
+def _infer_domain(row: pd.Series, cols: set[str], src_name: str) -> Optional[str]:
+    if "eval_domain" in cols and pd.notna(row.get("eval_domain")):
+        ed = str(row["eval_domain"]).strip().lower()
+        if "neu" in ed:
+            return "neuesc"
+        if "vsmec" in ed:
+            return "vsmec"
+    if "stage1" in cols and pd.notna(row.get("stage1")):
+        s1 = str(row["stage1"]).strip().lower()
+        if "neu" in s1 and not (pd.notna(row.get("stage2")) and str(row["stage2"]).strip()):
+            return "neuesc"
+    if "dataset" in cols and pd.notna(row.get("dataset")):
+        ds = str(row["dataset"]).strip().lower()
+        if "vsmec" in ds:
+            return "vsmec"
+        if "neu" in ds:
+            return "neuesc"
+    if "f1_enjoyment" in cols:
+        return "vsmec"
+    run_id = str(row.get("run_id", "")).lower()
+    if "stage1" in run_id or "vsmec" in run_id:
+        return "vsmec"
+    if "neu3" in run_id or "neuesc" in run_id:
+        return "neuesc"
+    if "stage1" in src_name.lower() or "vsmec" in src_name.lower():
+        return "vsmec"
+    if "neu3" in src_name.lower() or "neu" in src_name.lower():
+        return "neuesc"
+    if "f1_neg" in cols:
+        return "neuesc"
+    return None
+
+
+def _extract_variant(row: pd.Series, cols: set[str], run_id: str) -> str:
+    if "variant" in cols and pd.notna(row.get("variant")) and str(row["variant"]).strip():
+        return str(row["variant"]).strip()
+    m = re.search(r"(?:Stage1|NEU3)-([^_]+)_", run_id, flags=re.IGNORECASE)
+    if m:
+        return m.group(1).strip()
+    cfg_p = str(row.get("config_path", "")).lower()
+    if "sweep" in cfg_p:
+        return "sweep"
+    return "base"
+
+
+def _find_stage1_sidecar(csv_path: Path, run_id: str) -> Optional[Dict[str, Any]]:
+    candidates = [
+        csv_path.parent / "runs" / f"{run_id}.json",
+        csv_path.parent.parent / "runs" / f"{run_id}.json",
+    ]
+    for cand in candidates:
+        if cand.is_file():
+            try:
+                return json.loads(cand.read_text(encoding="utf-8"))
+            except Exception:
+                return None
+    return None
+
+
+def _safe_float(val: Any) -> Optional[float]:
+    if val is None or (isinstance(val, float) and math.isnan(val)):
+        return None
+    try:
+        if pd.isna(val):
+            return None
+        return float(val)
+    except Exception:
+        return None
+
+
+def load_step1_results(
+    results_files: Optional[Sequence[Union[str, Path]]] = None,
+    results_globs: Optional[Sequence[str]] = None,
+    default_inputs_dir: Union[str, Path] = "reports/step2/inputs",
+    fallback_results_dir: Optional[Union[str, Path]] = None,
+) -> Dict[str, Any]:
+    """Load, normalize schemas, filter LR sweep rows, and deduplicate by `(run_id, split)`.
+
+    Supports:
+    - `STAGE1_COLUMNS` (classic VSMEC 7-class CSV, optionally paired with `runs/<run_id>.json` or `split` col)
+    - `RESULT_COLUMNS` (legacy unified 31-col CSV using `model`, `dataset`, `split`, `variant`)
+    - `NEU3_COLUMNS` (`neu3.csv` using `backbone`, `eval_domain`, `split`, `run_kind`, `variant`, ...)
+    """
+    paths = discover_result_input_files(
+        results_files=results_files,
+        results_globs=results_globs,
+        default_inputs_dir=default_inputs_dir,
+        fallback_results_dir=fallback_results_dir,
+    )
+    if not paths:
+        return {
+            "files": [],
+            "df": pd.DataFrame(),
+            "n_raw_rows": 0,
+            "n_sweep_filtered": 0,
+            "n_duplicates_dropped": 0,
+        }
+
+    normalized_rows: List[Dict[str, Any]] = []
+    n_raw_rows = 0
+    n_sweep_filtered = 0
+
+    f1_cols_7 = [f"f1_{emo.lower()}" for emo in EMOTIONS7]
+    f1_cols_3 = ["f1_neg", "f1_neu", "f1_pos"]
+
+    for csv_path in paths:
+        try:
+            df = pd.read_csv(csv_path, encoding="utf-8")
+        except Exception as exc:
+            raise ValueError(f"Lỗi đọc file kết quả {csv_path.as_posix()}: {exc}") from exc
+        if df.empty:
+            continue
+
+        cols = set(df.columns)
+        has_split_col = "split" in cols
+        n_raw_rows += len(df)
+
+        for _, row in df.iterrows():
+            run_id = str(row.get("run_id", "")).strip()
+            if not run_id:
+                continue
+
+            domain = _infer_domain(row, cols, csv_path.name)
+            backbone_raw = ""
+            if "backbone" in cols and pd.notna(row.get("backbone")):
+                backbone_raw = str(row["backbone"]).strip()
+            elif "model" in cols and pd.notna(row.get("model")):
+                backbone_raw = str(row["model"]).strip()
+            backbone_key = _infer_backbone_key(backbone_raw) or _infer_backbone_key(run_id)
+
+            variant = _extract_variant(row, cols, run_id)
+            run_kind = (
+                str(row["run_kind"]).strip().lower()
+                if "run_kind" in cols and pd.notna(row.get("run_kind"))
+                else ("sweep" if variant.lower().startswith("sweep") else "base")
+            )
+
+            is_sweep = (
+                variant.lower().startswith("sweep")
+                or run_kind == "sweep"
+                or "-sweep" in run_id.lower()
+                or "_sweep" in run_id.lower()
+            )
+            if is_sweep:
+                n_sweep_filtered += 1
+                continue
+
+            if domain == "vsmec" and backbone_key in ("phobert", "visobert"):
+                group_key = f"vsmec_{backbone_key}"
+            elif domain == "neuesc" and backbone_key in ("phobert", "visobert"):
+                group_key = f"neu3_{backbone_key}"
+            else:
+                group_key = "unknown"
+
+            seed_val = int(row["seed"]) if "seed" in cols and pd.notna(row.get("seed")) else -1
+            data_hash = (
+                str(row["data_hash"]).strip()
+                if "data_hash" in cols and pd.notna(row.get("data_hash"))
+                else ""
+            )
+            code_version = (
+                str(row["code_version"]).strip()
+                if "code_version" in cols and pd.notna(row.get("code_version"))
+                else ""
+            )
+
+            f1_dict: Dict[str, Optional[float]] = {}
+            for c in (*f1_cols_7, *f1_cols_3):
+                f1_dict[c] = _safe_float(row.get(c)) if c in cols else None
+
+            if (
+                f1_dict["f1_neg"] is None
+                and "f1_per_class" in cols
+                and pd.notna(row.get("f1_per_class"))
+            ):
+                try:
+                    parsed = json.loads(str(row["f1_per_class"]))
+                    if isinstance(parsed, list) and len(parsed) == 3:
+                        f1_dict["f1_neg"] = float(parsed[0])
+                        f1_dict["f1_neu"] = float(parsed[1])
+                        f1_dict["f1_pos"] = float(parsed[2])
+                except Exception:
+                    pass
+
+            base_rec: Dict[str, Any] = {
+                "run_id": run_id,
+                "domain": domain,
+                "backbone_key": backbone_key,
+                "group_key": group_key,
+                "seed": seed_val,
+                "variant": variant,
+                "run_kind": run_kind,
+                "macro_f1": _safe_float(row.get("macro_f1")),
+                "data_hash": data_hash,
+                "code_version": code_version,
+                "ckpt_path": str(row.get("ckpt_path", "")).strip() if "ckpt_path" in cols and pd.notna(row.get("ckpt_path")) else "",
+                "source_file": csv_path.as_posix(),
+                **f1_dict,
+            }
+
+            if has_split_col and pd.notna(row.get("split")) and str(row.get("split")).strip():
+                sp = _normalize_split_tag(row["split"])
+                normalized_rows.append({**base_rec, "split": sp})
+            else:
+                # Classic STAGE1_COLUMNS has 1 row per run_id (dev metrics), with optional sidecar for test
+                normalized_rows.append({**base_rec, "split": "dev"})
+                sidecar = _find_stage1_sidecar(csv_path, run_id)
+                if sidecar and isinstance(sidecar.get("report_only"), dict):
+                    test_f1 = _safe_float(sidecar["report_only"].get("test_macro_f1"))
+                    if test_f1 is not None:
+                        normalized_rows.append(
+                            {**base_rec, "split": "test", "macro_f1": test_f1}
+                        )
+
+    if not normalized_rows:
+        return {
+            "files": [p.as_posix() for p in paths],
+            "df": pd.DataFrame(),
+            "n_raw_rows": n_raw_rows,
+            "n_sweep_filtered": n_sweep_filtered,
+            "n_duplicates_dropped": 0,
+        }
+
+    out_df = pd.DataFrame(normalized_rows)
+    before_dedup = len(out_df)
+    out_df = out_df.drop_duplicates(subset=["run_id", "split"], keep="last").reset_index(
+        drop=True
+    )
+    n_dups_dropped = before_dedup - len(out_df)
+
+    return {
+        "files": [p.as_posix() for p in paths],
+        "df": out_df,
+        "n_raw_rows": n_raw_rows,
+        "n_sweep_filtered": n_sweep_filtered,
+        "n_duplicates_dropped": n_dups_dropped,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Group A: Cấu trúc (BLOCKER)
 # ---------------------------------------------------------------------------
 def check_group_a(
@@ -173,7 +544,6 @@ def check_group_a(
     vsmec_dfs: Dict[str, pd.DataFrame] = {}
     neuesc_df: Optional[pd.DataFrame] = None
 
-    # A1: File existence, UTF-8 readability, expected columns
     a1_errors: List[str] = []
     expected_vsmec_cols = tuple(SPLIT_COLUMNS)
     expected_neuesc_cols = ("id", "text", "label", "subset", "text_seg")
@@ -234,9 +604,7 @@ def check_group_a(
                 a1_errors.append(f"Lỗi đọc {fname}: {exc}")
 
     if a1_errors:
-        results.append(
-            CheckResult("A1", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(a1_errors))
-        )
+        results.append(CheckResult("A1", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(a1_errors)))
     else:
         results.append(
             CheckResult(
@@ -283,9 +651,7 @@ def check_group_a(
         a2_errors.append("Không thể kiểm tra A2 do thiếu dữ liệu ở A1")
 
     if a2_errors:
-        results.append(
-            CheckResult("A2", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(a2_errors))
-        )
+        results.append(CheckResult("A2", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(a2_errors)))
     else:
         results.append(
             CheckResult(
@@ -314,9 +680,7 @@ def check_group_a(
         a3_errors.append("Thiếu dữ liệu để đếm split")
 
     if a3_errors:
-        results.append(
-            CheckResult("A3", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(a3_errors))
-        )
+        results.append(CheckResult("A3", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(a3_errors)))
     else:
         results.append(
             CheckResult(
@@ -372,7 +736,6 @@ def check_group_a(
 def check_group_b(neuesc_df: Optional[pd.DataFrame]) -> List[CheckResult]:
     results: List[CheckResult] = []
 
-    # B1: Hardcoded HARD_MERGE_RULE & HARD_MERGE_GROUPS check
     expected_rule = {0: 2, 1: 0, 2: 0, 3: 0, 4: 0, 5: 1, 6: 1}
     expected_groups = {0: (1, 2, 3, 4), 1: (5, 6), 2: (0,)}
     b1_ok = (
@@ -400,7 +763,6 @@ def check_group_b(neuesc_df: Optional[pd.DataFrame]) -> List[CheckResult]:
             )
         )
 
-    # B2: 7->3 probability sum check
     fake_probs7 = np.array(
         [
             [0.20, 0.10, 0.05, 0.15, 0.10, 0.25, 0.15],
@@ -410,8 +772,8 @@ def check_group_b(neuesc_df: Optional[pd.DataFrame]) -> List[CheckResult]:
     )
     expected_probs3 = np.array(
         [
-            [0.10 + 0.05 + 0.15 + 0.10, 0.25 + 0.15, 0.20],  # [0.40, 0.40, 0.20]
-            [0.02 + 0.03 + 0.05 + 0.05, 0.05 + 0.10, 0.70],  # [0.15, 0.15, 0.70]
+            [0.40, 0.40, 0.20],
+            [0.15, 0.15, 0.70],
         ],
         dtype=np.float64,
     )
@@ -440,7 +802,6 @@ def check_group_b(neuesc_df: Optional[pd.DataFrame]) -> List[CheckResult]:
             )
         )
 
-    # B3: NEUESC_ORIG_TO_LABEL3 & actual label counts
     expected_neuesc_map = {0: 1, 1: 2, 2: 0, 3: 0}
     if dict(NEUESC_ORIG_TO_LABEL3) != expected_neuesc_map:
         results.append(
@@ -457,14 +818,14 @@ def check_group_b(neuesc_df: Optional[pd.DataFrame]) -> List[CheckResult]:
         )
     else:
         vc = neuesc_df["label"].value_counts().reindex([0, 1, 2], fill_value=0).to_dict()
-        counts_Map = {int(k): int(v) for k, v in vc.items()}
+        counts_map = {int(k): int(v) for k, v in vc.items()}
         results.append(
             CheckResult(
                 "B3",
                 LEVEL_BLOCKER,
                 STATUS_PASS,
-                f"NEUESC_ORIG_TO_LABEL3 khớp (toxic 3->neg 0); phân bố thực: neg={counts_Map[0]}, neu={counts_Map[1]}, pos={counts_Map[2]}",
-                metrics={"neuesc_total_label_counts": counts_Map},
+                f"NEUESC_ORIG_TO_LABEL3 khớp (toxic 3->neg 0); phân bố thực: neg={counts_map[0]}, neu={counts_map[1]}, pos={counts_map[2]}",
+                metrics={"neuesc_total_label_counts": counts_map},
             )
         )
 
@@ -487,10 +848,7 @@ def check_group_c(
             )
         return results
 
-    datasets: Dict[str, Dict[str, pd.DataFrame]] = {
-        "vsmec": {},
-        "neuesc": {},
-    }
+    datasets: Dict[str, Dict[str, pd.DataFrame]] = {"vsmec": {}, "neuesc": {}}
     for sp in VSMEC_SPLITS:
         df = vsmec_dfs[sp].copy()
         df["norm_text"] = [normalize_text(str(t)) for t in df["text"]]
@@ -502,7 +860,7 @@ def check_group_c(
         df["text_hash"] = [hash_text(nt, normalize=False) for nt in df["norm_text"]]
         datasets["neuesc"][sp] = df
 
-    # C1: Internal duplicates within each split
+    # C1
     c1_violations: List[Dict[str, Any]] = []
     for ds_name, splits_map in datasets.items():
         for sp, df in splits_map.items():
@@ -549,7 +907,7 @@ def check_group_c(
             )
         )
 
-    # C2: Label conflicts within split and across splits of the same dataset
+    # C2
     c2_violations: List[Dict[str, Any]] = []
     for ds_name, splits_map in datasets.items():
         combined = pd.concat(
@@ -598,7 +956,7 @@ def check_group_c(
             )
         )
 
-    # C3: Cross-split leakage within each dataset
+    # C3
     c3_violations: List[Dict[str, Any]] = []
     for ds_name, splits_map in datasets.items():
         for sp_a, sp_b in (("train", "dev"), ("train", "test"), ("dev", "test")):
@@ -654,8 +1012,20 @@ def check_group_c(
 
 
 # ---------------------------------------------------------------------------
-# Group D: Trùng chéo miền (BLOCKER / INFO / WARN)
+# Group D: Trùng chéo miền (BLOCKER / INFO / WARN + Sensitivity CSV)
 # ---------------------------------------------------------------------------
+def _describe_vsmec_label(label_7: int) -> Tuple[str, int, str]:
+    orig_name = ID_TO_EMOTION7[int(label_7)]
+    lbl3 = HARD_MERGE_RULE[int(label_7)]
+    return orig_name, int(lbl3), ID_TO_LABEL3[int(lbl3)]
+
+
+def _describe_neuesc_label(label_3: int) -> Tuple[str, int, str]:
+    lbl3 = int(label_3)
+    name = ID_TO_LABEL3[lbl3]
+    return name, lbl3, name
+
+
 def check_group_d(
     vsmec_dfs: Dict[str, pd.DataFrame],
     neuesc_df: Optional[pd.DataFrame],
@@ -687,7 +1057,7 @@ def check_group_d(
         df["strong_norm"] = [strong_normalize_text(str(t)) for t in df["text"]]
         n_splits[sp] = df
 
-    # D1: vsmec_test vs neuesc_{train,dev,test}
+    # D1
     d1_violations: List[Dict[str, Any]] = []
     v_test = v_splits["test"]
     for n_sp, n_df in n_splits.items():
@@ -746,7 +1116,7 @@ def check_group_d(
             )
         )
 
-    # D2: neuesc_test vs vsmec_{train,dev,test}
+    # D2
     d2_violations: List[Dict[str, Any]] = []
     n_test = n_splits["test"]
     for v_sp, v_df in v_splits.items():
@@ -804,36 +1174,28 @@ def check_group_d(
             )
         )
 
-    # D3: 3 x 2 x 2 directional table + full 3 x 3 cross-domain table
+    # D3
     d3_table: List[Dict[str, Any]] = []
     for n_sp in NEUESC_SPLITS:
-        inter = set(v_splits["test"]["text_hash"]) & set(n_splits[n_sp]["text_hash"])
+        inter = set(v_test["text_hash"]) & set(n_splits[n_sp]["text_hash"])
         d3_table.append(
             {
                 "test_split": "vsmec_test",
                 "other_split": f"neuesc_{n_sp}",
                 "unique_overlap_hashes": len(inter),
-                "dir_test_to_other_rows": int(
-                    v_splits["test"]["text_hash"].isin(inter).sum()
-                ),
-                "dir_other_to_test_rows": int(
-                    n_splits[n_sp]["text_hash"].isin(inter).sum()
-                ),
+                "dir_test_to_other_rows": int(v_test["text_hash"].isin(inter).sum()),
+                "dir_other_to_test_rows": int(n_splits[n_sp]["text_hash"].isin(inter).sum()),
             }
         )
     for v_sp in VSMEC_SPLITS:
-        inter = set(n_splits["test"]["text_hash"]) & set(v_splits[v_sp]["text_hash"])
+        inter = set(n_test["text_hash"]) & set(v_splits[v_sp]["text_hash"])
         d3_table.append(
             {
                 "test_split": "neuesc_test",
                 "other_split": f"vsmec_{v_sp}",
                 "unique_overlap_hashes": len(inter),
-                "dir_test_to_other_rows": int(
-                    n_splits["test"]["text_hash"].isin(inter).sum()
-                ),
-                "dir_other_to_test_rows": int(
-                    v_splits[v_sp]["text_hash"].isin(inter).sum()
-                ),
+                "dir_test_to_other_rows": int(n_test["text_hash"].isin(inter).sum()),
+                "dir_other_to_test_rows": int(v_splits[v_sp]["text_hash"].isin(inter).sum()),
             }
         )
 
@@ -854,85 +1216,163 @@ def check_group_d(
         )
     )
 
-    # D4: Stronger normalization near-duplicates
+    # D4: Stronger normalization near-duplicates + sensitivity exclude IDs CSV
     d4_violations: List[Dict[str, Any]] = []
     exact_d1_ids = {int(r["id"]) for r in d1_violations}
     exact_d2_ids = {int(r["id"]) for r in d2_violations}
 
     for n_sp, n_df in n_splits.items():
-        n_sn_map = (
-            n_df[n_df["strong_norm"] != ""]
-            .groupby("strong_norm")["id"]
-            .apply(list)
-            .to_dict()
-        )
+        n_by_sn: Dict[str, pd.DataFrame] = {
+            sn: grp for sn, grp in n_df[n_df["strong_norm"] != ""].groupby("strong_norm", sort=False)
+        }
         for _, row in v_test.iterrows():
             sn = str(row["strong_norm"])
             rid = int(row["id"])
-            if sn and sn in n_sn_map and rid not in exact_d1_ids:
+            if sn and sn in n_by_sn and rid not in exact_d1_ids:
+                m_grp = n_by_sn[sn]
+                m_ids = [int(x) for x in m_grp["id"].tolist()]
+                m_labels = [int(x) for x in m_grp["label"].tolist()]
+                m_texts = [str(x) for x in m_grp["text"].tolist()]
+                src_orig_name, src_3c, src_3c_name = _describe_vsmec_label(int(row["label"]))
+                m_orig_name, m_3c, m_3c_name = _describe_neuesc_label(m_labels[0])
                 d4_violations.append(
                     {
                         "source_split": "vsmec_test",
                         "id": rid,
-                        "label": int(row["label"]),
+                        "orig_label": int(row["label"]),
+                        "orig_label_name": src_orig_name,
+                        "mapped_3class_label": src_3c,
+                        "mapped_3class_name": src_3c_name,
                         "matched_split": f"neuesc_{n_sp}",
-                        "matched_ids": json.dumps(n_sn_map[sn]),
+                        "matched_ids": json.dumps(m_ids),
+                        "matched_orig_label": m_labels[0],
+                        "matched_orig_label_name": m_orig_name,
+                        "matched_3class_label": m_3c,
+                        "matched_3class_name": m_3c_name,
+                        "label_3class_match": bool(src_3c == m_3c),
                         "strong_norm": sn,
                         "orig_text": str(row["text"]),
+                        "matched_text": m_texts[0],
                     }
                 )
 
     for v_sp, v_df in v_splits.items():
-        v_sn_map = (
-            v_df[v_df["strong_norm"] != ""]
-            .groupby("strong_norm")["id"]
-            .apply(list)
-            .to_dict()
-        )
+        v_by_sn: Dict[str, pd.DataFrame] = {
+            sn: grp for sn, grp in v_df[v_df["strong_norm"] != ""].groupby("strong_norm", sort=False)
+        }
         for _, row in n_test.iterrows():
             sn = str(row["strong_norm"])
             rid = int(row["id"])
-            if sn and sn in v_sn_map and rid not in exact_d2_ids:
+            if sn and sn in v_by_sn and rid not in exact_d2_ids:
+                m_grp = v_by_sn[sn]
+                m_ids = [int(x) for x in m_grp["id"].tolist()]
+                m_labels = [int(x) for x in m_grp["label"].tolist()]
+                m_texts = [str(x) for x in m_grp["text"].tolist()]
+                src_orig_name, src_3c, src_3c_name = _describe_neuesc_label(int(row["label"]))
+                m_orig_name, m_3c, m_3c_name = _describe_vsmec_label(m_labels[0])
                 d4_violations.append(
                     {
                         "source_split": "neuesc_test",
                         "id": rid,
-                        "label": int(row["label"]),
+                        "orig_label": int(row["label"]),
+                        "orig_label_name": src_orig_name,
+                        "mapped_3class_label": src_3c,
+                        "mapped_3class_name": src_3c_name,
                         "matched_split": f"vsmec_{v_sp}",
-                        "matched_ids": json.dumps(v_sn_map[sn]),
+                        "matched_ids": json.dumps(m_ids),
+                        "matched_orig_label": m_labels[0],
+                        "matched_orig_label_name": m_orig_name,
+                        "matched_3class_label": m_3c,
+                        "matched_3class_name": m_3c_name,
+                        "label_3class_match": bool(src_3c == m_3c),
                         "strong_norm": sn,
                         "orig_text": str(row["text"]),
+                        "matched_text": m_texts[0],
                     }
                 )
 
-    pd.DataFrame(
-        d4_violations,
-        columns=[
-            "source_split",
-            "id",
-            "label",
-            "matched_split",
-            "matched_ids",
-            "strong_norm",
-            "orig_text",
-        ],
-    ).to_csv(
+    d4_cols = [
+        "source_split",
+        "id",
+        "orig_label",
+        "orig_label_name",
+        "mapped_3class_label",
+        "mapped_3class_name",
+        "matched_split",
+        "matched_ids",
+        "matched_orig_label",
+        "matched_orig_label_name",
+        "matched_3class_label",
+        "matched_3class_name",
+        "label_3class_match",
+        "strong_norm",
+        "orig_text",
+        "matched_text",
+    ]
+    pd.DataFrame(d4_violations, columns=d4_cols).to_csv(
         reports_dir / "violations_D4_near_duplicates.csv",
         index=False,
         encoding="utf-8",
         lineterminator="\n",
     )
 
+    sens_rows: List[Dict[str, Any]] = []
+    seen_sens: set[Tuple[str, int]] = set()
+    for nd in d4_violations:
+        key = (str(nd["source_split"]), int(nd["id"]))
+        if key not in seen_sens:
+            seen_sens.add(key)
+            sens_rows.append(
+                {
+                    "id": int(nd["id"]),
+                    "dataset": str(nd["source_split"]),
+                    "reason": (
+                        f"D4 near-duplicate với {nd['matched_split']} id={nd['matched_ids']} "
+                        f"(strong_norm='{nd['strong_norm']}', "
+                        f"nhãn gốc={nd['orig_label_name']}->{nd['mapped_3class_name']}, "
+                        f"đối chiếu={nd['matched_orig_label_name']}->{nd['matched_3class_name']}, "
+                        f"khớp_3_nhãn={nd['label_3class_match']})"
+                    ),
+                }
+            )
+    pd.DataFrame(sens_rows, columns=["id", "dataset", "reason"]).to_csv(
+        reports_dir / "sensitivity_exclude_ids.csv",
+        index=False,
+        encoding="utf-8",
+        lineterminator="\n",
+    )
+
+    n_v_affected = sum(1 for ds, _ in seen_sens if ds == "vsmec_test")
+    n_n_affected = sum(1 for ds, _ in seen_sens if ds == "neuesc_test")
+    v_total = int(len(v_test))
+    n_total = int(len(n_test))
+    impact = {
+        "vsmec_test_affected": n_v_affected,
+        "vsmec_test_total": v_total,
+        "vsmec_test_rate": n_v_affected / max(1, v_total),
+        "neuesc_test_affected": n_n_affected,
+        "neuesc_test_total": n_total,
+        "neuesc_test_rate": n_n_affected / max(1, n_total),
+    }
+
     if d4_violations:
+        pair_descs = [
+            (
+                f"{nd['source_split']} id={nd['id']} ({nd['orig_label_name']}→{nd['mapped_3class_name']}) ↔ "
+                f"{nd['matched_split']} id={nd['matched_ids']} ({nd['matched_orig_label_name']}→{nd['matched_3class_name']}, "
+                f"khớp={nd['label_3class_match']})"
+            )
+            for nd in d4_violations
+        ]
         results.append(
             CheckResult(
                 "D4",
                 LEVEL_WARN,
                 STATUS_FAIL,
-                f"Phát hiện {len(d4_violations)} câu test trùng gần khi bỏ dấu câu/emoji "
-                f"(vsmec_test id=6311 ↔ neuesc_dev id=25960; neuesc_test id=28482 ↔ vsmec_train id=3607; "
-                f"xem violations_D4_near_duplicates.csv)",
-                metrics={"near_duplicates": d4_violations},
+                f"Giữ dữ liệu đóng băng; {len(d4_violations)} cặp trùng gần: {'; '.join(pair_descs)}. "
+                f"Ảnh hưởng độ nhạy: vsmec_test {n_v_affected}/{v_total} ({impact['vsmec_test_rate']*100:.4f}%), "
+                f"neuesc_test {n_n_affected}/{n_total} ({impact['neuesc_test_rate']*100:.4f}%) — đã xuất sensitivity_exclude_ids.csv",
+                metrics={"near_duplicates": d4_violations, "impact": impact},
             )
         )
     else:
@@ -942,7 +1382,7 @@ def check_group_d(
                 LEVEL_WARN,
                 STATUS_PASS,
                 "0 câu test trùng gần tăng thêm so với D1/D2",
-                metrics={"near_duplicates": []},
+                metrics={"near_duplicates": [], "impact": impact},
             )
         )
 
@@ -952,30 +1392,29 @@ def check_group_d(
 # ---------------------------------------------------------------------------
 # Group E: VSMEC-strict (BLOCKER when file provided; MISSING when null)
 # ---------------------------------------------------------------------------
-def check_group_e(
-    cfg: Dict[str, Any],
-    vsmec_dfs: Dict[str, pd.DataFrame],
-) -> List[CheckResult]:
-    strict_file = cfg.get("vsmec_strict_file")
-    if not strict_file:
-        msg_missing = (
-            "vsmec_strict_file=null trong configs/step2_data.yaml. "
-            "Cần người phụ trách cung cấp đường dẫn & định dạng file gán nhãn tay VSMEC-strict trên vsmec_test "
-            "(lưu ý: polarity_{nhat,long,key}.csv hiện có trong data/clean/ được lấy mẫu từ vsmec_train cho W_trans ở CV-P3)"
-        )
-        return [
-            CheckResult("E1", LEVEL_BLOCKER, STATUS_MISSING, msg_missing),
-            CheckResult("E2", LEVEL_BLOCKER, STATUS_MISSING, msg_missing),
-            CheckResult(
-                "E3",
-                LEVEL_BLOCKER,
-                STATUS_MISSING,
-                "vsmec_strict_file=null và chưa có tài liệu quy tắc dựng tập VSMEC-strict trong docs/",
-            ),
-        ]
+def _parse_annotator_label(val: Any) -> Optional[int]:
+    if pd.isna(val):
+        return None
+    if isinstance(val, (int, np.integer)):
+        iv = int(val)
+        return iv if iv in (0, 1, 2) else None
+    if isinstance(val, (float, np.floating)):
+        if math.isnan(float(val)):
+            return None
+        iv = int(val)
+        return iv if float(val) == float(iv) and iv in (0, 1, 2) else None
+    s = str(val).strip().lower()
+    if s in _ANNOTATOR_STR_MAP:
+        return _ANNOTATOR_STR_MAP[s]
+    return None
 
-    results: List[CheckResult] = []
-    strict_path = Path(strict_file)
+
+def validate_vsmec_strict_file(
+    strict_path: Path,
+    vsmec_test_df: pd.DataFrame,
+    has_rule: bool = False,
+) -> List[CheckResult]:
+    """Validate a candidate `VSMEC-strict` CSV against `vsmec_test` (E1, E2, E3)."""
     if not strict_path.is_file():
         err = f"File vsmec_strict_file không tồn tại: {strict_path.as_posix()}"
         return [
@@ -984,37 +1423,54 @@ def check_group_e(
             CheckResult("E3", LEVEL_BLOCKER, STATUS_FAIL, err),
         ]
 
-    df_strict = pd.read_csv(strict_path, encoding="utf-8")
-    v_test_ids = set(vsmec_dfs["test"]["id"].astype(int).tolist()) if "test" in vsmec_dfs else set()
+    try:
+        df_strict = pd.read_csv(strict_path, encoding="utf-8")
+    except Exception as exc:
+        err = f"Lỗi đọc {strict_path.as_posix()}: {exc}"
+        return [
+            CheckResult("E1", LEVEL_BLOCKER, STATUS_FAIL, err),
+            CheckResult("E2", LEVEL_BLOCKER, STATUS_FAIL, err),
+            CheckResult("E3", LEVEL_BLOCKER, STATUS_FAIL, err),
+        ]
 
-    # E1
-    e1_errors: List[str] = []
-    if "id" not in df_strict.columns:
-        e1_errors.append("Thiếu cột id")
-    else:
-        if df_strict["id"].isna().any() or df_strict["id"].duplicated().any():
-            e1_errors.append("id có NaN hoặc trùng lặp")
-        strict_ids = set(df_strict["id"].dropna().astype(int).tolist())
-        not_in_test = sorted(strict_ids - v_test_ids)
-        if not_in_test:
-            e1_errors.append(
-                f"{len(not_in_test)} id không thuộc vsmec_test (ví dụ: {not_in_test[:5]})"
-            )
+    v_test_ids = set(vsmec_test_df["id"].astype(int).tolist())
 
     annot_cols = [
         c
         for c in df_strict.columns
-        if c.startswith("label_") or c.startswith("annotator") or c in ("nhat", "long", "polarity_label")
+        if c.startswith("annotator")
+        or (c.startswith("label_") and c not in ("label_orig", "label_vsmec"))
+        or c in ("nhat", "long", "polarity_nhat", "polarity_long")
     ]
+
+    e1_errors: List[str] = []
+    if "id" not in df_strict.columns:
+        e1_errors.append("Thiếu cột id")
+    else:
+        if df_strict["id"].isna().any():
+            e1_errors.append("Cột id có giá trị NaN")
+        elif df_strict["id"].duplicated().any():
+            e1_errors.append("Cột id bị trùng lặp")
+        else:
+            strict_ids = set(df_strict["id"].astype(int).tolist())
+            not_in_test = sorted(strict_ids - v_test_ids)
+            if not_in_test:
+                e1_errors.append(
+                    f"{len(not_in_test)} id không thuộc vsmec_test (ví dụ: {not_in_test[:5]})"
+                )
+
+    parsed_cols: Dict[str, List[int]] = {}
     if not annot_cols:
-        e1_errors.append("Không tìm thấy cột nhãn gán tay")
+        e1_errors.append("Không tìm thấy cột nhãn của người gán (ví dụ annotator_1, annotator_2)")
     else:
         for col in annot_cols:
-            if df_strict[col].isna().any() or not set(
-                df_strict[col].dropna().astype(int).unique()
-            ).issubset({0, 1, 2}):
-                e1_errors.append(f"Cột {col} có nhãn ngoài {{0,1,2}}")
+            vals = [_parse_annotator_label(v) for v in df_strict[col].tolist()]
+            if any(v is None for v in vals):
+                e1_errors.append(f"Cột {col} có nhãn rỗng/NaN hoặc ngoài {{0,1,2}}")
+            else:
+                parsed_cols[col] = [int(v) for v in vals if v is not None]
 
+    results: List[CheckResult] = []
     if e1_errors:
         results.append(CheckResult("E1", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(e1_errors)))
     else:
@@ -1024,44 +1480,50 @@ def check_group_e(
                 LEVEL_BLOCKER,
                 STATUS_PASS,
                 f"Đọc được {len(df_strict)} dòng, tất cả id thuộc vsmec_test, nhãn hợp lệ",
+                metrics={"n": int(len(df_strict)), "annotator_cols": annot_cols},
             )
         )
 
     # E2: 2 annotators & Cohen's kappa
-    if len(annot_cols) < 2:
+    if len(parsed_cols) < 2:
         results.append(
             CheckResult(
                 "E2",
                 LEVEL_BLOCKER,
                 STATUS_FAIL,
-                f"Cần nhãn của đủ 2 người gán để tính Cohen's kappa, chỉ thấy {annot_cols}",
+                f"Cần nhãn hợp lệ của đủ 2 người gán để tính Cohen's kappa, chỉ thấy {list(parsed_cols.keys())}",
             )
         )
     else:
         c1, c2 = annot_cols[0], annot_cols[1]
-        a = df_strict[c1].astype(int).tolist()
-        b = df_strict[c2].astype(int).tolist()
+        a, b = parsed_cols[c1], parsed_cols[c2]
         po, pe, kappa = compute_po_and_kappa(a, b)
-        warn_note = " (WARN: kappa < 0.6)" if (not math.isnan(kappa) and kappa < 0.6) else ""
+        kappa_warn = bool(not math.isnan(kappa) and kappa < 0.60)
+        warn_note = " (WARN: kappa < 0.60)" if kappa_warn else ""
         results.append(
             CheckResult(
                 "E2",
                 LEVEL_BLOCKER,
                 STATUS_PASS,
                 f"n={len(a)}, po={po:.4f}, Cohen's kappa={kappa:.4f}{warn_note}",
-                metrics={"n": len(a), "po": po, "pe": pe, "kappa": kappa},
+                metrics={
+                    "n": len(a),
+                    "po": float(po),
+                    "pe": float(pe),
+                    "kappa": float(kappa),
+                    "kappa_warn": kappa_warn,
+                },
             )
         )
 
-    # E3: Strict subset rule in docs
-    rule_doc = Path("docs/vsmec_strict_rule.md")
-    if not rule_doc.is_file():
+    # E3: Strict construction rule documentation
+    if not has_rule:
         results.append(
             CheckResult(
                 "E3",
                 LEVEL_BLOCKER,
                 STATUS_MISSING,
-                "Chưa có tài liệu quy tắc dựng tập VSMEC-strict (docs/vsmec_strict_rule.md); cần người phụ trách cung cấp",
+                "Chưa có tài liệu quy tắc dựng VSMEC-strict (docs/vsmec_strict_rule.md); cần người phụ trách xác nhận (bỏ Surprise/Other hay gán nhãn tay lại)",
             )
         )
     elif len(df_strict) == 0:
@@ -1075,43 +1537,74 @@ def check_group_e(
                 LEVEL_BLOCKER,
                 STATUS_PASS,
                 f"Tập VSMEC-strict có {len(df_strict)} mẫu và có tài liệu quy tắc",
+                metrics={"n": int(len(df_strict))},
             )
         )
 
     return results
 
 
+def check_group_e(
+    cfg: Dict[str, Any],
+    vsmec_dfs: Dict[str, pd.DataFrame],
+) -> List[CheckResult]:
+    strict_file = cfg.get("vsmec_strict_file")
+    if not strict_file:
+        msg_missing = (
+            "vsmec_strict_file=null trong configs/step2_data.yaml. "
+            "Chưa có file VSMEC-strict trên vsmec_test (các file polarity_{nhat,long,key}.csv cũ lấy từ vsmec_train cho CV-P3 nên KHÔNG dùng được). "
+            "Cần người phụ trách cung cấp file gán nhãn tay hoặc quyết định quy tắc strict"
+        )
+        return [
+            CheckResult("E1", LEVEL_BLOCKER, STATUS_MISSING, msg_missing),
+            CheckResult("E2", LEVEL_BLOCKER, STATUS_MISSING, msg_missing),
+            CheckResult(
+                "E3",
+                LEVEL_BLOCKER,
+                STATUS_MISSING,
+                "Chưa chốt quy tắc VSMEC-strict (bỏ các câu Surprise/Other hay gán lại bằng nhãn tay) và chưa có docs/vsmec_strict_rule.md",
+            ),
+        ]
+
+    if "test" not in vsmec_dfs:
+        err = "Thiếu vsmec_test để đối chiếu id"
+        return [
+            CheckResult("E1", LEVEL_BLOCKER, STATUS_FAIL, err),
+            CheckResult("E2", LEVEL_BLOCKER, STATUS_FAIL, err),
+            CheckResult("E3", LEVEL_BLOCKER, STATUS_FAIL, err),
+        ]
+
+    has_rule = Path("docs/vsmec_strict_rule.md").is_file() or bool(cfg.get("vsmec_strict_rule"))
+    return validate_vsmec_strict_file(
+        strict_path=Path(str(strict_file)),
+        vsmec_test_df=vsmec_dfs["test"],
+        has_rule=has_rule,
+    )
+
+
 # ---------------------------------------------------------------------------
-# Group F: Nhất quán với checkpoint đã train (BLOCKER)
+# Group F: Mã băm dữ liệu & MANIFEST (F1, F2, F2b, F3)
 # ---------------------------------------------------------------------------
 def check_group_f(
+    cfg: Dict[str, Any],
     clean_dir: Path,
     neuesc_file: Path,
-    results_dir: Path,
+    loaded_results: Dict[str, Any],
 ) -> List[CheckResult]:
     results: List[CheckResult] = []
     vsmec_hash = compute_vsmec_data_hash(clean_dir)
     neuesc_hash = compute_neuesc_data_hash(neuesc_file)
+    res_df: pd.DataFrame = loaded_results["df"]
 
-    stage1_csv = results_dir / "stage1.csv"
-    neu3_csv = results_dir / "neu3.csv"
-
-    # F1: Data hash matches results/stage1.csv & results/neu3.csv
-    missing_res: List[str] = []
-    if not stage1_csv.is_file():
-        missing_res.append(stage1_csv.as_posix())
-    if not neu3_csv.is_file():
-        missing_res.append(neu3_csv.as_posix())
-
-    if missing_res:
+    # F1: data_hash matches computed hashes for VSMEC & NEU-ESC
+    if res_df.empty:
         results.append(
             CheckResult(
                 "F1",
                 LEVEL_BLOCKER,
                 STATUS_MISSING,
-                f"Chưa có file kết quả Bước 1 tại {', '.join(missing_res)} trên nhánh hiện tại "
-                f"(hash hiện tại: vsmec_data_hash={vsmec_hash[:12]}..., neuesc_data_hash={neuesc_hash[:12]}...); "
-                f"cần người phụ trách đồng bộ results/stage1.csv và results/neu3.csv từ Drive",
+                f"Chưa có CSV kết quả Bước 1 trong reports/step2/inputs/ hoặc qua --results-file "
+                f"(hash hiện tại: vsmec_data_hash={vsmec_hash[:12]}..., neuesc_data_hash={neuesc_hash[:12]}...)",
                 metrics={
                     "current_vsmec_data_hash": vsmec_hash,
                     "current_neuesc_data_hash": neuesc_hash,
@@ -1119,18 +1612,51 @@ def check_group_f(
             )
         )
     else:
-        df_s1 = pd.read_csv(stage1_csv, encoding="utf-8")
-        df_n3 = pd.read_csv(neu3_csv, encoding="utf-8")
-        s1_hashes = set(df_s1["data_hash"].dropna().astype(str).unique())
-        n3_hashes = set(df_n3["data_hash"].dropna().astype(str).unique())
         f1_errs: List[str] = []
-        if s1_hashes != {vsmec_hash}:
-            f1_errs.append(f"stage1.csv data_hash={sorted(s1_hashes)} != {vsmec_hash}")
-        if n3_hashes != {neuesc_hash}:
-            f1_errs.append(f"neu3.csv data_hash={sorted(n3_hashes)} != {neuesc_hash}")
+        missing_groups: List[str] = []
+        for grp in GROUP_ORDER:
+            sub = res_df[res_df["group_key"] == grp]
+            if sub.empty:
+                missing_groups.append(GROUP_LABELS[grp])
+                continue
+            expected_h = vsmec_hash if grp.startswith("vsmec") else neuesc_hash
+            actual_hashes = sorted(
+                h for h in sub["data_hash"].dropna().astype(str).unique().tolist() if h
+            )
+            if not actual_hashes:
+                f1_errs.append(f"{GROUP_LABELS[grp]} thiếu cột/giá trị data_hash")
+            elif set(actual_hashes) != {expected_h}:
+                f1_errs.append(
+                    f"{GROUP_LABELS[grp]} lệch data_hash ({[x[:10] for x in actual_hashes]} != {expected_h[:10]})"
+                )
+
         if f1_errs:
             results.append(
-                CheckResult("F1", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(f1_errs))
+                CheckResult(
+                    "F1",
+                    LEVEL_BLOCKER,
+                    STATUS_FAIL,
+                    "; ".join(f1_errs),
+                    metrics={
+                        "current_vsmec_data_hash": vsmec_hash,
+                        "current_neuesc_data_hash": neuesc_hash,
+                        "missing_groups": missing_groups,
+                    },
+                )
+            )
+        elif missing_groups:
+            results.append(
+                CheckResult(
+                    "F1",
+                    LEVEL_BLOCKER,
+                    STATUS_MISSING,
+                    f"Các nhóm đã nạp khớp hash, còn thiếu dữ liệu của: {', '.join(missing_groups)}",
+                    metrics={
+                        "current_vsmec_data_hash": vsmec_hash,
+                        "current_neuesc_data_hash": neuesc_hash,
+                        "missing_groups": missing_groups,
+                    },
+                )
             )
         else:
             results.append(
@@ -1138,7 +1664,7 @@ def check_group_f(
                     "F1",
                     LEVEL_BLOCKER,
                     STATUS_PASS,
-                    f"data_hash trong stage1.csv ({vsmec_hash[:10]}...) và neu3.csv ({neuesc_hash[:10]}...) khớp dữ liệu hiện tại",
+                    f"Toàn bộ 4 nhóm khớp data_hash hiện tại (vsmec={vsmec_hash[:10]}..., neuesc={neuesc_hash[:10]}...)",
                     metrics={
                         "current_vsmec_data_hash": vsmec_hash,
                         "current_neuesc_data_hash": neuesc_hash,
@@ -1146,39 +1672,48 @@ def check_group_f(
                 )
             )
 
-    # F2: MANIFEST.json matches actual SHA-256 of files in data/clean/
+    # F2 (BLOCKER): only verify hash of `step2_files` from config against MANIFEST.json
     manifest_path = clean_dir / "MANIFEST.json"
+    step2_files = [str(f) for f in (cfg.get("step2_files") or [])]
     if not manifest_path.is_file():
         results.append(
             CheckResult("F2", LEVEL_BLOCKER, STATUS_FAIL, "Thiếu data/clean/MANIFEST.json")
         )
+        manifest: Dict[str, str] = {}
+    elif not step2_files:
+        results.append(
+            CheckResult(
+                "F2",
+                LEVEL_BLOCKER,
+                STATUS_FAIL,
+                "Thiếu khóa step2_files trong configs/step2_data.yaml",
+            )
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     else:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        mismatches: List[str] = []
-        for fname, expected_sha in sorted(manifest.items()):
+        f2_mismatches: List[str] = []
+        for fname in step2_files:
             fp = clean_dir / fname
             if not fp.is_file():
-                mismatches.append(f"{fname} (không tồn tại)")
+                f2_mismatches.append(f"{fname} (không tồn tại)")
+            elif fname not in manifest:
+                f2_mismatches.append(f"{fname} (chưa có trong MANIFEST.json)")
             else:
                 actual_sha = sha256_file(fp)
-                if actual_sha != expected_sha:
-                    mismatches.append(
-                        f"{fname} (MANIFEST={expected_sha[:10]}... != thực tế={actual_sha[:10]}...)"
+                if actual_sha != manifest[fname]:
+                    f2_mismatches.append(
+                        f"{fname} (MANIFEST={manifest[fname][:10]}... != thực tế={actual_sha[:10]}...)"
                     )
-        unlisted_csvs = sorted(
-            p.name for p in clean_dir.glob("*.csv") if p.name not in manifest
-        )
-        if unlisted_csvs:
-            mismatches.append(f"CSV chưa có trong MANIFEST.json: {unlisted_csvs}")
 
-        if mismatches:
+        if f2_mismatches:
             results.append(
                 CheckResult(
                     "F2",
                     LEVEL_BLOCKER,
                     STATUS_FAIL,
-                    f"Lệch MANIFEST.json: {'; '.join(mismatches)}",
-                    metrics={"mismatches": mismatches},
+                    f"Lệch hash các file Step 2: {'; '.join(f2_mismatches)}",
+                    metrics={"step2_files": step2_files, "mismatches": f2_mismatches},
                 )
             )
         else:
@@ -1187,31 +1722,94 @@ def check_group_f(
                     "F2",
                     LEVEL_BLOCKER,
                     STATUS_PASS,
-                    f"Tất cả {len(manifest)} file trong MANIFEST.json khớp SHA-256 thực tế",
+                    f"Tất cả {len(step2_files)} file Bước 2 trong step2_files khớp SHA-256 trong MANIFEST.json",
+                    metrics={"step2_files": step2_files},
                 )
             )
 
-    # F3: Single data_hash and code_version per Step 1 result file
-    if missing_res:
+    # F2b (WARN): remaining artifacts in data/clean (polarity_*.csv, etc.)
+    step2_set = set(step2_files)
+    excluded_self = {"MANIFEST.json"}
+    remaining_names = sorted(
+        (
+            {
+                p.name
+                for p in clean_dir.iterdir()
+                if p.is_file() and p.name not in step2_set and p.name not in excluded_self
+            }
+            | {k for k in manifest.keys() if k not in step2_set and k not in excluded_self}
+        )
+    )
+    artifact_rows: List[Dict[str, str]] = []
+    any_f2b_diff = False
+    for fname in remaining_names:
+        fp = clean_dir / fname
+        actual_sha = sha256_file(fp) if fp.is_file() else "không tồn tại"
+        man_sha = str(manifest.get(fname, "không có"))
+        if actual_sha != man_sha:
+            any_f2b_diff = True
+            note = "không có trong MANIFEST" if man_sha == "không có" else "lệch MANIFEST"
+        else:
+            note = "khớp MANIFEST"
+        artifact_rows.append(
+            {
+                "file": fname,
+                "actual_sha256": actual_sha,
+                "manifest_sha256": man_sha,
+                "note": note,
+            }
+        )
+
+    summary_parts = [
+        f"{r['file']}: thực={r['actual_sha256'][:12]}..., MANIFEST={r['manifest_sha256'][:12] + '...' if r['manifest_sha256'] != 'không có' else 'không có'}"
+        for r in artifact_rows
+    ]
+    results.append(
+        CheckResult(
+            "F2b",
+            LEVEL_WARN,
+            STATUS_FAIL if any_f2b_diff else STATUS_PASS,
+            "Artifact cũ ngoài phạm vi Bước 2 (lệch MANIFEST đã biết, không dùng cho Bước 2): "
+            + "; ".join(summary_parts),
+            metrics={"artifacts": artifact_rows},
+        )
+    )
+
+    # F3: unique data_hash & unique code_version per Step 1 group
+    if res_df.empty:
         results.append(
             CheckResult(
                 "F3",
                 LEVEL_BLOCKER,
                 STATUS_MISSING,
-                f"Chưa có {', '.join(missing_res)} để kiểm tra tính duy nhất của data_hash và code_version",
+                "Chưa có kết quả Bước 1 để kiểm tra tính duy nhất của data_hash và code_version",
             )
         )
     else:
         f3_errs: List[str] = []
-        for label, csv_p in (("stage1.csv", stage1_csv), ("neu3.csv", neu3_csv)):
-            df_r = pd.read_csv(csv_p, encoding="utf-8")
-            n_dh = df_r["data_hash"].nunique() if "data_hash" in df_r.columns else 0
-            n_cv = df_r["code_version"].nunique() if "code_version" in df_r.columns else 0
-            if n_dh != 1 or n_cv != 1:
-                f3_errs.append(f"{label} có {n_dh} data_hash và {n_cv} code_version")
+        f3_missing: List[str] = []
+        for grp in GROUP_ORDER:
+            sub = res_df[res_df["group_key"] == grp]
+            if sub.empty:
+                f3_missing.append(GROUP_LABELS[grp])
+                continue
+            dh_vals = sorted(x for x in sub["data_hash"].dropna().astype(str).unique().tolist() if x)
+            cv_vals = sorted(x for x in sub["code_version"].dropna().astype(str).unique().tolist() if x)
+            if len(dh_vals) != 1 or len(cv_vals) != 1:
+                f3_errs.append(
+                    f"{GROUP_LABELS[grp]} có {len(dh_vals)} data_hash và {len(cv_vals)} code_version"
+                )
+
         if f3_errs:
+            results.append(CheckResult("F3", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(f3_errs)))
+        elif f3_missing:
             results.append(
-                CheckResult("F3", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(f3_errs))
+                CheckResult(
+                    "F3",
+                    LEVEL_BLOCKER,
+                    STATUS_MISSING,
+                    f"Các nhóm đã nạp chỉ có 1 data_hash & 1 code_version; còn thiếu: {', '.join(f3_missing)}",
+                )
             )
         else:
             results.append(
@@ -1219,7 +1817,7 @@ def check_group_f(
                     "F3",
                     LEVEL_BLOCKER,
                     STATUS_PASS,
-                    "Mỗi file kết quả Bước 1 chỉ có duy nhất 1 data_hash và 1 code_version",
+                    "Mỗi nhóm trong 4 nhóm chỉ có duy nhất 1 data_hash và 1 code_version",
                 )
             )
 
@@ -1231,137 +1829,204 @@ def check_group_f(
 # ---------------------------------------------------------------------------
 def check_group_g(
     cfg: Dict[str, Any],
-    results_dir: Path,
+    loaded_results: Dict[str, Any],
 ) -> List[CheckResult]:
     results: List[CheckResult] = []
     seeds = [int(s) for s in cfg.get("seeds", [0, 1, 2, 3, 4])]
-    published_f1 = cfg.get("vsmec_published_macro_f1")
+    seed_set = set(seeds)
+    res_df: pd.DataFrame = loaded_results["df"]
 
-    stage1_csv = results_dir / "stage1.csv"
-    neu3_csv = results_dir / "neu3.csv"
+    # G1: Per-group counts (5 seeds each with BOTH dev & test, after sweep filtering)
+    group_counts: Dict[str, Dict[str, Any]] = {}
+    for grp in GROUP_ORDER:
+        if res_df.empty:
+            completed_seeds: List[int] = []
+        else:
+            sub = res_df[res_df["group_key"] == grp]
+            completed_seeds = []
+            for s in seeds:
+                s_rows = sub[sub["seed"].astype(int) == s]
+                s_splits = set(s_rows["split"].astype(str).tolist())
+                if {"dev", "test"}.issubset(s_splits):
+                    completed_seeds.append(s)
+        group_counts[grp] = {
+            "label": GROUP_LABELS[grp],
+            "completed": len(completed_seeds),
+            "target": len(seeds),
+            "completed_seeds": completed_seeds,
+            "missing_seeds": [s for s in seeds if s not in completed_seeds],
+        }
 
-    # G1: 5 seeds for each (backbone, domain) = 20 baseline runs
-    if not stage1_csv.is_file() or not neu3_csv.is_file():
-        missing_files = [
-            p.as_posix() for p in (stage1_csv, neu3_csv) if not p.is_file()
-        ]
+    per_group_summary = "; ".join(
+        f"{group_counts[g]['label']}: {group_counts[g]['completed']}/{group_counts[g]['target']}"
+        for g in GROUP_ORDER
+    )
+    total_completed = sum(group_counts[g]["completed"] for g in GROUP_ORDER)
+    total_target = sum(group_counts[g]["target"] for g in GROUP_ORDER)
+
+    if res_df.empty:
         results.append(
             CheckResult(
                 "G1",
                 LEVEL_BLOCKER,
                 STATUS_MISSING,
-                f"Chưa có {', '.join(missing_files)}; cần người phụ trách cung cấp kết quả 20 lượt baseline Bước 1 (5 seed × 2 backbone × 2 miền)",
+                f"Chưa có kết quả Bước 1 (tổng {total_completed}/{total_target} lượt: {per_group_summary}; cần người phụ trách tải stage1.csv và neu3.csv của 2 backbone vào reports/step2/inputs/)",
+                metrics={"groups": group_counts, "n_sweep_filtered": loaded_results["n_sweep_filtered"]},
+            )
+        )
+    elif total_completed < total_target:
+        missing_detail = "; ".join(
+            f"{group_counts[g]['label']} thiếu seed {group_counts[g]['missing_seeds']}"
+            for g in GROUP_ORDER
+            if group_counts[g]["missing_seeds"]
+        )
+        results.append(
+            CheckResult(
+                "G1",
+                LEVEL_BLOCKER,
+                STATUS_FAIL,
+                f"Chưa đủ {total_target} lượt baseline ({total_completed}/{total_target}): {per_group_summary} ({missing_detail})",
+                metrics={"groups": group_counts, "n_sweep_filtered": loaded_results["n_sweep_filtered"]},
             )
         )
     else:
-        df_s1 = pd.read_csv(stage1_csv, encoding="utf-8")
-        df_n3 = pd.read_csv(neu3_csv, encoding="utf-8")
-        if "run_kind" in df_n3.columns:
-            df_n3 = df_n3[df_n3["run_kind"] == "base"]
-
-        g1_errors: List[str] = []
-        for bb_sub, bb_label in (("phobert", "PhoBERT"), ("visobert", "ViSoBERT")):
-            s1_sub = df_s1[
-                df_s1["backbone"].astype(str).str.lower().str.contains(bb_sub)
-            ]
-            s1_seeds = sorted(s1_sub["seed"].astype(int).unique().tolist())
-            if set(seeds) - set(s1_seeds):
-                g1_errors.append(
-                    f"VSMEC {bb_label} thiếu seed {sorted(set(seeds) - set(s1_seeds))}"
-                )
-
-            n3_sub = df_n3[
-                df_n3["backbone"].astype(str).str.lower().str.contains(bb_sub)
-            ]
-            for sp in ("dev", "test"):
-                n3_sp_seeds = sorted(
-                    n3_sub[n3_sub["split"] == sp]["seed"].astype(int).unique().tolist()
-                )
-                if set(seeds) - set(n3_sp_seeds):
-                    g1_errors.append(
-                        f"NEU3 {bb_label} ({sp}) thiếu seed {sorted(set(seeds) - set(n3_sp_seeds))}"
-                    )
-
-        if g1_errors:
-            results.append(
-                CheckResult("G1", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(g1_errors))
+        results.append(
+            CheckResult(
+                "G1",
+                LEVEL_BLOCKER,
+                STATUS_PASS,
+                f"Đủ {total_completed}/{total_target} lượt baseline (mỗi lượt đủ dev & test, đã lọc {loaded_results['n_sweep_filtered']} dòng sweep): {per_group_summary}",
+                metrics={"groups": group_counts, "n_sweep_filtered": loaded_results["n_sweep_filtered"]},
             )
-        else:
-            results.append(
-                CheckResult(
-                    "G1",
-                    LEVEL_BLOCKER,
-                    STATUS_PASS,
-                    f"Đủ {len(seeds)} seed cho cả 4 nhóm (PhoBERT/ViSoBERT × VSMEC/NEU-ESC)",
-                )
+        )
+
+    # G2: vsmec_published_macro_f1: {phobert: ..., visobert: ...}
+    pub_cfg = cfg.get("vsmec_published_macro_f1") or {}
+    if not isinstance(pub_cfg, dict):
+        pub_cfg = {"phobert": pub_cfg, "visobert": pub_cfg}
+
+    g2_metrics: Dict[str, Any] = {}
+    g2_parts: List[str] = []
+    g2_missing_reasons: List[str] = []
+
+    for bb_key, bb_name in (("phobert", "PhoBERT"), ("visobert", "ViSoBERT")):
+        pub_val = pub_cfg.get(bb_key)
+        grp = f"vsmec_{bb_key}"
+        test_sub = (
+            res_df[
+                (res_df["group_key"] == grp)
+                & (res_df["split"] == "test")
+                & (res_df["seed"].isin(seed_set))
+            ]
+            if not res_df.empty
+            else pd.DataFrame()
+        )
+        if pub_val is None:
+            g2_missing_reasons.append(f"vsmec_published_macro_f1.{bb_key}=null")
+        if test_sub.empty or test_sub["macro_f1"].dropna().empty:
+            g2_missing_reasons.append(f"thiếu kết quả test VSMEC {bb_name}")
+        if pub_val is not None and not test_sub.empty and not test_sub["macro_f1"].dropna().empty:
+            vals = test_sub["macro_f1"].dropna().astype(float)
+            mean_f1 = float(vals.mean())
+            std_f1 = float(vals.std(ddof=1)) if len(vals) > 1 else 0.0
+            pv = float(pub_val)
+            diff = mean_f1 - pv
+            g2_metrics[bb_key] = {
+                "n_seeds": int(len(vals)),
+                "mean_test_macro_f1": mean_f1,
+                "std_test_macro_f1": std_f1,
+                "published_macro_f1": pv,
+                "diff": diff,
+            }
+            g2_parts.append(
+                f"{bb_name}: mean={mean_f1:.4f} ± {std_f1:.4f} vs công bố={pv:.4f} (lệch={diff:+.4f})"
             )
 
-    # G2: Compare mean test VSMEC macro-F1 against vsmec_published_macro_f1
-    if published_f1 is None:
+    if g2_missing_reasons:
+        prefix = f"{'; '.join(g2_parts)}. " if g2_parts else ""
         results.append(
             CheckResult(
                 "G2",
                 LEVEL_BLOCKER,
                 STATUS_MISSING,
-                "vsmec_published_macro_f1=null trong configs/step2_data.yaml; cần người phụ trách cung cấp số macro-F1 test VSMEC đã công bố để đối chiếu",
-            )
-        )
-    elif not stage1_csv.is_file():
-        results.append(
-            CheckResult(
-                "G2",
-                LEVEL_BLOCKER,
-                STATUS_MISSING,
-                f"Đã có vsmec_published_macro_f1={published_f1} nhưng chưa có {stage1_csv.as_posix()}",
+                f"{prefix}Thiếu đầu vào đối chiếu G2: {', '.join(g2_missing_reasons)}",
+                metrics=g2_metrics,
             )
         )
     else:
-        df_s1 = pd.read_csv(stage1_csv, encoding="utf-8")
-        mean_f1 = float(df_s1["macro_f1"].mean())
-        std_f1 = float(df_s1["macro_f1"].std(ddof=1)) if len(df_s1) > 1 else 0.0
-        pub_val = float(published_f1)
-        diff = mean_f1 - pub_val
         results.append(
             CheckResult(
                 "G2",
                 LEVEL_BLOCKER,
                 STATUS_PASS,
-                f"VSMEC macro_f1 mean={mean_f1:.4f} ± {std_f1:.4f} vs công bố={pub_val:.4f} (lệch={diff:+.4f})",
-                metrics={
-                    "mean_macro_f1": mean_f1,
-                    "std_macro_f1": std_f1,
-                    "published_macro_f1": pub_val,
-                    "diff": diff,
-                },
+                "; ".join(g2_parts),
+                metrics=g2_metrics,
             )
         )
 
-    # G3: Std > 0 across seeds and no class F1 < 0.30
-    if not stage1_csv.is_file() or not neu3_csv.is_file():
+    # G3 (WARN): std across seeds & mean per-class F1 >= 0.30
+    if res_df.empty or any(group_counts[g]["completed"] == 0 for g in GROUP_ORDER):
+        missing_g3 = [
+            GROUP_LABELS[g] for g in GROUP_ORDER if group_counts[g]["completed"] == 0
+        ]
         results.append(
             CheckResult(
                 "G3",
                 LEVEL_WARN,
                 STATUS_MISSING,
-                "Chưa có đủ results/stage1.csv và results/neu3.csv để kiểm tra std giữa các seed và F1 từng lớp >= 0.30",
+                f"Chưa đủ kết quả để kiểm tra std và F1 từng lớp >= 0.30 (thiếu: {', '.join(missing_g3)})",
             )
         )
     else:
-        df_s1 = pd.read_csv(stage1_csv, encoding="utf-8")
-        df_n3 = pd.read_csv(neu3_csv, encoding="utf-8")
         g3_warns: List[str] = []
-        if len(df_s1) > 1 and float(df_s1["macro_f1"].std(ddof=1)) == 0.0:
-            g3_warns.append("VSMEC macro_f1 có std=0 giữa các seed")
-        for emo in EMOTIONS7:
-            col = f"f1_{emo.lower()}"
-            if col in df_s1.columns and float(df_s1[col].mean()) < 0.30:
-                g3_warns.append(f"VSMEC {col} mean={float(df_s1[col].mean()):.4f} < 0.30")
-        for col in ("f1_neg", "f1_neu", "f1_pos"):
-            if col in df_n3.columns and float(df_n3[col].mean()) < 0.30:
-                g3_warns.append(f"NEU3 {col} mean={float(df_n3[col].mean()):.4f} < 0.30")
+        g3_stats: Dict[str, Any] = {}
+        f1_cols_7 = [f"f1_{emo.lower()}" for emo in EMOTIONS7]
+        f1_cols_3 = ["f1_neg", "f1_neu", "f1_pos"]
+
+        for grp in GROUP_ORDER:
+            sub_t = res_df[(res_df["group_key"] == grp) & (res_df["split"] == "test")]
+            if sub_t.empty:
+                sub_t = res_df[res_df["group_key"] == grp]
+            vals = sub_t["macro_f1"].dropna().astype(float)
+            std_val = float(vals.std(ddof=1)) if len(vals) > 1 else 0.0
+            if len(vals) > 1 and std_val == 0.0:
+                g3_warns.append(f"{GROUP_LABELS[grp]} macro_f1 std=0 giữa các seed")
+
+            cls_means: Dict[str, float] = {}
+            target_cols = f1_cols_7 if grp.startswith("vsmec") else f1_cols_3
+            for col in target_cols:
+                if col in sub_t.columns and not sub_t[col].dropna().empty:
+                    mval = float(sub_t[col].dropna().astype(float).mean())
+                    cls_means[col] = mval
+                    if mval < 0.30:
+                        g3_warns.append(f"{GROUP_LABELS[grp]} {col} mean={mval:.4f} < 0.30")
+            if grp.startswith("vsmec") and not cls_means:
+                for col in f1_cols_3:
+                    if col in sub_t.columns and not sub_t[col].dropna().empty:
+                        mval = float(sub_t[col].dropna().astype(float).mean())
+                        cls_means[col] = mval
+                        if mval < 0.30:
+                            g3_warns.append(f"{GROUP_LABELS[grp]} {col} mean={mval:.4f} < 0.30")
+
+            g3_stats[grp] = {
+                "n_rows": int(len(vals)),
+                "macro_f1_mean": float(vals.mean()) if len(vals) else None,
+                "macro_f1_std": std_val,
+                "class_f1_means": cls_means,
+            }
+
+        std_summary = ", ".join(
+            f"{GROUP_LABELS[g]} std={g3_stats[g]['macro_f1_std']:.4f}" for g in GROUP_ORDER
+        )
         if g3_warns:
             results.append(
-                CheckResult("G3", LEVEL_WARN, STATUS_FAIL, "; ".join(g3_warns))
+                CheckResult(
+                    "G3",
+                    LEVEL_WARN,
+                    STATUS_FAIL,
+                    f"Cảnh báo Bước 1 ({std_summary}): {'; '.join(g3_warns)}",
+                    metrics=g3_stats,
+                )
             )
         else:
             results.append(
@@ -1369,7 +2034,8 @@ def check_group_g(
                     "G3",
                     LEVEL_WARN,
                     STATUS_PASS,
-                    "Có std > 0 giữa các seed và không lớp nào có F1 trung bình < 0.30",
+                    f"Các nhóm đều có std > 0 giữa seed ({std_summary}) và mọi lớp có F1 TB >= 0.30",
+                    metrics=g3_stats,
                 )
             )
 
@@ -1377,8 +2043,27 @@ def check_group_g(
 
 
 # ---------------------------------------------------------------------------
-# Group H: Phân bố và độ tin cậy (INFO / WARN)
+# Group H: Phân bố, độ lệch tiên nghiệm & độ lệch bề mặt (INFO / WARN)
 # ---------------------------------------------------------------------------
+def _compute_surface_stats(df: pd.DataFrame) -> Dict[str, Any]:
+    texts = df["text"].astype(str).tolist()
+    n = max(1, len(texts))
+    ends_space_dot = sum(1 for t in texts if t.endswith(" .")) / n
+    ends_dot = sum(1 for t in texts if t.endswith(".")) / n
+    has_emoji = sum(1 for t in texts if contains_unicode_emoji(t)) / n
+    word_counts = [len(t.split()) for t in texts]
+    all_lower = sum(1 for t in texts if t == t.lower()) / n
+    return {
+        "n": int(len(texts)),
+        "ends_with_space_dot_rate": float(ends_space_dot),
+        "ends_with_dot_rate": float(ends_dot),
+        "has_emoji_rate": float(has_emoji),
+        "word_count_mean": float(np.mean(word_counts)) if word_counts else 0.0,
+        "word_count_p95": float(np.percentile(word_counts, 95)) if word_counts else 0.0,
+        "all_lowercase_rate": float(all_lower),
+    }
+
+
 def check_group_h(
     vsmec_dfs: Dict[str, pd.DataFrame],
     neuesc_df: Optional[pd.DataFrame],
@@ -1389,9 +2074,10 @@ def check_group_h(
             CheckResult("H1", LEVEL_INFO, STATUS_FAIL, "Thiếu dữ liệu đầu vào"),
             CheckResult("H2", LEVEL_WARN, STATUS_FAIL, "Thiếu dữ liệu đầu vào"),
             CheckResult("H3", LEVEL_INFO, STATUS_FAIL, "Thiếu dữ liệu đầu vào"),
+            CheckResult("H4", LEVEL_INFO, STATUS_FAIL, "Thiếu dữ liệu đầu vào"),
         ]
 
-    # H1: Per-split distributions for 7-class VSMEC, 3-class VSMEC (B1), and 3-class NEU-ESC
+    # H1
     dist_vsmec7: Dict[str, Dict[str, int]] = {}
     dist_vsmec3: Dict[str, Dict[str, int]] = {}
     dist_neuesc3: Dict[str, Dict[str, int]] = {}
@@ -1428,7 +2114,7 @@ def check_group_h(
         )
     )
 
-    # H2: JS divergence & < 30 sample check on test splits
+    # H2
     js_by_split: Dict[str, Dict[str, float]] = {}
     for sp in ("train", "dev", "test"):
         v_vec = [dist_vsmec3[sp][lbl] for lbl in LABELS3]
@@ -1466,7 +2152,7 @@ def check_group_h(
         )
     )
 
-    # H3: Surprise & Other counts in vsmec_test
+    # H3
     n_test_v = int(len(vsmec_dfs["test"]))
     n_surprise = dist_vsmec7["test"]["Surprise"]
     n_other = dist_vsmec7["test"]["Other"]
@@ -1487,12 +2173,45 @@ def check_group_h(
         )
     )
 
+    # H4 (INFO): surface statistics per split for both domains (numbers only, no conclusions)
+    surface_metrics: Dict[str, Dict[str, Dict[str, Any]]] = {
+        "vsmec": {sp: _compute_surface_stats(vsmec_dfs[sp]) for sp in VSMEC_SPLITS},
+        "neuesc": {
+            sp: _compute_surface_stats(neuesc_df[neuesc_df["subset"] == sp])
+            for sp in NEUESC_SPLITS
+        },
+    }
+    vt = surface_metrics["vsmec"]["test"]
+    nt = surface_metrics["neuesc"]["test"]
+    results.append(
+        CheckResult(
+            "H4",
+            LEVEL_INFO,
+            STATUS_PASS,
+            f"Lệch bề mặt test: vsmec_test (' .'={vt['ends_with_space_dot_rate']*100:.2f}%, "
+            f"emoji={vt['has_emoji_rate']*100:.2f}%, words={vt['word_count_mean']:.2f}/p95={vt['word_count_p95']:.1f}, "
+            f"lower={vt['all_lowercase_rate']*100:.2f}%) vs neuesc_test (' .'={nt['ends_with_space_dot_rate']*100:.2f}%, "
+            f"emoji={nt['has_emoji_rate']*100:.2f}%, words={nt['word_count_mean']:.2f}/p95={nt['word_count_p95']:.1f}, "
+            f"lower={nt['all_lowercase_rate']*100:.2f}%)",
+            metrics={"surface_stats": surface_metrics},
+        )
+    )
+
     return results
 
 
 # ---------------------------------------------------------------------------
 # Group I: Đầu vào của mô hình (WARN)
 # ---------------------------------------------------------------------------
+def _load_tokenizer_safe(model_name: str):
+    from transformers import AutoTokenizer
+
+    try:
+        return AutoTokenizer.from_pretrained(model_name, local_files_only=True)
+    except Exception:
+        return AutoTokenizer.from_pretrained(model_name)
+
+
 def check_group_i(
     vsmec_dfs: Dict[str, pd.DataFrame],
     neuesc_df: Optional[pd.DataFrame],
@@ -1508,7 +2227,7 @@ def check_group_i(
     v_test = vsmec_dfs["test"]
     n_test = neuesc_df[neuesc_df["subset"] == "test"].reset_index(drop=True)
 
-    # I1: text_seg present and non-empty in both test sets
+    # I1
     i1_errs: List[str] = []
     for name, df_t in (("vsmec_test", v_test), ("neuesc_test", n_test)):
         if "text_seg" not in df_t.columns:
@@ -1530,7 +2249,7 @@ def check_group_i(
             )
         )
 
-    # I2: Truncation rate at max_length=256 (requires --with-tokenizer)
+    # I2: Truncation rate @256
     if not with_tokenizer:
         results.append(
             CheckResult(
@@ -1542,10 +2261,8 @@ def check_group_i(
         )
     else:
         try:
-            from transformers import AutoTokenizer
-
-            tok_pho = AutoTokenizer.from_pretrained("vinai/phobert-base-v2")
-            tok_viso = AutoTokenizer.from_pretrained("uitnlp/visobert")
+            tok_pho = _load_tokenizer_safe("vinai/phobert-base-v2")
+            tok_viso = _load_tokenizer_safe("uitnlp/visobert")
             trunc_metrics: Dict[str, Any] = {}
             for ds_name, df_t in (("vsmec_test", v_test), ("neuesc_test", n_test)):
                 pho_ids = tok_pho(
@@ -1574,15 +2291,17 @@ def check_group_i(
                     "visobert_n_truncated": viso_trunc,
                     "visobert_rate": viso_trunc / max(1, n_tot),
                 }
+            vt = trunc_metrics["vsmec_test"]
+            nt = trunc_metrics["neuesc_test"]
             results.append(
                 CheckResult(
                     "I2",
                     LEVEL_WARN,
                     STATUS_PASS,
-                    f"Cắt cụt @256: vsmec_test (PhoBERT={trunc_metrics['vsmec_test']['phobert_n_truncated']}/{len(v_test)}, "
-                    f"ViSoBERT={trunc_metrics['vsmec_test']['visobert_n_truncated']}/{len(v_test)}); "
-                    f"neuesc_test (PhoBERT={trunc_metrics['neuesc_test']['phobert_n_truncated']}/{len(n_test)}, "
-                    f"ViSoBERT={trunc_metrics['neuesc_test']['visobert_n_truncated']}/{len(n_test)})",
+                    f"Cắt cụt @256: vsmec_test (PhoBERT={vt['phobert_n_truncated']}/{vt['n_total']} [{vt['phobert_rate']*100:.2f}%], "
+                    f"ViSoBERT={vt['visobert_n_truncated']}/{vt['n_total']} [{vt['visobert_rate']*100:.2f}%]); "
+                    f"neuesc_test (PhoBERT={nt['phobert_n_truncated']}/{nt['n_total']} [{nt['phobert_rate']*100:.2f}%], "
+                    f"ViSoBERT={nt['visobert_n_truncated']}/{nt['n_total']} [{nt['visobert_rate']*100:.2f}%])",
                     metrics=trunc_metrics,
                 )
             )
@@ -1591,18 +2310,17 @@ def check_group_i(
                 CheckResult(
                     "I2",
                     LEVEL_WARN,
-                    STATUS_FAIL,
-                    f"Lỗi khi chạy tokenizer ở I2: {exc}",
+                    STATUS_SKIP,
+                    f"Bỏ qua I2 do không tải được tokenizer từ cache/mạng: {exc}",
                 )
             )
 
-    # I3: normalize_text idempotence on both test sets
+    # I3
     non_idempotent = 0
     for df_t in (v_test, n_test):
         for t in df_t["text"].astype(str):
             once = normalize_text(t)
-            twice = normalize_text(once)
-            if once != twice:
+            if normalize_text(once) != once:
                 non_idempotent += 1
     if non_idempotent == 0:
         results.append(
@@ -1623,17 +2341,13 @@ def check_group_i(
             )
         )
 
-    # I4: ViSoBERT emoji_mode="keep" consistency across VSMEC test and NEU-ESC test
+    # I4
     v_keep = [preprocess_text(str(t), emoji_mode="keep") for t in v_test["text"]]
     n_keep = [preprocess_text(str(t), emoji_mode="keep") for t in n_test["text"]]
     v_empty = sum(1 for s in v_keep if not s.strip())
     n_empty = sum(1 for s in n_keep if not s.strip())
-    v_idemp_fail = sum(
-        1 for s in v_keep if preprocess_text(s, emoji_mode="keep") != s
-    )
-    n_idemp_fail = sum(
-        1 for s in n_keep if preprocess_text(s, emoji_mode="keep") != s
-    )
+    v_idemp_fail = sum(1 for s in v_keep if preprocess_text(s, emoji_mode="keep") != s)
+    n_idemp_fail = sum(1 for s in n_keep if preprocess_text(s, emoji_mode="keep") != s)
     if v_empty == 0 and n_empty == 0 and v_idemp_fail == 0 and n_idemp_fail == 0:
         results.append(
             CheckResult(
@@ -1659,38 +2373,181 @@ def check_group_i(
 
 
 # ---------------------------------------------------------------------------
-# Group J: Checkpoint (BLOCKER, chỉ chạy khi --check-ckpt)
+# Group J: Checkpoint & --reload-check (BLOCKER, chỉ chạy khi --check-ckpt)
 # ---------------------------------------------------------------------------
 def _locate_group_seed_ckpt(
     root: Path,
     alias: str,
     seeds: Sequence[int],
 ) -> Dict[int, Optional[Path]]:
-    """Locate checkpoint directory containing `encoder/` and `head.pt` for each seed (or shared alias dir)."""
+    """Locate distinct per-seed checkpoint directories containing `encoder/` and `head.pt`."""
     found: Dict[int, Optional[Path]] = {}
+    used_paths: set[Path] = set()
+    subdirs = [d for d in sorted(root.iterdir()) if d.is_dir()] if root.is_dir() else []
+    alias_dir = root / alias
+    alias_subdirs = (
+        [d for d in sorted(alias_dir.iterdir()) if d.is_dir()]
+        if alias_dir.is_dir()
+        else []
+    )
+
     for s in seeds:
         candidates = [
             root / f"seed_{s}" / alias,
             root / f"s{s}" / alias,
-            root / f"{alias}_s{s}",
+            root / f"seed{s}" / alias,
+            root / f"seed_{s}",
+            root / f"s{s}",
+            root / f"seed{s}",
             root / alias / f"seed_{s}",
             root / alias / f"s{s}",
-            root / alias,
-            root,
+            root / alias / f"seed{s}",
+            root / f"{alias}_s{s}",
+            root / f"{alias}_seed_{s}",
         ]
+        seed_pat = re.compile(rf"(?:^|[_\-])s(?:eed)?_?{s}(?:$|[_\-])", flags=re.IGNORECASE)
+        for d in subdirs:
+            if seed_pat.search(d.name):
+                candidates.append(d / alias)
+                candidates.append(d)
+        for d in alias_subdirs:
+            if seed_pat.search(d.name):
+                candidates.append(d)
+
         matched: Optional[Path] = None
         for cand in candidates:
             if (cand / "encoder").is_dir() and (cand / "head.pt").is_file():
-                matched = cand
-                break
+                rc = cand.resolve()
+                if rc not in used_paths:
+                    matched = cand
+                    used_paths.add(rc)
+                    break
         found[int(s)] = matched
     return found
+
+
+def _find_prediction_csv_for_group(
+    grp_name: str,
+    ckpt_path: Path,
+    search_dirs: Iterable[Path],
+    loaded_results_df: Optional[pd.DataFrame] = None,
+) -> Optional[Path]:
+    domain, alias, _ = GROUP_SPECS[grp_name]
+    alias_low = alias.lower()
+    split_tag = "vsmec_dev" if domain == "vsmec" else "neuesc_dev"
+    sub_dir_name = "predictions7" if domain == "vsmec" else "predictions3"
+
+    candidate_dirs: List[Path] = []
+    for base in (ckpt_path.parent, ckpt_path.parent.parent, *search_dirs):
+        for p in (base, base / sub_dir_name, base.parent / sub_dir_name):
+            if p.is_dir() and p not in candidate_dirs:
+                candidate_dirs.append(p)
+
+    # First try matching run_ids from loaded_results_df for this group
+    run_ids: List[str] = []
+    if loaded_results_df is not None and not loaded_results_df.empty:
+        sub = loaded_results_df[loaded_results_df["group_key"] == grp_name]
+        run_ids = [str(r) for r in sub["run_id"].dropna().unique().tolist()]
+
+    all_csvs: List[Path] = []
+    for d in candidate_dirs:
+        for fp in sorted(d.glob("*.csv")):
+            name_low = fp.name.lower()
+            if split_tag in name_low and (alias_low in name_low or any(rid.lower() in name_low for rid in run_ids)):
+                return fp
+            if split_tag in name_low:
+                all_csvs.append(fp)
+
+    for fp in all_csvs:
+        if alias_low in str(fp).lower():
+            return fp
+    return None
+
+
+def _run_reload_check_for_group(
+    grp_name: str,
+    ckpt_path: Path,
+    vsmec_dfs: Dict[str, pd.DataFrame],
+    neuesc_df: Optional[pd.DataFrame],
+    pred_csv: Path,
+    n_samples: int = 16,
+) -> Tuple[bool, float, str]:
+    """Reload 1 encoder + head.pt in FP32, run on 16 dev sentences, compare logits vs saved CSV."""
+    from transformers import AutoModel, AutoTokenizer
+
+    domain, alias, n_labels = GROUP_SPECS[grp_name]
+    if domain == "vsmec":
+        dev_df = vsmec_dfs["dev"]
+        logit_cols = [f"logit_{i}" for i in range(7)]
+    else:
+        assert neuesc_df is not None
+        dev_df = neuesc_df[neuesc_df["subset"] == "dev"].reset_index(drop=True)
+        logit_cols = ["logit_neg", "logit_neu", "logit_pos"]
+
+    pred_df = pd.read_csv(pred_csv, encoding="utf-8")
+    missing_lcols = [c for c in logit_cols if c not in pred_df.columns]
+    if missing_lcols:
+        return False, float("nan"), f"{pred_csv.name} thiếu cột logit {missing_lcols}"
+
+    dev_sub = dev_df.iloc[:n_samples].copy()
+    if "id" in pred_df.columns:
+        pred_indexed = pred_df.set_index("id")
+        try:
+            saved_logits = pred_indexed.loc[dev_sub["id"].tolist(), logit_cols].to_numpy(
+                dtype=np.float64
+            )
+        except KeyError:
+            saved_logits = pred_df.iloc[: len(dev_sub)][logit_cols].to_numpy(dtype=np.float64)
+    else:
+        saved_logits = pred_df.iloc[: len(dev_sub)][logit_cols].to_numpy(dtype=np.float64)
+
+    if alias == "PhoBERT":
+        texts = dev_sub["text_seg"].astype(str).tolist()
+    else:
+        texts = [preprocess_text(str(t), emoji_mode="keep") for t in dev_sub["text"].tolist()]
+
+    encoder_dir = ckpt_path / "encoder"
+    head_pt = ckpt_path / "head.pt"
+
+    tokenizer = AutoTokenizer.from_pretrained(str(encoder_dir))
+    encoder = AutoModel.from_pretrained(str(encoder_dir))
+    encoder.eval()
+    head_state = torch.load(head_pt, map_location="cpu", weights_only=True)
+    weight = head_state["weight"].detach().float()
+    bias = head_state["bias"].detach().float()
+
+    enc = tokenizer(
+        texts,
+        padding=True,
+        truncation=True,
+        max_length=256,
+        return_tensors="pt",
+    )
+    with torch.no_grad():
+        outputs = encoder(**enc)
+        cls_repr = outputs.last_hidden_state[:, 0, :].float()
+        logits = (cls_repr @ weight.T + bias).cpu().numpy().astype(np.float64)
+
+    if logits.shape != saved_logits.shape:
+        return (
+            False,
+            float("nan"),
+            f"Lệch shape logit: recomputed={logits.shape} vs saved={saved_logits.shape}",
+        )
+
+    max_diff = float(np.max(np.abs(logits - saved_logits)))
+    ok = bool(max_diff <= RELOAD_MAX_ABS_DIFF_TOL)
+    return ok, max_diff, f"max_abs_diff={max_diff:.2e} (<= {RELOAD_MAX_ABS_DIFF_TOL:.0e})"
 
 
 def check_group_j(
     cfg: Dict[str, Any],
     results_dir: Path,
     check_ckpt: bool = False,
+    reload_check: bool = False,
+    vsmec_dfs: Optional[Dict[str, pd.DataFrame]] = None,
+    neuesc_df: Optional[pd.DataFrame] = None,
+    loaded_results: Optional[Dict[str, Any]] = None,
 ) -> List[CheckResult]:
     if not check_ckpt:
         skip_msg = "Bỏ qua kiểm tra checkpoint (chỉ chạy khi truyền --check-ckpt)"
@@ -1701,48 +2558,54 @@ def check_group_j(
         ]
 
     ckpt_roots = cfg.get("ckpt_roots") or {}
-    required_groups = {
-        "vsmec_phobert": ("PhoBERT", 7),
-        "vsmec_visobert": ("ViSoBERT", 7),
-        "neu3_phobert": ("PhoBERT", 3),
-        "neu3_visobert": ("ViSoBERT", 3),
-    }
-    null_groups = [g for g in required_groups if not ckpt_roots.get(g)]
-    if null_groups:
-        msg = (
-            f"ckpt_roots có khóa null cho: {', '.join(null_groups)}; "
-            f"cần người phụ trách điền đường dẫn thư mục checkpoint Bước 1 trên Drive vào configs/step2_data.yaml"
-        )
-        return [
-            CheckResult("J1", LEVEL_BLOCKER, STATUS_MISSING, msg),
-            CheckResult("J2", LEVEL_BLOCKER, STATUS_MISSING, msg),
-            CheckResult("J3", LEVEL_BLOCKER, STATUS_MISSING, msg),
-        ]
-
     seeds = [int(s) for s in cfg.get("seeds", [0, 1, 2, 3, 4])]
-    results: List[CheckResult] = []
 
-    # J1 & J2
-    j1_missing: List[str] = []
+    j1_group_summary: Dict[str, Any] = {}
+    j1_issues: List[str] = []
+    j1_nulls: List[str] = []
     j2_errors: List[str] = []
-    located_dirs: Dict[str, List[Path]] = {}
+    located_dirs: Dict[str, Dict[int, Path]] = {}
 
-    for grp_name, (alias, expected_out_dim) in required_groups.items():
-        root_path = Path(str(ckpt_roots[grp_name]))
-        if not root_path.is_dir():
-            j1_missing.append(f"{grp_name} (thư mục không tồn tại: {root_path.as_posix()})")
+    for grp_name in GROUP_ORDER:
+        _, alias, expected_out_dim = GROUP_SPECS[grp_name]
+        root_val = ckpt_roots.get(grp_name)
+        if not root_val:
+            j1_nulls.append(grp_name)
+            j1_group_summary[grp_name] = {
+                "found": 0,
+                "target": len(seeds),
+                "missing_seeds": seeds,
+                "status": "null",
+            }
             continue
-        seed_map = _locate_group_seed_ckpt(root_path, alias, seeds)
-        missing_seeds = [s for s, p in seed_map.items() if p is None]
-        if missing_seeds:
-            j1_missing.append(f"{grp_name} thiếu seed {missing_seeds}")
-        unique_paths: List[Path] = []
-        for p in seed_map.values():
-            if p is not None and p not in unique_paths:
-                unique_paths.append(p)
-        located_dirs[grp_name] = unique_paths
 
-        for ckpt_p in unique_paths:
+        root_path = Path(str(root_val))
+        if not root_path.is_dir():
+            j1_issues.append(f"{grp_name}: thư mục không tồn tại ({root_path.as_posix()})")
+            j1_group_summary[grp_name] = {
+                "found": 0,
+                "target": len(seeds),
+                "missing_seeds": seeds,
+                "status": "missing_dir",
+            }
+            continue
+
+        seed_map = _locate_group_seed_ckpt(root_path, alias, seeds)
+        found_map = {s: p for s, p in seed_map.items() if p is not None}
+        missing_seeds = [s for s, p in seed_map.items() if p is None]
+        located_dirs[grp_name] = found_map
+        j1_group_summary[grp_name] = {
+            "found": len(found_map),
+            "target": len(seeds),
+            "missing_seeds": missing_seeds,
+            "status": "ok" if not missing_seeds else "incomplete",
+        }
+        if missing_seeds:
+            j1_issues.append(
+                f"{GROUP_LABELS[grp_name]}: {len(found_map)}/{len(seeds)} (thiếu seed {missing_seeds})"
+            )
+
+        for ckpt_p in found_map.values():
             head_pt = ckpt_p / "head.pt"
             try:
                 state = torch.load(head_pt, map_location="cpu", weights_only=True)
@@ -1755,9 +2618,42 @@ def check_group_j(
             except Exception as exc:
                 j2_errors.append(f"Lỗi đọc {head_pt.as_posix()}: {exc}")
 
-    if j1_missing:
+    results: List[CheckResult] = []
+    counts_str = "; ".join(
+        f"{GROUP_LABELS[g]}: {j1_group_summary[g]['found']}/{j1_group_summary[g]['target']}"
+        for g in GROUP_ORDER
+    )
+
+    if len(j1_nulls) == len(GROUP_ORDER):
+        msg_null = (
+            f"ckpt_roots đều null ({counts_str}); cần truyền --ckpt-root-<nhóm> hoặc điền configs/step2_data.yaml"
+        )
+        return [
+            CheckResult("J1", LEVEL_BLOCKER, STATUS_MISSING, msg_null, metrics=j1_group_summary),
+            CheckResult("J2", LEVEL_BLOCKER, STATUS_MISSING, msg_null, metrics=j1_group_summary),
+            CheckResult("J3", LEVEL_BLOCKER, STATUS_MISSING, msg_null, metrics=j1_group_summary),
+        ]
+
+    if j1_issues:
+        extra_null = f"; nhóm chưa cấu hình: {j1_nulls}" if j1_nulls else ""
         results.append(
-            CheckResult("J1", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(j1_missing))
+            CheckResult(
+                "J1",
+                LEVEL_BLOCKER,
+                STATUS_FAIL,
+                f"{counts_str} — {'; '.join(j1_issues)}{extra_null}",
+                metrics=j1_group_summary,
+            )
+        )
+    elif j1_nulls:
+        results.append(
+            CheckResult(
+                "J1",
+                LEVEL_BLOCKER,
+                STATUS_MISSING,
+                f"{counts_str} — thiếu --ckpt-root cho: {', '.join(j1_nulls)}",
+                metrics=j1_group_summary,
+            )
         )
     else:
         results.append(
@@ -1765,74 +2661,142 @@ def check_group_j(
                 "J1",
                 LEVEL_BLOCKER,
                 STATUS_PASS,
-                "Đủ 4 nhóm checkpoint (vsmec/neu3 × phobert/visobert) với encoder/ và head.pt",
+                f"Đủ 4 nhóm × {len(seeds)} seed có encoder/ và head.pt ({counts_str})",
+                metrics=j1_group_summary,
             )
         )
 
-    if j1_missing and not located_dirs:
+    # J2
+    has_any_ckpt = any(bool(v) for v in located_dirs.values())
+    if not has_any_ckpt:
         results.append(
             CheckResult(
                 "J2",
                 LEVEL_BLOCKER,
                 STATUS_FAIL,
-                "Không thể kiểm tra head.pt do các thư mục checkpoint ở J1 đều thiếu",
+                "Không tìm thấy head.pt nào để kiểm tra kích thước lớp đầu ra",
             )
         )
     elif j2_errors:
-        results.append(
-            CheckResult("J2", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(j2_errors))
-        )
+        results.append(CheckResult("J2", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(j2_errors)))
     else:
         results.append(
             CheckResult(
                 "J2",
                 LEVEL_BLOCKER,
                 STATUS_PASS,
-                "Tất cả head.pt có weight.shape[0] == 7 (VSMEC) và 3 (NEU-3)",
+                "Tất cả head.pt đã tìm thấy có weight.shape[0] == 7 (VSMEC) và 3 (NEU-3)",
             )
         )
 
-    # J3: Verify checkpoint hash JSONs if present
+    # J3: Checkpoint hashes and/or --reload-check (16 dev samples, max_abs_diff <= 2e-3)
     hash_files = [
         results_dir / "stage1_ckpt_hash.json",
         results_dir / "neu3_ckpt_hash.json",
     ]
     existing_hash_files = [p for p in hash_files if p.is_file()]
-    if not existing_hash_files:
-        results.append(
-            CheckResult(
-                "J3",
-                LEVEL_BLOCKER,
-                STATUS_MISSING,
-                "Chưa có stage1_ckpt_hash.json / neu3_ckpt_hash.json trong results/ để đối chiếu SHA-256 checkpoint",
-            )
-        )
-    else:
-        j3_errors: List[str] = []
+    j3_hash_errs: List[str] = []
+    if existing_hash_files:
         for hf in existing_hash_files:
             payload = json.loads(hf.read_text(encoding="utf-8"))
             for key, info in payload.items():
                 ckpt_p = Path(str(info.get("path", "")))
                 head_pt = ckpt_p / "head.pt"
                 if not head_pt.is_file():
-                    j3_errors.append(f"{hf.name}[{key}] thiếu {head_pt.as_posix()}")
+                    j3_hash_errs.append(f"{hf.name}[{key}] thiếu {head_pt.as_posix()}")
                     continue
-                actual_head = sha256_file(head_pt)
-                if actual_head != info.get("head_sha256"):
-                    j3_errors.append(f"{hf.name}[{key}] lệch head_sha256")
-        if j3_errors:
-            results.append(
-                CheckResult("J3", LEVEL_BLOCKER, STATUS_FAIL, "; ".join(j3_errors))
-            )
+                if sha256_file(head_pt) != info.get("head_sha256"):
+                    j3_hash_errs.append(f"{hf.name}[{key}] lệch head_sha256")
+
+    reload_metrics: Dict[str, Any] = {}
+    reload_errs: List[str] = []
+    reload_msgs: List[str] = []
+
+    if reload_check:
+        if not vsmec_dfs or neuesc_df is None:
+            reload_errs.append("Thiếu dữ liệu dev để chạy --reload-check")
         else:
-            results.append(
-                CheckResult(
-                    "J3",
-                    LEVEL_BLOCKER,
-                    STATUS_PASS,
-                    "Hash checkpoint trong JSON khớp với file thực tế trên đĩa",
+            inputs_dir = Path(str(cfg.get("results_inputs_dir", "reports/step2/inputs")))
+            res_df = loaded_results["df"] if loaded_results else pd.DataFrame()
+            search_dirs = [results_dir, inputs_dir]
+            for grp_name in GROUP_ORDER:
+                found_seeds = located_dirs.get(grp_name, {})
+                if not found_seeds:
+                    reload_msgs.append(f"{GROUP_LABELS[grp_name]}: thiếu checkpoint")
+                    continue
+                first_seed = sorted(found_seeds.keys())[0]
+                ckpt_p = found_seeds[first_seed]
+                pred_csv = _find_prediction_csv_for_group(
+                    grp_name, ckpt_p, search_dirs, loaded_results_df=res_df
                 )
+                if pred_csv is None:
+                    reload_errs.append(
+                        f"{GROUP_LABELS[grp_name]} (s{first_seed}): không tìm thấy file predictions dev để so logit"
+                    )
+                    continue
+                ok, max_diff, note = _run_reload_check_for_group(
+                    grp_name, ckpt_p, vsmec_dfs, neuesc_df, pred_csv
+                )
+                reload_metrics[grp_name] = {
+                    "seed": first_seed,
+                    "pred_csv": pred_csv.as_posix(),
+                    "max_abs_diff": max_diff if not math.isnan(max_diff) else None,
+                    "ok": ok,
+                }
+                if not ok:
+                    reload_errs.append(f"{GROUP_LABELS[grp_name]} (s{first_seed}): {note}")
+                else:
+                    reload_msgs.append(f"{GROUP_LABELS[grp_name]} (s{first_seed}): {note}")
+
+    if j3_hash_errs or reload_errs:
+        all_errs = j3_hash_errs + reload_errs
+        results.append(
+            CheckResult(
+                "J3",
+                LEVEL_BLOCKER,
+                STATUS_FAIL,
+                "; ".join(all_errs),
+                metrics={"reload_check": reload_metrics},
             )
+        )
+    elif reload_check and reload_msgs and len(reload_metrics) == len(GROUP_ORDER):
+        results.append(
+            CheckResult(
+                "J3",
+                LEVEL_BLOCKER,
+                STATUS_PASS,
+                "Reload-check 16 câu dev khớp <= 2e-3: " + "; ".join(reload_msgs),
+                metrics={"reload_check": reload_metrics},
+            )
+        )
+    elif existing_hash_files and not reload_check:
+        results.append(
+            CheckResult(
+                "J3",
+                LEVEL_BLOCKER,
+                STATUS_PASS,
+                "Hash checkpoint trong JSON khớp đĩa (truyền thêm --reload-check để so logit 16 câu dev)",
+            )
+        )
+    elif reload_check and reload_msgs:
+        results.append(
+            CheckResult(
+                "J3",
+                LEVEL_BLOCKER,
+                STATUS_MISSING,
+                f"Reload-check chưa đủ 4 nhóm: {'; '.join(reload_msgs)}",
+                metrics={"reload_check": reload_metrics},
+            )
+        )
+    else:
+        results.append(
+            CheckResult(
+                "J3",
+                LEVEL_BLOCKER,
+                STATUS_MISSING,
+                "Chưa có stage1_ckpt_hash.json / neu3_ckpt_hash.json và chưa chạy --reload-check với file predictions dev",
+            )
+        )
 
     return results
 
@@ -1845,35 +2809,60 @@ def run_all_step2_checks(
     reports_dir: Union[str, Path] = "reports/step2",
     with_tokenizer: bool = False,
     check_ckpt: bool = False,
+    reload_check: bool = False,
+    results_files: Optional[Sequence[Union[str, Path]]] = None,
+    results_globs: Optional[Sequence[str]] = None,
+    ckpt_roots_override: Optional[Dict[str, Optional[Union[str, Path]]]] = None,
     cfg_override: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Run all checks A–J, write reports & violation CSVs to `reports_dir`, and return summary."""
+    """Run all checks A–J, write reports & violation CSVs to `reports_dir`, and return payload."""
     cfg = load_step2_config(config_path)
     if cfg_override:
         cfg.update(cfg_override)
+    if ckpt_roots_override:
+        merged_cr = dict(cfg.get("ckpt_roots") or {})
+        for k, v in ckpt_roots_override.items():
+            if v is not None:
+                merged_cr[k] = str(v)
+        cfg["ckpt_roots"] = merged_cr
 
     clean_dir = Path(str(cfg["vsmec_clean_dir"]))
     neuesc_file = Path(str(cfg["neuesc_file"]))
     results_dir = Path(str(cfg.get("results_dir", "results")))
+    inputs_dir = Path(str(cfg.get("results_inputs_dir", "reports/step2/inputs")))
     rep_dir = Path(reports_dir)
     rep_dir.mkdir(parents=True, exist_ok=True)
 
-    all_results: List[CheckResult] = []
+    loaded_results = load_step1_results(
+        results_files=results_files,
+        results_globs=results_globs,
+        default_inputs_dir=inputs_dir,
+        fallback_results_dir=results_dir,
+    )
 
+    all_results: List[CheckResult] = []
     res_a, vsmec_dfs, neuesc_df = check_group_a(clean_dir, neuesc_file)
     all_results.extend(res_a)
     all_results.extend(check_group_b(neuesc_df))
     all_results.extend(check_group_c(vsmec_dfs, neuesc_df, rep_dir))
     all_results.extend(check_group_d(vsmec_dfs, neuesc_df, rep_dir))
     all_results.extend(check_group_e(cfg, vsmec_dfs))
-    all_results.extend(check_group_f(clean_dir, neuesc_file, results_dir))
-    all_results.extend(check_group_g(cfg, results_dir))
+    all_results.extend(check_group_f(cfg, clean_dir, neuesc_file, loaded_results))
+    all_results.extend(check_group_g(cfg, loaded_results))
     all_results.extend(check_group_h(vsmec_dfs, neuesc_df))
     all_results.extend(
         check_group_i(vsmec_dfs, neuesc_df, with_tokenizer=with_tokenizer)
     )
     all_results.extend(
-        check_group_j(cfg, results_dir, check_ckpt=check_ckpt)
+        check_group_j(
+            cfg,
+            results_dir,
+            check_ckpt=check_ckpt,
+            reload_check=reload_check,
+            vsmec_dfs=vsmec_dfs,
+            neuesc_df=neuesc_df,
+            loaded_results=loaded_results,
+        )
     )
 
     blocking_unresolved = [
@@ -1893,25 +2882,28 @@ def run_all_step2_checks(
         "ready": is_ready,
         "gate_line": gate_line,
         "blocking_unresolved": blocking_unresolved,
+        "loaded_result_files": loaded_results["files"],
+        "n_sweep_filtered": loaded_results["n_sweep_filtered"],
         "checks": [asdict(r) for r in all_results],
         "d3_overlap": by_id["D3"].metrics if "D3" in by_id else {},
         "d4_near_duplicates": by_id["D4"].metrics if "D4" in by_id else {},
+        "f2b_artifacts": by_id["F2b"].metrics if "F2b" in by_id else {},
         "h1_distributions": by_id["H1"].metrics if "H1" in by_id else {},
         "h2_js_and_counts": by_id["H2"].metrics if "H2" in by_id else {},
         "h3_surprise_other": by_id["H3"].metrics if "H3" in by_id else {},
+        "h4_surface_stats": by_id["H4"].metrics if "H4" in by_id else {},
+        "i2_truncation": by_id["I2"].metrics if "I2" in by_id else {},
         "e2_kappa": by_id["E2"].metrics if "E2" in by_id else {},
+        "g1_counts": by_id["G1"].metrics if "G1" in by_id else {},
         "g2_published_diff": by_id["G2"].metrics if "G2" in by_id else {},
         "f1_hashes": by_id["F1"].metrics if "F1" in by_id else {},
     }
 
-    json_path = rep_dir / "readiness_report.json"
-    json_path.write_text(
+    (rep_dir / "readiness_report.json").write_text(
         json.dumps(report_payload, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-
-    md_path = rep_dir / "readiness_report.md"
-    _write_markdown_report(md_path, report_payload, all_results)
+    _write_markdown_report(rep_dir / "readiness_report.md", report_payload, all_results)
 
     return report_payload
 
@@ -1953,41 +2945,50 @@ def _write_markdown_report(
             f"{row['dir_test_to_other_rows']} | {row['dir_other_to_test_rows']} |"
         )
 
-    near_dups = payload.get("d4_near_duplicates", {}).get("near_duplicates", [])
+    d4_data = payload.get("d4_near_duplicates", {})
+    near_dups = d4_data.get("near_duplicates", [])
+    impact = d4_data.get("impact", {})
     lines.extend(
         [
             "",
-            f"### 2.2. Câu trùng gần phát hiện ở D4 (bỏ dấu câu & emoji, giữ dấu tiếng Việt): `{len(near_dups)}` câu",
+            f"### 2.2. Câu trùng gần phát hiện ở D4 (hạn chế đã biết & kiểm tra độ nhạy): `{len(near_dups)}` cặp",
             "",
         ]
     )
     if near_dups:
         lines.extend(
             [
-                "| Tập Test | ID | Nhãn | Tập khớp | ID khớp | Chuỗi chuẩn hóa mạnh | Văn bản gốc |",
-                "| --- | ---: | ---: | --- | --- | --- | --- |",
+                "| Phía Test | ID | Nhãn gốc (7c/3c) | Nhãn B1 (3c) | Phía đối chiếu | ID khớp | Nhãn gốc đối chiếu | Nhãn B1 đối chiếu | Khớp nhãn 3c? | Chuỗi chuẩn hóa mạnh |",
+                "| --- | ---: | --- | --- | --- | --- | --- | --- | --- | --- |",
             ]
         )
         for nd in near_dups:
             lines.append(
-                f"| `{nd['source_split']}` | {nd['id']} | {nd['label']} | `{nd['matched_split']}` | "
-                f"`{nd['matched_ids']}` | `{nd['strong_norm']}` | {nd['orig_text']} |"
+                f"| `{nd['source_split']}` | {nd['id']} | `{nd['orig_label_name']}` ({nd['orig_label']}) | "
+                f"`{nd['mapped_3class_name']}` ({nd['mapped_3class_label']}) | `{nd['matched_split']}` | "
+                f"`{nd['matched_ids']}` | `{nd['matched_orig_label_name']}` ({nd['matched_orig_label']}) | "
+                f"`{nd['matched_3class_name']}` ({nd['matched_3class_label']}) | **{nd['label_3class_match']}** | `{nd['strong_norm']}` |"
             )
-        lines.append("")
-        lines.append(
-            "> **Lưu ý:** Nếu loại bỏ bất kỳ câu nào khỏi tập test (`vsmec_test` hoặc `neuesc_test`), "
-            "số liệu test của Bước 1 bắt buộc phải được suy luận và tính lại từ checkpoint đã lưu."
+        lines.extend(
+            [
+                "",
+                f"- **Tỉ lệ câu bị ảnh hưởng nếu kiểm tra độ nhạy:** `vsmec_test` = **{impact.get('vsmec_test_affected', 0)}/{impact.get('vsmec_test_total', 692)}** "
+                f"({impact.get('vsmec_test_rate', 0.0)*100:.4f}%); `neuesc_test` = **{impact.get('neuesc_test_affected', 0)}/{impact.get('neuesc_test_total', 6613)}** "
+                f"({impact.get('neuesc_test_rate', 0.0)*100:.4f}%).",
+                "- **Quyết định đã chốt:** Giữ nguyên dữ liệu đóng băng, không loại bỏ câu nào khỏi tập test gốc. Hai ID vi phạm được xuất ra [sensitivity_exclude_ids.csv](sensitivity_exclude_ids.csv) để Bước 2 chạy thêm một lượt độ nhạy song song với lượt đầy đủ.",
+            ]
         )
 
-    # Section 3: H1 - H3
+    # Section 3: H1 - H4
     h1 = payload.get("h1_distributions", {})
     h2 = payload.get("h2_js_and_counts", {})
     h3 = payload.get("h3_surprise_other", {})
+    h4 = payload.get("h4_surface_stats", {}).get("surface_stats", {})
     if h1:
         lines.extend(
             [
                 "",
-                "## 3. Phân bố nhãn và độ lệch tiên nghiệm (H1 – H3)",
+                "## 3. Phân bố nhãn, độ lệch tiên nghiệm và độ lệch bề mặt (H1 – H4)",
                 "",
                 "### 3.1. Phân bố VSMEC 7 nhãn (H1)",
                 "",
@@ -2040,16 +3041,75 @@ def _write_markdown_report(
             ]
         )
 
-    # Section 4: E2 Kappa & G2 diff
+    if h4:
+        lines.extend(
+            [
+                "",
+                "### 3.4. Lệch bề mặt giữa hai miền (H4)",
+                "",
+                "| Bộ dữ liệu | Split | Số câu | Kết thúc `\" .\"` | Kết thúc `\".\"` | Có emoji Unicode | Số từ TB | Số từ p95 | Toàn chữ thường |",
+                "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            ]
+        )
+        for dom_key, dom_label in (("vsmec", "VSMEC"), ("neuesc", "NEU-ESC")):
+            for sp in ("train", "dev", "test"):
+                st = h4.get(dom_key, {}).get(sp, {})
+                if st:
+                    lines.append(
+                        f"| {dom_label} | `{sp}` | {st['n']} | {st['ends_with_space_dot_rate']*100:.2f}% | "
+                        f"{st['ends_with_dot_rate']*100:.2f}% | {st['has_emoji_rate']*100:.2f}% | "
+                        f"{st['word_count_mean']:.2f} | {st['word_count_p95']:.1f} | {st['all_lowercase_rate']*100:.2f}% |"
+                    )
+        lines.extend(
+            [
+                "",
+                "Hiệu ứng này cần được xét ở phần \"độ lệch nội tại\" của Bước 2.",
+            ]
+        )
+
+    # Section 4: F2b & E/G/I2
+    f2b_rows = payload.get("f2b_artifacts", {}).get("artifacts", [])
+    if f2b_rows:
+        lines.extend(
+            [
+                "",
+                "## 4. Artifact cũ ngoài phạm vi Bước 2 trong `data/clean/` (F2b)",
+                "",
+                "> Các file dưới đây là artifact cũ (CV-P3 / mở rộng), **không** được Bước 2 sử dụng. Sai khác với `MANIFEST.json` là đã biết và giữ nguyên `MANIFEST.json` theo quyết định.",
+                "",
+                "| File | SHA-256 thực tế | SHA-256 trong `MANIFEST.json` | Ghi chú |",
+                "| --- | --- | --- | --- |",
+            ]
+        )
+        for ar in f2b_rows:
+            man_disp = f"`{ar['manifest_sha256']}`" if ar["manifest_sha256"] != "không có" else "không có"
+            lines.append(
+                f"| `{ar['file']}` | `{ar['actual_sha256']}` | {man_disp} | {ar['note']} |"
+            )
+
     lines.extend(
         [
             "",
-            "## 4. Thông tin VSMEC-strict (E1–E3) và Cổng Bước 1 (G1–G3)",
+            "## 5. Đoạn mã Colab kiểm tra checkpoint & tokenizer trên Drive (nhóm I2 & J1–J3)",
             "",
-            f"- **VSMEC-strict Cohen's kappa (E2):** `{json.dumps(payload.get('e2_kappa', {}), ensure_ascii=False)}` "
-            f"(ghi chú: trên nhánh hiện tại có `results/polarity/kappa_report.json` cho 100 câu lấy từ `vsmec_train` ở CV-P3 với κ = 0.410163, "
-            f"nhưng chưa có file `vsmec_strict_file` trên `vsmec_test`)",
-            f"- **Đối chiếu F1 công bố (G2):** `{json.dumps(payload.get('g2_published_diff', {}), ensure_ascii=False)}`",
+            "```python",
+            "from google.colab import drive",
+            "drive.mount('/content/drive')",
+            "",
+            "# Chỉnh lại đường dẫn repo & thư mục Drive thực tế của bạn:",
+            "%cd /content/Xdomain-Transfer-Learning",
+            "!git checkout p1",
+            "",
+            "!python -m scripts.check_step2_data \\",
+            "  --results-glob '/content/drive/MyDrive/xdomain_results/**/*.csv' \\",
+            "  --with-tokenizer \\",
+            "  --check-ckpt \\",
+            "  --reload-check \\",
+            "  --ckpt-root-vsmec-phobert '/content/drive/MyDrive/xdomain_ckpts/stage1' \\",
+            "  --ckpt-root-vsmec-visobert '/content/drive/MyDrive/xdomain_ckpts/stage1' \\",
+            "  --ckpt-root-neu3-phobert '/content/drive/MyDrive/xdomain_ckpts/neu3' \\",
+            "  --ckpt-root-neu3-visobert '/content/drive/MyDrive/xdomain_ckpts/neu3'",
+            "```",
             "",
         ]
     )
@@ -2087,6 +3147,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         help="Thư mục xuất báo cáo và danh sách vi phạm (mặc định: reports/step2).",
     )
     parser.add_argument(
+        "--results-file",
+        action="append",
+        type=Path,
+        default=None,
+        help="Đường dẫn tới file CSV kết quả Bước 1 (có thể truyền nhiều lần).",
+    )
+    parser.add_argument(
+        "--results-glob",
+        action="append",
+        type=str,
+        default=None,
+        help="Mẫu glob tìm file CSV kết quả Bước 1 (có thể truyền nhiều lần; mặc định quét reports/step2/inputs/**/*.csv).",
+    )
+    parser.add_argument(
         "--with-tokenizer",
         action="store_true",
         help="Chạy thêm kiểm tra I2 (tỉ lệ cắt cụt ở max_length=256 với tokenizer PhoBERT & ViSoBERT).",
@@ -2096,13 +3170,52 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         action="store_true",
         help="Chạy thêm kiểm tra J1-J3 trên các thư mục checkpoint Bước 1.",
     )
+    parser.add_argument(
+        "--reload-check",
+        action="store_true",
+        help="Khi bật cùng --check-ckpt: nạp lại 1 checkpoint mỗi nhóm, chạy trên 16 câu dev và so logit với file predictions.",
+    )
+    parser.add_argument(
+        "--ckpt-root-vsmec-phobert",
+        type=Path,
+        default=None,
+        help="Thư mục chứa checkpoint Bước 1 VSMEC PhoBERT.",
+    )
+    parser.add_argument(
+        "--ckpt-root-vsmec-visobert",
+        type=Path,
+        default=None,
+        help="Thư mục chứa checkpoint Bước 1 VSMEC ViSoBERT.",
+    )
+    parser.add_argument(
+        "--ckpt-root-neu3-phobert",
+        type=Path,
+        default=None,
+        help="Thư mục chứa checkpoint Bước 1 NEU-3 PhoBERT.",
+    )
+    parser.add_argument(
+        "--ckpt-root-neu3-visobert",
+        type=Path,
+        default=None,
+        help="Thư mục chứa checkpoint Bước 1 NEU-3 ViSoBERT.",
+    )
     args = parser.parse_args(argv)
 
+    ckpt_overrides = {
+        "vsmec_phobert": args.ckpt_root_vsmec_phobert,
+        "vsmec_visobert": args.ckpt_root_vsmec_visobert,
+        "neu3_phobert": args.ckpt_root_neu3_phobert,
+        "neu3_visobert": args.ckpt_root_neu3_visobert,
+    }
     payload = run_all_step2_checks(
         config_path=args.config,
         reports_dir=args.reports_dir,
         with_tokenizer=args.with_tokenizer,
         check_ckpt=args.check_ckpt,
+        reload_check=args.reload_check,
+        results_files=args.results_file,
+        results_globs=args.results_glob,
+        ckpt_roots_override=ckpt_overrides,
     )
     checks = [CheckResult(**c) for c in payload["checks"]]
     print(format_console_table(checks, payload["gate_line"]))
@@ -2111,4 +3224,3 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

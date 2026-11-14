@@ -1,12 +1,27 @@
 vsmec_clean_dir: data/clean
 neuesc_file: data/clean/neuesc_100.csv
-results_dir: results
-vsmec_strict_file: null        # file gán nhãn tay; null => test E1-E3 báo MISSING
-vsmec_published_macro_f1: null # số đã công bố để so ở cổng Bước 1; null => G2 báo MISSING
+results_inputs_dir: reports/step2/inputs
+
+# Danh sách các file trong data/clean mà Bước 2 thực sự dùng để kiểm tra hash ở F2 (BLOCKER)
+step2_files:
+  - vsmec_train.csv
+  - vsmec_dev.csv
+  - vsmec_test.csv
+  - neuesc_100.csv
+  - vsmec_removed.csv
+  - overlap_matrix.csv
+  - internal_stats.csv
+  - excluded_records.csv
+
+vsmec_strict_file: null        # file gán nhãn tay trên vsmec_test; null => test E1-E3 báo MISSING
+vsmec_published_macro_f1:      # số macro-F1 đã công bố theo từng backbone; null => G2 báo MISSING
+  phobert: null
+  visobert: null
+
 ckpt_roots:                    # thư mục chứa checkpoint Bước 1 (chỉ dùng khi --check-ckpt)
   vsmec_phobert: null
   vsmec_visobert: null
   neu3_phobert: null
   neu3_visobert: null
-seeds: [0, 1, 2, 3, 4]
 
+seeds: [0, 1, 2, 3, 4]

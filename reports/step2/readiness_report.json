@@ -1,16 +1,17 @@
 {
   "ready": false,
-  "gate_line": "CHƯA SẴN SÀNG: E1, E2, E3, F1, F2, F3, G1, G2",
+  "gate_line": "CHƯA SẴN SÀNG: E1, E2, E3, F1, F3, G1, G2",
   "blocking_unresolved": [
     "E1",
     "E2",
     "E3",
     "F1",
-    "F2",
     "F3",
     "G1",
     "G2"
   ],
+  "loaded_result_files": [],
+  "n_sweep_filtered": 0,
   "checks": [
     {
       "id": "A1",
@@ -182,56 +183,82 @@
       "id": "D4",
       "level": "WARN",
       "status": "FAIL",
-      "detail": "Phát hiện 2 câu test trùng gần khi bỏ dấu câu/emoji (vsmec_test id=6311 ↔ neuesc_dev id=25960; neuesc_test id=28482 ↔ vsmec_train id=3607; xem violations_D4_near_duplicates.csv)",
+      "detail": "Giữ dữ liệu đóng băng; 2 cặp trùng gần: vsmec_test id=6311 (Sadness→negative) ↔ neuesc_dev id=[25960] (negative→negative, khớp=True); neuesc_test id=28482 (neutral→neutral) ↔ vsmec_train id=[3607] (Other→neutral, khớp=True). Ảnh hưởng độ nhạy: vsmec_test 1/692 (0.1445%), neuesc_test 1/6613 (0.0151%) — đã xuất sensitivity_exclude_ids.csv",
       "metrics": {
         "near_duplicates": [
           {
             "source_split": "vsmec_test",
             "id": 6311,
-            "label": 1,
+            "orig_label": 1,
+            "orig_label_name": "Sadness",
+            "mapped_3class_label": 0,
+            "mapped_3class_name": "negative",
             "matched_split": "neuesc_dev",
             "matched_ids": "[25960]",
+            "matched_orig_label": 0,
+            "matched_orig_label_name": "negative",
+            "matched_3class_label": 0,
+            "matched_3class_name": "negative",
+            "label_3class_match": true,
             "strong_norm": "chạm đáy nỗi đau",
-            "orig_text": "chạm đáy nỗi đau 😞"
+            "orig_text": "chạm đáy nỗi đau 😞",
+            "matched_text": "chạm đáy nỗi đau ."
           },
           {
             "source_split": "neuesc_test",
             "id": 28482,
-            "label": 1,
+            "orig_label": 1,
+            "orig_label_name": "neutral",
+            "mapped_3class_label": 1,
+            "mapped_3class_name": "neutral",
             "matched_split": "vsmec_train",
             "matched_ids": "[3607]",
+            "matched_orig_label": 6,
+            "matched_orig_label_name": "Other",
+            "matched_3class_label": 1,
+            "matched_3class_name": "neutral",
+            "label_3class_match": true,
             "strong_norm": "vật chất quyết định ý thức",
-            "orig_text": "vật chất quyết định ý thức ."
+            "orig_text": "vật chất quyết định ý thức .",
+            "matched_text": "vật chất quyết định ý thức"
           }
-        ]
+        ],
+        "impact": {
+          "vsmec_test_affected": 1,
+          "vsmec_test_total": 692,
+          "vsmec_test_rate": 0.001445086705202312,
+          "neuesc_test_affected": 1,
+          "neuesc_test_total": 6613,
+          "neuesc_test_rate": 0.00015121729925903524
+        }
       }
     },
     {
       "id": "E1",
       "level": "BLOCKER",
       "status": "MISSING",
-      "detail": "vsmec_strict_file=null trong configs/step2_data.yaml. Cần người phụ trách cung cấp đường dẫn & định dạng file gán nhãn tay VSMEC-strict trên vsmec_test (lưu ý: polarity_{nhat,long,key}.csv hiện có trong data/clean/ được lấy mẫu từ vsmec_train cho W_trans ở CV-P3)",
+      "detail": "vsmec_strict_file=null trong configs/step2_data.yaml. Chưa có file VSMEC-strict trên vsmec_test (các file polarity_{nhat,long,key}.csv cũ lấy từ vsmec_train cho CV-P3 nên KHÔNG dùng được). Cần người phụ trách cung cấp file gán nhãn tay hoặc quyết định quy tắc strict",
       "metrics": {}
     },
     {
       "id": "E2",
       "level": "BLOCKER",
       "status": "MISSING",
-      "detail": "vsmec_strict_file=null trong configs/step2_data.yaml. Cần người phụ trách cung cấp đường dẫn & định dạng file gán nhãn tay VSMEC-strict trên vsmec_test (lưu ý: polarity_{nhat,long,key}.csv hiện có trong data/clean/ được lấy mẫu từ vsmec_train cho W_trans ở CV-P3)",
+      "detail": "vsmec_strict_file=null trong configs/step2_data.yaml. Chưa có file VSMEC-strict trên vsmec_test (các file polarity_{nhat,long,key}.csv cũ lấy từ vsmec_train cho CV-P3 nên KHÔNG dùng được). Cần người phụ trách cung cấp file gán nhãn tay hoặc quyết định quy tắc strict",
       "metrics": {}
     },
     {
       "id": "E3",
       "level": "BLOCKER",
       "status": "MISSING",
-      "detail": "vsmec_strict_file=null và chưa có tài liệu quy tắc dựng tập VSMEC-strict trong docs/",
+      "detail": "Chưa chốt quy tắc VSMEC-strict (bỏ các câu Surprise/Other hay gán lại bằng nhãn tay) và chưa có docs/vsmec_strict_rule.md",
       "metrics": {}
     },
     {
       "id": "F1",
       "level": "BLOCKER",
       "status": "MISSING",
-      "detail": "Chưa có file kết quả Bước 1 tại results/stage1.csv, results/neu3.csv trên nhánh hiện tại (hash hiện tại: vsmec_data_hash=680bfc0f241e..., neuesc_data_hash=9b0e3f42c2b7...); cần người phụ trách đồng bộ results/stage1.csv và results/neu3.csv từ Drive",
+      "detail": "Chưa có CSV kết quả Bước 1 trong reports/step2/inputs/ hoặc qua --results-file (hash hiện tại: vsmec_data_hash=680bfc0f241e..., neuesc_data_hash=9b0e3f42c2b7...)",
       "metrics": {
         "current_vsmec_data_hash": "680bfc0f241ea47d4fed57638af07a3744911168b9efbffabdccd1911555d588",
         "current_neuesc_data_hash": "9b0e3f42c2b7fa279e6887d15b522c566dd30d1c28430741972ed6d86ab03ac1"
@@ -240,13 +267,64 @@
     {
       "id": "F2",
       "level": "BLOCKER",
-      "status": "FAIL",
-      "detail": "Lệch MANIFEST.json: polarity_long.csv (MANIFEST=bba9a68c2a... != thực tế=054ffc6808...); polarity_nhat.csv (MANIFEST=bba9a68c2a... != thực tế=a22f50bcd2...); CSV chưa có trong MANIFEST.json: ['polarity_key.csv']",
+      "status": "PASS",
+      "detail": "Tất cả 8 file Bước 2 trong step2_files khớp SHA-256 trong MANIFEST.json",
       "metrics": {
-        "mismatches": [
-          "polarity_long.csv (MANIFEST=bba9a68c2a... != thực tế=054ffc6808...)",
-          "polarity_nhat.csv (MANIFEST=bba9a68c2a... != thực tế=a22f50bcd2...)",
-          "CSV chưa có trong MANIFEST.json: ['polarity_key.csv']"
+        "step2_files": [
+          "vsmec_train.csv",
+          "vsmec_dev.csv",
+          "vsmec_test.csv",
+          "neuesc_100.csv",
+          "vsmec_removed.csv",
+          "overlap_matrix.csv",
+          "internal_stats.csv",
+          "excluded_records.csv"
+        ]
+      }
+    },
+    {
+      "id": "F2b",
+      "level": "WARN",
+      "status": "FAIL",
+      "detail": "Artifact cũ ngoài phạm vi Bước 2 (lệch MANIFEST đã biết, không dùng cho Bước 2): manifest_run1.json: thực=80a19181ad2c..., MANIFEST=không có; polarity_key.csv: thực=4c5587afe006..., MANIFEST=không có; polarity_long.csv: thực=054ffc680881..., MANIFEST=bba9a68c2af3...; polarity_nhat.csv: thực=a22f50bcd290..., MANIFEST=bba9a68c2af3...; vsfc_test_clean.csv: thực=e6873a782eb1..., MANIFEST=e6873a782eb1...; vsmec_clean_report.json: thực=7071ea3ec51d..., MANIFEST=không có",
+      "metrics": {
+        "artifacts": [
+          {
+            "file": "manifest_run1.json",
+            "actual_sha256": "80a19181ad2c88373af0b93289c978328bed4569963acbb4a5a5a8d3d2fdde9c",
+            "manifest_sha256": "không có",
+            "note": "không có trong MANIFEST"
+          },
+          {
+            "file": "polarity_key.csv",
+            "actual_sha256": "4c5587afe006a905c71af1441b1125a0bcda1035786e66ec828a1a692201b15b",
+            "manifest_sha256": "không có",
+            "note": "không có trong MANIFEST"
+          },
+          {
+            "file": "polarity_long.csv",
+            "actual_sha256": "054ffc6808815a79ae9c3601d5e12977fbbadf6ba971d2e1e8ed17da2a05b0e6",
+            "manifest_sha256": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834",
+            "note": "lệch MANIFEST"
+          },
+          {
+            "file": "polarity_nhat.csv",
+            "actual_sha256": "a22f50bcd290569e65e943b2e2c1c575b176762fd1941560458841d237df98da",
+            "manifest_sha256": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834",
+            "note": "lệch MANIFEST"
+          },
+          {
+            "file": "vsfc_test_clean.csv",
+            "actual_sha256": "e6873a782eb1368b85a46fcabee091aa081a174f01fdc759951558aba4ed6023",
+            "manifest_sha256": "e6873a782eb1368b85a46fcabee091aa081a174f01fdc759951558aba4ed6023",
+            "note": "khớp MANIFEST"
+          },
+          {
+            "file": "vsmec_clean_report.json",
+            "actual_sha256": "7071ea3ec51d3a8a72e597e39225757b139a33003758e6f52400b94dd4b59dd8",
+            "manifest_sha256": "không có",
+            "note": "không có trong MANIFEST"
+          }
         ]
       }
     },
@@ -254,28 +332,84 @@
       "id": "F3",
       "level": "BLOCKER",
       "status": "MISSING",
-      "detail": "Chưa có results/stage1.csv, results/neu3.csv để kiểm tra tính duy nhất của data_hash và code_version",
+      "detail": "Chưa có kết quả Bước 1 để kiểm tra tính duy nhất của data_hash và code_version",
       "metrics": {}
     },
     {
       "id": "G1",
       "level": "BLOCKER",
       "status": "MISSING",
-      "detail": "Chưa có results/stage1.csv, results/neu3.csv; cần người phụ trách cung cấp kết quả 20 lượt baseline Bước 1 (5 seed × 2 backbone × 2 miền)",
-      "metrics": {}
+      "detail": "Chưa có kết quả Bước 1 (tổng 0/20 lượt: VSMEC PhoBERT: 0/5; VSMEC ViSoBERT: 0/5; NEU-3 PhoBERT: 0/5; NEU-3 ViSoBERT: 0/5; cần người phụ trách tải stage1.csv và neu3.csv của 2 backbone vào reports/step2/inputs/)",
+      "metrics": {
+        "groups": {
+          "vsmec_phobert": {
+            "label": "VSMEC PhoBERT",
+            "completed": 0,
+            "target": 5,
+            "completed_seeds": [],
+            "missing_seeds": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "vsmec_visobert": {
+            "label": "VSMEC ViSoBERT",
+            "completed": 0,
+            "target": 5,
+            "completed_seeds": [],
+            "missing_seeds": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "neu3_phobert": {
+            "label": "NEU-3 PhoBERT",
+            "completed": 0,
+            "target": 5,
+            "completed_seeds": [],
+            "missing_seeds": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "neu3_visobert": {
+            "label": "NEU-3 ViSoBERT",
+            "completed": 0,
+            "target": 5,
+            "completed_seeds": [],
+            "missing_seeds": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        },
+        "n_sweep_filtered": 0
+      }
     },
     {
       "id": "G2",
       "level": "BLOCKER",
       "status": "MISSING",
-      "detail": "vsmec_published_macro_f1=null trong configs/step2_data.yaml; cần người phụ trách cung cấp số macro-F1 test VSMEC đã công bố để đối chiếu",
+      "detail": "Thiếu đầu vào đối chiếu G2: vsmec_published_macro_f1.phobert=null, thiếu kết quả test VSMEC PhoBERT, vsmec_published_macro_f1.visobert=null, thiếu kết quả test VSMEC ViSoBERT",
       "metrics": {}
     },
     {
       "id": "G3",
       "level": "WARN",
       "status": "MISSING",
-      "detail": "Chưa có đủ results/stage1.csv và results/neu3.csv để kiểm tra std giữa các seed và F1 từng lớp >= 0.30",
+      "detail": "Chưa đủ kết quả để kiểm tra std và F1 từng lớp >= 0.30 (thiếu: VSMEC PhoBERT, VSMEC ViSoBERT, NEU-3 PhoBERT, NEU-3 ViSoBERT)",
       "metrics": {}
     },
     {
@@ -404,6 +538,74 @@
       }
     },
     {
+      "id": "H4",
+      "level": "INFO",
+      "status": "PASS",
+      "detail": "Lệch bề mặt test: vsmec_test (' .'=6.65%, emoji=19.08%, words=13.80/p95=31.0, lower=100.00%) vs neuesc_test (' .'=98.53%, emoji=0.00%, words=26.02/p95=89.0, lower=100.00%)",
+      "metrics": {
+        "surface_stats": {
+          "vsmec": {
+            "train": {
+              "n": 5542,
+              "ends_with_space_dot_rate": 0.06423673763984121,
+              "ends_with_dot_rate": 0.0887766149404547,
+              "has_emoji_rate": 0.17268134247564057,
+              "word_count_mean": 14.01118729700469,
+              "word_count_p95": 33.0,
+              "all_lowercase_rate": 1.0
+            },
+            "dev": {
+              "n": 686,
+              "ends_with_space_dot_rate": 0.05393586005830904,
+              "ends_with_dot_rate": 0.07871720116618076,
+              "has_emoji_rate": 0.1661807580174927,
+              "word_count_mean": 14.176384839650146,
+              "word_count_p95": 31.0,
+              "all_lowercase_rate": 1.0
+            },
+            "test": {
+              "n": 692,
+              "ends_with_space_dot_rate": 0.06647398843930635,
+              "ends_with_dot_rate": 0.09104046242774566,
+              "has_emoji_rate": 0.1907514450867052,
+              "word_count_mean": 13.796242774566474,
+              "word_count_p95": 31.0,
+              "all_lowercase_rate": 1.0
+            }
+          },
+          "neuesc": {
+            "train": {
+              "n": 23048,
+              "ends_with_space_dot_rate": 0.9866365845192642,
+              "ends_with_dot_rate": 0.9866365845192642,
+              "has_emoji_rate": 0.0,
+              "word_count_mean": 24.813259284970496,
+              "word_count_p95": 81.0,
+              "all_lowercase_rate": 0.9998698368622007
+            },
+            "dev": {
+              "n": 3305,
+              "ends_with_space_dot_rate": 0.9869894099848714,
+              "ends_with_dot_rate": 0.9869894099848714,
+              "has_emoji_rate": 0.0,
+              "word_count_mean": 25.124054462934946,
+              "word_count_p95": 82.0,
+              "all_lowercase_rate": 0.999697428139183
+            },
+            "test": {
+              "n": 6613,
+              "ends_with_space_dot_rate": 0.9853319219718736,
+              "ends_with_dot_rate": 0.9853319219718736,
+              "has_emoji_rate": 0.0,
+              "word_count_mean": 26.02207772569182,
+              "word_count_p95": 89.0,
+              "all_lowercase_rate": 1.0
+            }
+          }
+        }
+      }
+    },
+    {
       "id": "I1",
       "level": "WARN",
       "status": "PASS",
@@ -413,9 +615,24 @@
     {
       "id": "I2",
       "level": "WARN",
-      "status": "SKIP",
-      "detail": "Bỏ qua nạp tokenizer (truyền --with-tokenizer để đo tỉ lệ cắt cụt ở max_length=256)",
-      "metrics": {}
+      "status": "PASS",
+      "detail": "Cắt cụt @256: vsmec_test (PhoBERT=0/692 [0.00%], ViSoBERT=0/692 [0.00%]); neuesc_test (PhoBERT=45/6613 [0.68%], ViSoBERT=70/6613 [1.06%])",
+      "metrics": {
+        "vsmec_test": {
+          "n_total": 692,
+          "phobert_n_truncated": 0,
+          "phobert_rate": 0.0,
+          "visobert_n_truncated": 0,
+          "visobert_rate": 0.0
+        },
+        "neuesc_test": {
+          "n_total": 6613,
+          "phobert_n_truncated": 45,
+          "phobert_rate": 0.006804778466656586,
+          "visobert_n_truncated": 70,
+          "visobert_rate": 0.010585210948132466
+        }
+      }
     },
     {
       "id": "I3",
@@ -521,20 +738,86 @@
       {
         "source_split": "vsmec_test",
         "id": 6311,
-        "label": 1,
+        "orig_label": 1,
+        "orig_label_name": "Sadness",
+        "mapped_3class_label": 0,
+        "mapped_3class_name": "negative",
         "matched_split": "neuesc_dev",
         "matched_ids": "[25960]",
+        "matched_orig_label": 0,
+        "matched_orig_label_name": "negative",
+        "matched_3class_label": 0,
+        "matched_3class_name": "negative",
+        "label_3class_match": true,
         "strong_norm": "chạm đáy nỗi đau",
-        "orig_text": "chạm đáy nỗi đau 😞"
+        "orig_text": "chạm đáy nỗi đau 😞",
+        "matched_text": "chạm đáy nỗi đau ."
       },
       {
         "source_split": "neuesc_test",
         "id": 28482,
-        "label": 1,
+        "orig_label": 1,
+        "orig_label_name": "neutral",
+        "mapped_3class_label": 1,
+        "mapped_3class_name": "neutral",
         "matched_split": "vsmec_train",
         "matched_ids": "[3607]",
+        "matched_orig_label": 6,
+        "matched_orig_label_name": "Other",
+        "matched_3class_label": 1,
+        "matched_3class_name": "neutral",
+        "label_3class_match": true,
         "strong_norm": "vật chất quyết định ý thức",
-        "orig_text": "vật chất quyết định ý thức ."
+        "orig_text": "vật chất quyết định ý thức .",
+        "matched_text": "vật chất quyết định ý thức"
+      }
+    ],
+    "impact": {
+      "vsmec_test_affected": 1,
+      "vsmec_test_total": 692,
+      "vsmec_test_rate": 0.001445086705202312,
+      "neuesc_test_affected": 1,
+      "neuesc_test_total": 6613,
+      "neuesc_test_rate": 0.00015121729925903524
+    }
+  },
+  "f2b_artifacts": {
+    "artifacts": [
+      {
+        "file": "manifest_run1.json",
+        "actual_sha256": "80a19181ad2c88373af0b93289c978328bed4569963acbb4a5a5a8d3d2fdde9c",
+        "manifest_sha256": "không có",
+        "note": "không có trong MANIFEST"
+      },
+      {
+        "file": "polarity_key.csv",
+        "actual_sha256": "4c5587afe006a905c71af1441b1125a0bcda1035786e66ec828a1a692201b15b",
+        "manifest_sha256": "không có",
+        "note": "không có trong MANIFEST"
+      },
+      {
+        "file": "polarity_long.csv",
+        "actual_sha256": "054ffc6808815a79ae9c3601d5e12977fbbadf6ba971d2e1e8ed17da2a05b0e6",
+        "manifest_sha256": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834",
+        "note": "lệch MANIFEST"
+      },
+      {
+        "file": "polarity_nhat.csv",
+        "actual_sha256": "a22f50bcd290569e65e943b2e2c1c575b176762fd1941560458841d237df98da",
+        "manifest_sha256": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834",
+        "note": "lệch MANIFEST"
+      },
+      {
+        "file": "vsfc_test_clean.csv",
+        "actual_sha256": "e6873a782eb1368b85a46fcabee091aa081a174f01fdc759951558aba4ed6023",
+        "manifest_sha256": "e6873a782eb1368b85a46fcabee091aa081a174f01fdc759951558aba4ed6023",
+        "note": "khớp MANIFEST"
+      },
+      {
+        "file": "vsmec_clean_report.json",
+        "actual_sha256": "7071ea3ec51d3a8a72e597e39225757b139a33003758e6f52400b94dd4b59dd8",
+        "manifest_sha256": "không có",
+        "note": "không có trong MANIFEST"
       }
     ]
   },
@@ -645,7 +928,142 @@
     "other_count": 129,
     "neutral_b1_total": 166
   },
+  "h4_surface_stats": {
+    "surface_stats": {
+      "vsmec": {
+        "train": {
+          "n": 5542,
+          "ends_with_space_dot_rate": 0.06423673763984121,
+          "ends_with_dot_rate": 0.0887766149404547,
+          "has_emoji_rate": 0.17268134247564057,
+          "word_count_mean": 14.01118729700469,
+          "word_count_p95": 33.0,
+          "all_lowercase_rate": 1.0
+        },
+        "dev": {
+          "n": 686,
+          "ends_with_space_dot_rate": 0.05393586005830904,
+          "ends_with_dot_rate": 0.07871720116618076,
+          "has_emoji_rate": 0.1661807580174927,
+          "word_count_mean": 14.176384839650146,
+          "word_count_p95": 31.0,
+          "all_lowercase_rate": 1.0
+        },
+        "test": {
+          "n": 692,
+          "ends_with_space_dot_rate": 0.06647398843930635,
+          "ends_with_dot_rate": 0.09104046242774566,
+          "has_emoji_rate": 0.1907514450867052,
+          "word_count_mean": 13.796242774566474,
+          "word_count_p95": 31.0,
+          "all_lowercase_rate": 1.0
+        }
+      },
+      "neuesc": {
+        "train": {
+          "n": 23048,
+          "ends_with_space_dot_rate": 0.9866365845192642,
+          "ends_with_dot_rate": 0.9866365845192642,
+          "has_emoji_rate": 0.0,
+          "word_count_mean": 24.813259284970496,
+          "word_count_p95": 81.0,
+          "all_lowercase_rate": 0.9998698368622007
+        },
+        "dev": {
+          "n": 3305,
+          "ends_with_space_dot_rate": 0.9869894099848714,
+          "ends_with_dot_rate": 0.9869894099848714,
+          "has_emoji_rate": 0.0,
+          "word_count_mean": 25.124054462934946,
+          "word_count_p95": 82.0,
+          "all_lowercase_rate": 0.999697428139183
+        },
+        "test": {
+          "n": 6613,
+          "ends_with_space_dot_rate": 0.9853319219718736,
+          "ends_with_dot_rate": 0.9853319219718736,
+          "has_emoji_rate": 0.0,
+          "word_count_mean": 26.02207772569182,
+          "word_count_p95": 89.0,
+          "all_lowercase_rate": 1.0
+        }
+      }
+    }
+  },
+  "i2_truncation": {
+    "vsmec_test": {
+      "n_total": 692,
+      "phobert_n_truncated": 0,
+      "phobert_rate": 0.0,
+      "visobert_n_truncated": 0,
+      "visobert_rate": 0.0
+    },
+    "neuesc_test": {
+      "n_total": 6613,
+      "phobert_n_truncated": 45,
+      "phobert_rate": 0.006804778466656586,
+      "visobert_n_truncated": 70,
+      "visobert_rate": 0.010585210948132466
+    }
+  },
   "e2_kappa": {},
+  "g1_counts": {
+    "groups": {
+      "vsmec_phobert": {
+        "label": "VSMEC PhoBERT",
+        "completed": 0,
+        "target": 5,
+        "completed_seeds": [],
+        "missing_seeds": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "vsmec_visobert": {
+        "label": "VSMEC ViSoBERT",
+        "completed": 0,
+        "target": 5,
+        "completed_seeds": [],
+        "missing_seeds": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "neu3_phobert": {
+        "label": "NEU-3 PhoBERT",
+        "completed": 0,
+        "target": 5,
+        "completed_seeds": [],
+        "missing_seeds": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "neu3_visobert": {
+        "label": "NEU-3 ViSoBERT",
+        "completed": 0,
+        "target": 5,
+        "completed_seeds": [],
+        "missing_seeds": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    },
+    "n_sweep_filtered": 0
+  },
   "g2_published_diff": {},
   "f1_hashes": {
     "current_vsmec_data_hash": "680bfc0f241ea47d4fed57638af07a3744911168b9efbffabdccd1911555d588",
