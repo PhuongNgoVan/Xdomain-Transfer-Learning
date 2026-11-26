@@ -1,0 +1,12 @@
+{
+  "actual_update_steps": 292,
+  "effective_precision": "bf16",
+  "gpu_hours": 0.01290352855583333,
+  "gpu_name": "NVIDIA A100-SXM4-80GB",
+  "n_gpus": 1,
+  "peak_vram_mb": 2979.6591796875,
+  "total_params": 97568259,
+  "train_seconds": 46.45270280099999,
+  "trainable_params": 97568259,
+  "trunc_rate": 0.00737527114967462
+}

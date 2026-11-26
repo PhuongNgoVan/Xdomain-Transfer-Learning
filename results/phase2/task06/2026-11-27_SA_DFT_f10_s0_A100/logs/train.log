@@ -1,0 +1,115 @@
+
+--- CLI start 2026-11-26 18:06:58 UTC ---
+/content/task06-venv/lib/python3.13/site-packages/pandas/core/arrays/masked.py:63: UserWarning: Pandas requires version '1.5.0' or newer of 'bottleneck' (version '1.4.2' currently installed).
+  from pandas.core import (
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795716426.249112    2559 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795716426.319884    2559 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795716428.887978    2559 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795716428.888659    2559 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+Some weights of XLMRobertaModel were not initialized from the model checkpoint at uitnlp/visobert and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[fit] device=cuda precision=bf16 train=2305 dev=3305 updates_per_epoch=73 epochs=10 resume_save=step1-and-eval
+You're using a XLMRobertaTokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[train] epoch=1 step=1 batch=2/145 loss=1.1434
+[resume saved] step=1 epoch=0 cursor=2
+[train] epoch=1 step=10 batch=20/145 loss=0.7982
+[train] epoch=1 step=20 batch=40/145 loss=1.2206
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/content/xdomain-task06/src/phase2/cli.py", line 45, in <module>
+    main()
+    ~~~~^^
+  File "/content/xdomain-task06/src/phase2/cli.py", line 40, in main
+    result = run_phase2_experiment(config_path, **options)
+  File "/content/xdomain-task06/src/phase2/run.py", line 165, in run_phase2_experiment
+    fit = trainer.fit(data["train_texts"], data["train_labels"], data["dev_texts"], data["dev_labels"], work_dir)
+  File "/content/xdomain-task06/src/phase2/trainer.py", line 167, in fit
+    (loss * (len(batch_ids) / n_items)).backward()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/dist-packages/torch/_tensor.py", line 623, in backward
+    torch.autograd.backward(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        self, gradient, retain_graph, create_graph, inputs=inputs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/dist-packages/torch/autograd/__init__.py", line 395, in backward
+    _engine_run_backward(
+    ~~~~~~~~~~~~~~~~~~~~^
+        tensors,
+        ^^^^^^^^
+    ...<5 lines>...
+        accumulate_grad=True,
+        ^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/dist-packages/torch/autograd/graph.py", line 1072, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        t_outputs, *args, **kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )  # Calls into the C++ engine to run the backward pass
+    ^
+KeyboardInterrupt
+
+--- CLI start 2026-11-26 18:07:27 UTC ---
+/content/task06-venv/lib/python3.13/site-packages/pandas/core/arrays/masked.py:63: UserWarning: Pandas requires version '1.5.0' or newer of 'bottleneck' (version '1.4.2' currently installed).
+  from pandas.core import (
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795716454.757731    2800 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795716454.826283    2800 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795716457.309156    2800 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795716457.309676    2800 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+Some weights of XLMRobertaModel were not initialized from the model checkpoint at uitnlp/visobert and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[resume] epoch=0 cursor=2 step=1 best_step=0
+[fit] device=cuda precision=bf16 train=2305 dev=3305 updates_per_epoch=73 epochs=10 resume_save=step1-and-eval
+You're using a XLMRobertaTokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[train] epoch=1 step=10 batch=20/145 loss=0.7982
+[train] epoch=1 step=20 batch=40/145 loss=1.2206
+[train] epoch=1 step=30 batch=60/145 loss=0.6041
+[train] epoch=1 step=40 batch=80/145 loss=0.9727
+[train] epoch=1 step=50 batch=100/145 loss=0.8638
+[train] epoch=1 step=60 batch=120/145 loss=0.5789
+[train] epoch=1 step=70 batch=140/145 loss=0.6101
+[eval] epoch=1.00 step=73
+[epoch=1.00 step=73] train_loss=0.7681 dev_score=0.6010
+[resume saved] step=73 epoch=1 cursor=0
+[train] epoch=2 step=80 batch=14/145 loss=0.3402
+[train] epoch=2 step=90 batch=34/145 loss=0.2445
+[train] epoch=2 step=100 batch=54/145 loss=0.1490
+[train] epoch=2 step=110 batch=74/145 loss=0.4501
+[train] epoch=2 step=120 batch=94/145 loss=0.2582
+[train] epoch=2 step=130 batch=114/145 loss=1.0012
+[train] epoch=2 step=140 batch=134/145 loss=0.3201
+[eval] epoch=2.00 step=146
+[epoch=2.00 step=146] train_loss=0.4351 dev_score=0.6637
+[resume saved] step=146 epoch=2 cursor=0
+[train] epoch=3 step=150 batch=8/145 loss=0.2856
+[train] epoch=3 step=160 batch=28/145 loss=0.1440
+[train] epoch=3 step=170 batch=48/145 loss=0.0189
+[train] epoch=3 step=180 batch=68/145 loss=0.5447
+[train] epoch=3 step=190 batch=88/145 loss=0.0381
+[train] epoch=3 step=200 batch=108/145 loss=0.3926
+[train] epoch=3 step=210 batch=128/145 loss=0.1319
+[eval] epoch=3.00 step=219
+[epoch=3.00 step=219] train_loss=0.1832 dev_score=0.6598
+[resume saved] step=219 epoch=3 cursor=0
+[train] epoch=4 step=220 batch=2/145 loss=1.7102
+[train] epoch=4 step=230 batch=22/145 loss=0.1743
+[train] epoch=4 step=240 batch=42/145 loss=0.0061
+[train] epoch=4 step=250 batch=62/145 loss=0.3571
+[train] epoch=4 step=260 batch=82/145 loss=0.0064
+[train] epoch=4 step=270 batch=102/145 loss=2.1898
+[train] epoch=4 step=280 batch=122/145 loss=0.0559
+[train] epoch=4 step=290 batch=142/145 loss=0.0307
+[eval] epoch=4.00 step=292
+[epoch=4.00 step=292] train_loss=0.1938 dev_score=0.6422
+[resume saved] step=292 epoch=4 cursor=0
+ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961: complete

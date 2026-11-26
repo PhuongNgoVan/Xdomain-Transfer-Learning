@@ -1,0 +1,82 @@
+﻿[
+    {
+        "original_path":  "results/phase2/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/completion.json",
+        "archive_path":  "artifacts/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/completion.json",
+        "sha256":  "e7f345c9e4194ae7b8e93d90fb15b79a4a84933b219dd66c26ef4280f4491a5c"
+    },
+    {
+        "original_path":  "results/phase2/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/config.yaml",
+        "archive_path":  "artifacts/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/config.yaml",
+        "sha256":  "d76cbf454613f53f6f71641b8dc370f028531048e41e4340d2907244fd67744a"
+    },
+    {
+        "original_path":  "results/phase2/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/cost.json",
+        "archive_path":  "artifacts/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/cost.json",
+        "sha256":  "f6f074400bf98c020a0f3450d087086d9096e5a8c916ff620eaa6a16fb53ddef"
+    },
+    {
+        "original_path":  "results/phase2/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/metadata.json",
+        "archive_path":  "artifacts/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/metadata.json",
+        "sha256":  "f87f2e8c6c5d88f57e8d1c2483bfa7f1d2ac527bad287d52ed2e13182da684f4"
+    },
+    {
+        "original_path":  "results/phase2/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/metrics.json",
+        "archive_path":  "artifacts/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/metrics.json",
+        "sha256":  "9fa326ec86448a3d5a67bb4f5663b5c8b10bbd4871d0113c8e065311bc22f253"
+    },
+    {
+        "original_path":  "results/phase2/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/predictions_dev.csv",
+        "archive_path":  "artifacts/runs/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/predictions_dev.csv",
+        "sha256":  "d70b6c779dec1ed39c00e88aaba3c4759b0819500e2cc7c1983236b3d1802d13"
+    },
+    {
+        "original_path":  "results/phase2/work/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/provenance.json",
+        "archive_path":  "artifacts/work/ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961/provenance.json",
+        "sha256":  "6c4c3a3f7cccfcd4268739c783ed675ebd7aa8c62f4eccb67ce4c85c240f7421"
+    },
+    {
+        "original_path":  "reports/phase2/smoke_test.md",
+        "archive_path":  "smoke_report.md",
+        "sha256":  "b5dff09a30d807721afe4a97cb0bbd1352a762bac2c81ec84ddcb8346b30d231"
+    },
+    {
+        "original_path":  "task6/pip-freeze.txt",
+        "archive_path":  "environment/pip-freeze.txt",
+        "sha256":  "e8b6e465e741e567daac46fe2b03559c4cc47427e89f06b3304079e2140c52ab"
+    },
+    {
+        "original_path":  "task6/skip_check.log",
+        "archive_path":  "logs/skip_check.log",
+        "sha256":  "b30215354be07f96df9a3a27c65a562cf95a56aad1c070065a03f61f1416aea2"
+    },
+    {
+        "original_path":  "task6/environment.json",
+        "archive_path":  "environment/environment.json",
+        "sha256":  "b145714819b05be77000f7163ffebb4a99a49f8c7d10ecdf656e381f6803fd81"
+    },
+    {
+        "original_path":  "task6/train.log",
+        "archive_path":  "logs/train.log",
+        "sha256":  "eee7e0456186e8c9cf6c06f8cf2dd65a4c002067bb2231be8ee68533def09de8"
+    },
+    {
+        "original_path":  "task6/install.log",
+        "archive_path":  "logs/install.log",
+        "sha256":  "1a34c276881570671e79937a3cb9085ca9bf8923bc72f97035320f945a38e80a"
+    },
+    {
+        "original_path":  "results/phase2/phase2_runs.csv",
+        "archive_path":  "artifacts/phase2_runs.csv",
+        "sha256":  "b63b79db35ab606a0c0015d4ad46346fb34b77b279f4e8fcbcb5d84a1992f88c"
+    },
+    {
+        "original_path":  "task6/resume_check.json",
+        "archive_path":  "logs/resume_check.json",
+        "sha256":  "a0040e74a2e629913d72de9ce796e4f2ea15deec58db6f447a6bc322a75976a1"
+    },
+    {
+        "original_path":  "task6/frozen_before.json",
+        "archive_path":  "environment/frozen_before.json",
+        "sha256":  "d66d6fc8a445d8981f626ff46d8b81e839479b55102bc6d72ea92e5ad152ccd4"
+    }
+]

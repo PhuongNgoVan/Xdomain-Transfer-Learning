@@ -1,0 +1,14 @@
+{
+  "artifacts": {
+    "config.yaml": "d76cbf454613f53f6f71641b8dc370f028531048e41e4340d2907244fd67744a",
+    "cost.json": "f6f074400bf98c020a0f3450d087086d9096e5a8c916ff620eaa6a16fb53ddef",
+    "metadata.json": "f87f2e8c6c5d88f57e8d1c2483bfa7f1d2ac527bad287d52ed2e13182da684f4",
+    "metrics.json": "9fa326ec86448a3d5a67bb4f5663b5c8b10bbd4871d0113c8e065311bc22f253",
+    "predictions_dev.csv": "d70b6c779dec1ed39c00e88aaba3c4759b0819500e2cc7c1983236b3d1802d13"
+  },
+  "checkpoint_files": [],
+  "ckpt_path": null,
+  "complete": true,
+  "fingerprint": "bcad931dab9d1752f3a54d7ceb93c8774312ef138e3dd48eb95b261309a9d601",
+  "rows_digest": "00b78b6510120a7f1cd29ca30295ce8607f8516318abe55b65ac953d11c68951"
+}

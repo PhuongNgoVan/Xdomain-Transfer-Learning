@@ -1,0 +1,383 @@
+{
+  "backbone": "ViSoBERT",
+  "ckpt_out_dir": "/content/task06_outputs/af12db20672b/checkpoints/phase2",
+  "data_provenance": {
+    "dataset": "neuesc",
+    "file_sha256": "799e9ef5fd8a6e18660db2fc6722955e82bb2f69f70db011ab9b67e71dcf3a06",
+    "fraction": 10,
+    "ids_sha256": "14f5fba3a6823278a13894e9e4dd017fba9461c373cbdfb515c389e978d3a218",
+    "input_texts_sha256": {
+      "dev": "f74799fbc6ae00608ddb643a5cfdea6a0b3ba9817fe45b340150fffb0557b18c",
+      "train": "becd2015d2d5532c8fb4771e6b108959f2f0921187d13d2562c4ce6d322c0951"
+    },
+    "max_examples": null,
+    "n_dev": 3305,
+    "n_test": null,
+    "n_train": 2305,
+    "seed": 0,
+    "source_files_sha256": {
+      "neuesc_100.csv": "9b0e3f42c2b7fa279e6887d15b522c566dd30d1c28430741972ed6d86ab03ac1"
+    },
+    "subset_file": "neuesc_f10_s0_ids.csv",
+    "test_integrity_checked": false
+  },
+  "direction": "SA",
+  "effective": {
+    "hooks": {
+      "adapter": null,
+      "optimizer": null,
+      "saver": null,
+      "trainer": null
+    },
+    "max_examples": null,
+    "run_mode": "smoke",
+    "save_ckpt": false,
+    "settings": {
+      "batch_size": 16,
+      "dropout": 0.1,
+      "effective_batch_size": 32,
+      "epochs": 10,
+      "evals_per_epoch": 1,
+      "gradient_accumulation_steps": 2,
+      "lr": 3e-05,
+      "max_grad_norm": 1.0,
+      "max_length": 256,
+      "patience": 2,
+      "precision": "bf16",
+      "strict_precision": true,
+      "warmup_ratio": 0.1,
+      "weight_decay": 0.01
+    }
+  },
+  "fingerprint": "bcad931dab9d1752f3a54d7ceb93c8774312ef138e3dd48eb95b261309a9d601",
+  "fraction": 10,
+  "git_commit": "af12db20672b198accf724cbd26cdbf59b32d162",
+  "lr": 3e-05,
+  "method": "dft",
+  "protocol_cfg": {
+    "anchor_100pct": {
+      "historical_phase1_reference": true,
+      "historical_plot_style": "dashed_with_protocol_diff_note",
+      "mandatory_phase2_v1_reruns": [
+        {
+          "backbone": "ViSoBERT",
+          "direction": "SA",
+          "fraction": 100,
+          "lr_source": "reuse_10pct_selected",
+          "methods": [
+            "dft",
+            "seq"
+          ],
+          "seeds": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "mandatory_rerun_count": 10,
+      "unrun_homogenization_remaining_count": 16
+    },
+    "backbones": {
+      "PhoBERT": {
+        "alias": "PhoBERT",
+        "emoji_mode": "keep",
+        "model_name": "vinai/phobert-base-v2",
+        "role": "historical_reference_only",
+        "text_col": "text_seg"
+      },
+      "ViSoBERT": {
+        "alias": "ViSoBERT",
+        "emoji_mode": "keep",
+        "model_name": "uitnlp/visobert",
+        "role": "core",
+        "text_col": "text"
+      },
+      "XLMR": {
+        "alias": "XLMR",
+        "emoji_mode": "keep",
+        "model_name": "xlm-roberta-base",
+        "role": "reference_10pct",
+        "text_col": "text"
+      }
+    },
+    "c0_protocol": {
+      "forbid_100pct_target_checkpoint_below_100": true,
+      "log_actual_update_steps": true,
+      "lr_mode": "reuse_seq_selected",
+      "mode": "low_resource_two_stage",
+      "reset_optimizer_and_scheduler": true,
+      "stage1_source": "reuse_best_dft_same_target_fraction_seed",
+      "stage2_head_init": "fresh_random_matching_seq_seed",
+      "verify_hashes_and_provenance": true
+    },
+    "data": {
+      "clean_dir": "data/clean",
+      "core_fractions": [
+        10,
+        25,
+        50
+      ],
+      "expected_dev_rows": {
+        "neuesc": 3305,
+        "vsmec": 686
+      },
+      "expected_test_rows": {
+        "neuesc": 6613,
+        "vsmec": 692
+      },
+      "fixed_dev_test": true,
+      "min_dev_vsmec": 172,
+      "optional_deferred_fractions": [
+        5
+      ],
+      "subsets_dir": "data/subsets_phase2",
+      "subsets_schema_version": "phase2-subsets-v1"
+    },
+    "dev_selection": {
+      "neuesc": {
+        "excluded_from_mean": [],
+        "filter_dev_rows": false,
+        "metric": "macro_f1_v3",
+        "predict_num_labels": 3,
+        "score_labels": [
+          0,
+          1,
+          2
+        ]
+      },
+      "vsmec": {
+        "excluded_from_mean": [
+          5,
+          6
+        ],
+        "filter_dev_rows": false,
+        "metric": "macro_f1_v5",
+        "predict_num_labels": 7,
+        "score_labels": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    },
+    "directions": {
+      "SA": {
+        "dev_selection_view": "V3-NEU",
+        "source": "vsmec",
+        "source_num_labels": 7,
+        "target": "neuesc",
+        "target_num_labels": 3,
+        "test_primary_view": "V3-NEU"
+      },
+      "SB": {
+        "dev_selection_view": "V5-VSMEC",
+        "source": "neuesc",
+        "source_num_labels": 3,
+        "target": "vsmec",
+        "target_num_labels": 7,
+        "test_primary_view": "V7-VSMEC"
+      }
+    },
+    "naming": {
+      "legacy_result_mapping": {
+        "REFN2N": "DFT_NEU_100_phase1",
+        "REFV2V": "DFT_VSMEC_100_phase1"
+      },
+      "report_baseline_label": "DFT",
+      "run_id_format": "{backbone}_{direction}_{method_tag}_f{fraction}_s{seed}_lr{lr}_{protocol_tag}_h{cfg_hash8}"
+    },
+    "protocol_tag": "p2v1",
+    "protocol_version": "phase2-v1",
+    "scope_and_budget": {
+      "breakdown": {
+        "anchor_100pct_SA_dft_seq": 10,
+        "task07_lr_sweep_10pct": 12,
+        "task08_core_10pct": 26,
+        "task09_core_25_50pct": 52,
+        "task10_llrd_lora_sweep_and_main": 46,
+        "task11_xlmr_main": 18
+      },
+      "core_runs_estimated": 164,
+      "cut_order": [
+        "fraction_5pct",
+        "phase2_25pct",
+        "mdeberta_v3",
+        "fraction_50pct",
+        "reduce_c0_seeds"
+      ],
+      "llm_reference_10pct": {
+        "candidate_model": "Qwen/Qwen2.5-7B-Instruct",
+        "few_shot_pool": "train_10pct_only",
+        "n_few_shot_strategies": 3,
+        "prompt_selection_split": "dev_only",
+        "temperature": 0.0,
+        "verify_license_before_run": true
+      },
+      "optional_deferred": {
+        "fraction_5pct_core": 26,
+        "full_100pct_homogenization_remaining": 16,
+        "mdeberta_v3_10pct": 18,
+        "phase2_at_25pct": 20
+      },
+      "xlmr_lr_sweep_note": "18 lượt là cấu hình chạy chính của XLM-R (3 seed); nếu dò LR riêng trên dev seed 0 sẽ cộng thêm 12 lượt dev-only sau Task 06."
+    },
+    "seeds": {
+      "c0": [
+        0,
+        1,
+        2
+      ],
+      "core": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "sweep_seed": 0,
+      "xlmr": [
+        0,
+        1,
+        2
+      ]
+    },
+    "statistics": {
+      "alpha": 0.05,
+      "boot": 10000,
+      "boot_seed": 0,
+      "ci": 0.95,
+      "holm_family_size": 2,
+      "primary": [
+        {
+          "backbone": "ViSoBERT",
+          "contrast": "seq_minus_dft",
+          "direction": "SA",
+          "fraction": 10,
+          "id": "P2_SA_10",
+          "label_view": "V3-NEU",
+          "stat": "macro_f1"
+        },
+        {
+          "backbone": "ViSoBERT",
+          "contrast": "seq_minus_dft",
+          "direction": "SB",
+          "fraction": 10,
+          "id": "P2_SB_10",
+          "label_view": "V7-VSMEC",
+          "stat": "macro_f1"
+        }
+      ],
+      "pvalue_method": "two_sided_tail_area_ci_inversion_plus_one",
+      "sd_ratio": {
+        "interpretation": "exploratory_5_seeds",
+        "log_n_nan_replicates": true,
+        "zero_denom_threshold": 1e-08,
+        "zero_point_behavior": "undefined_nan"
+      },
+      "secondary_label_views": {
+        "neuesc": [
+          "V3-NEU",
+          "V3-NEU-noToxic"
+        ],
+        "vsmec": [
+          "V7-VSMEC",
+          "V5-VSMEC",
+          "V3-VSMEC",
+          "V3-VSMEC-noSurprise",
+          "V3-VSMEC-strict"
+        ]
+      },
+      "share_seeds": true,
+      "share_test": true
+    },
+    "sweeps": {
+      "dft_lr_grid": [
+        2e-05,
+        3e-05,
+        5e-05
+      ],
+      "fraction": 10,
+      "llrd": {
+        "decay_grid": [
+          0.8,
+          0.9
+        ],
+        "peak_lr_source": "reuse_seq_selected"
+      },
+      "lora": {
+        "alpha_multiplier": 2,
+        "dropout": 0.1,
+        "lr_grid": [
+          0.0001,
+          0.0003,
+          0.0005
+        ],
+        "rank_grid": [
+          8,
+          16
+        ],
+        "target_modules": [
+          "query",
+          "value"
+        ],
+        "trainable_head": "full",
+        "unconverged_extension": {
+          "enabled": true,
+          "extended_max_epochs": 15,
+          "require_no_early_stop": true,
+          "trigger_best_epochs_at_10": [
+            9,
+            10
+          ]
+        }
+      },
+      "seed": 0,
+      "seq_lr_grid": [
+        1e-05,
+        2e-05,
+        3e-05
+      ],
+      "tie_breaker": "smaller_lr"
+    },
+    "training": {
+      "batch_size": 16,
+      "dropout": 0.1,
+      "effective_batch_size": 32,
+      "epochs": 10,
+      "evals_per_epoch": 1,
+      "gradient_accumulation_steps": 2,
+      "max_grad_norm": 1.0,
+      "max_length": 256,
+      "patience": 2,
+      "precision": "bf16",
+      "strict_precision": true,
+      "warmup_ratio": 0.1,
+      "weight_decay": 0.01
+    }
+  },
+  "run_overrides": {},
+  "seed": 0,
+  "selection": null,
+  "source_ckpt_provenance": {
+    "init_kind": "pretrained_backbone",
+    "local_files_sha256": {},
+    "model_ref": "uitnlp/visobert"
+  },
+  "source_code_sha256": {
+    "__init__.py": "9c3817193058ac1f7cdf0b48319d62ed6b39a51751ad60708c5b2284a410746c",
+    "audit_task01_02.py": "97a3033aeae137fd7f2578baeb907914879105a24f9e1ec73663a1d3c42c8c5e",
+    "cli.py": "e8731333512a539805a677bf7525fa6ad9abe951c428512033168bb39b98429c",
+    "data.py": "26f882027ab79aeec2e570ee1c45b610c94c77b01ef5a0023645c8c25495eda4",
+    "models.py": "2066817225bb07bc7c1e658f5d42956a9be2db2e3020145755121e419d39ce99",
+    "protocol.py": "aae524c5f9e80ad1cf713bdf1631e0ee8009b6b44f3deaaf8266ff96f895f731",
+    "run.py": "3329d2bad904568de3a7c38f5efd47aaaa71abb511a9b4e766bab80998da9fa6",
+    "select_lr.py": "5dae2e2a56a95acecdbed2c7ab47734c34ee654616a8234d94df19bbe82b762b",
+    "subsets.py": "f48d0295c8dd993e0de64400ab8a3a10996009b13697d88283c3daa3e1ab2018",
+    "trainer.py": "76e96316c3db63f14ece052d5ffe0a519f479acbe179ad968a5b22e47741c8af"
+  }
+}

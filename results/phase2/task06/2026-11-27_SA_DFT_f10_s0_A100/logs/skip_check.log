@@ -1,0 +1,3 @@
+/content/task06-venv/lib/python3.13/site-packages/pandas/core/arrays/masked.py:63: UserWarning: Pandas requires version '1.5.0' or newer of 'bottleneck' (version '1.4.2' currently installed).
+  from pandas.core import (
+ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961: SKIP

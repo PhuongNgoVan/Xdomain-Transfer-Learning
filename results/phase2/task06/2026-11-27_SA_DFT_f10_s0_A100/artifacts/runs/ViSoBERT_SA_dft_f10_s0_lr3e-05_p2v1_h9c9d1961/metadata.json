@@ -1,0 +1,43 @@
+{
+  "backbone": "ViSoBERT",
+  "cfg_hash8": "9c9d1961",
+  "data_provenance": {
+    "dataset": "neuesc",
+    "file_sha256": "799e9ef5fd8a6e18660db2fc6722955e82bb2f69f70db011ab9b67e71dcf3a06",
+    "fraction": 10,
+    "ids_sha256": "14f5fba3a6823278a13894e9e4dd017fba9461c373cbdfb515c389e978d3a218",
+    "input_texts_sha256": {
+      "dev": "f74799fbc6ae00608ddb643a5cfdea6a0b3ba9817fe45b340150fffb0557b18c",
+      "train": "becd2015d2d5532c8fb4771e6b108959f2f0921187d13d2562c4ce6d322c0951"
+    },
+    "max_examples": null,
+    "n_dev": 3305,
+    "n_test": null,
+    "n_train": 2305,
+    "seed": 0,
+    "source_files_sha256": {
+      "neuesc_100.csv": "9b0e3f42c2b7fa279e6887d15b522c566dd30d1c28430741972ed6d86ab03ac1"
+    },
+    "subset_file": "neuesc_f10_s0_ids.csv",
+    "test_integrity_checked": false
+  },
+  "direction": "SA",
+  "fingerprint": "bcad931dab9d1752f3a54d7ceb93c8774312ef138e3dd48eb95b261309a9d601",
+  "fraction": 10,
+  "git_commit": "af12db20672b198accf724cbd26cdbf59b32d162",
+  "lr": 3e-05,
+  "max_examples": null,
+  "method": "dft",
+  "protocol_version": "phase2-v1",
+  "run_id": "ViSoBERT_SA_dft_f10_s0_lr3e-05_p2v1_h9c9d1961",
+  "run_mode": "smoke",
+  "seed": 0,
+  "source_ckpt_provenance": {
+    "head_seed": 0,
+    "init_kind": "pretrained_backbone",
+    "local_files_sha256": {},
+    "model_ref": "uitnlp/visobert",
+    "total_params": 97568259,
+    "trainable_params": 97568259
+  }
+}
