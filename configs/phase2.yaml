@@ -1,0 +1,214 @@
+# Cấu hình giao thức thực thi Giai đoạn 2 (phase2-v1)
+# Tài liệu quyết định đi kèm: reports/phase2/decisions.md
+# Quy tắc: KHÔNG sửa âm thầm file này riêng lẻ; mọi thay đổi giao thức phải cập nhật đồng bộ
+# protocol_version, reports/phase2/decisions.md và tests/test_phase2_task04.py (theo AGENTS.md).
+
+protocol_version: phase2-v1
+protocol_tag: p2v1
+
+backbones:
+  ViSoBERT:
+    alias: ViSoBERT
+    model_name: uitnlp/visobert
+    text_col: text
+    emoji_mode: keep
+    role: core
+  PhoBERT:
+    alias: PhoBERT
+    model_name: vinai/phobert-base-v2
+    text_col: text_seg
+    emoji_mode: keep
+    role: historical_reference_only
+  XLMR:
+    alias: XLMR
+    model_name: xlm-roberta-base
+    text_col: text
+    emoji_mode: keep
+    role: reference_10pct
+
+directions:
+  SA:
+    source: vsmec
+    target: neuesc
+    source_num_labels: 7
+    target_num_labels: 3
+    dev_selection_view: V3-NEU
+    test_primary_view: V3-NEU
+  SB:
+    source: neuesc
+    target: vsmec
+    source_num_labels: 3
+    target_num_labels: 7
+    dev_selection_view: V5-VSMEC
+    test_primary_view: V7-VSMEC
+
+data:
+  clean_dir: data/clean
+  subsets_dir: data/subsets_phase2
+  subsets_schema_version: phase2-subsets-v1
+  core_fractions: [10, 25, 50]
+  optional_deferred_fractions: [5]
+  fixed_dev_test: true
+  expected_dev_rows:
+    vsmec: 686
+    neuesc: 3305
+  expected_test_rows:
+    vsmec: 692
+    neuesc: 6613
+  min_dev_vsmec: 172
+
+seeds:
+  core: [0, 1, 2, 3, 4]
+  c0: [0, 1, 2]
+  xlmr: [0, 1, 2]
+  sweep_seed: 0
+
+training:
+  batch_size: 16
+  gradient_accumulation_steps: 2
+  effective_batch_size: 32
+  epochs: 10
+  evals_per_epoch: 1
+  patience: 2
+  warmup_ratio: 0.10
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  dropout: 0.1
+  max_length: 256
+  precision: bf16
+  strict_precision: true
+
+dev_selection:
+  vsmec:
+    metric: macro_f1_v5
+    predict_num_labels: 7
+    score_labels: [0, 1, 2, 3, 4]
+    excluded_from_mean: [5, 6]
+    filter_dev_rows: false
+  neuesc:
+    metric: macro_f1_v3
+    predict_num_labels: 3
+    score_labels: [0, 1, 2]
+    excluded_from_mean: []
+    filter_dev_rows: false
+
+c0_protocol:
+  mode: low_resource_two_stage
+  stage1_source: reuse_best_dft_same_target_fraction_seed
+  forbid_100pct_target_checkpoint_below_100: true
+  stage2_head_init: fresh_random_matching_seq_seed
+  reset_optimizer_and_scheduler: true
+  lr_mode: reuse_seq_selected
+  verify_hashes_and_provenance: true
+  log_actual_update_steps: true
+
+anchor_100pct:
+  historical_phase1_reference: true
+  historical_plot_style: dashed_with_protocol_diff_note
+  mandatory_phase2_v1_reruns:
+    - backbone: ViSoBERT
+      direction: SA
+      methods: [dft, seq]
+      fraction: 100
+      seeds: [0, 1, 2, 3, 4]
+      lr_source: reuse_10pct_selected
+  mandatory_rerun_count: 10
+  unrun_homogenization_remaining_count: 16
+
+sweeps:
+  fraction: 10
+  seed: 0
+  tie_breaker: smaller_lr
+  dft_lr_grid: [2.0e-5, 3.0e-5, 5.0e-5]
+  seq_lr_grid: [1.0e-5, 2.0e-5, 3.0e-5]
+  llrd:
+    decay_grid: [0.8, 0.9]
+    peak_lr_source: reuse_seq_selected
+  lora:
+    lr_grid: [1.0e-4, 3.0e-4, 5.0e-4]
+    rank_grid: [8, 16]
+    alpha_multiplier: 2
+    dropout: 0.1
+    target_modules: [query, value]
+    trainable_head: full
+    unconverged_extension:
+      enabled: true
+      trigger_best_epochs_at_10: [9, 10]
+      require_no_early_stop: true
+      extended_max_epochs: 15
+
+naming:
+  report_baseline_label: DFT
+  legacy_result_mapping:
+    REFN2N: DFT_NEU_100_phase1
+    REFV2V: DFT_VSMEC_100_phase1
+  run_id_format: "{backbone}_{direction}_{method_tag}_f{fraction}_s{seed}_lr{lr}_{protocol_tag}_h{cfg_hash8}"
+
+scope_and_budget:
+  core_runs_estimated: 164
+  breakdown:
+    task07_lr_sweep_10pct: 12
+    task08_core_10pct: 26
+    task09_core_25_50pct: 52
+    anchor_100pct_SA_dft_seq: 10
+    task10_llrd_lora_sweep_and_main: 46
+    task11_xlmr_main: 18
+  xlmr_lr_sweep_note: "18 lượt là cấu hình chạy chính của XLM-R (3 seed); nếu dò LR riêng trên dev seed 0 sẽ cộng thêm 12 lượt dev-only sau Task 06."
+  optional_deferred:
+    fraction_5pct_core: 26
+    phase2_at_25pct: 20
+    mdeberta_v3_10pct: 18
+    full_100pct_homogenization_remaining: 16
+  cut_order:
+    - fraction_5pct
+    - phase2_25pct
+    - mdeberta_v3
+    - fraction_50pct
+    - reduce_c0_seeds
+  llm_reference_10pct:
+    candidate_model: Qwen/Qwen2.5-7B-Instruct
+    verify_license_before_run: true
+    temperature: 0.0
+    prompt_selection_split: dev_only
+    few_shot_pool: train_10pct_only
+    n_few_shot_strategies: 3
+
+statistics:
+  boot: 10000
+  boot_seed: 0
+  ci: 0.95
+  alpha: 0.05
+  share_test: true
+  share_seeds: true
+  pvalue_method: two_sided_tail_area_ci_inversion_plus_one
+  holm_family_size: 2
+  primary:
+    - id: P2_SA_10
+      backbone: ViSoBERT
+      direction: SA
+      fraction: 10
+      contrast: seq_minus_dft
+      label_view: V3-NEU
+      stat: macro_f1
+    - id: P2_SB_10
+      backbone: ViSoBERT
+      direction: SB
+      fraction: 10
+      contrast: seq_minus_dft
+      label_view: V7-VSMEC
+      stat: macro_f1
+  sd_ratio:
+    zero_denom_threshold: 1.0e-8
+    zero_point_behavior: undefined_nan
+    log_n_nan_replicates: true
+    interpretation: exploratory_5_seeds
+  secondary_label_views:
+    vsmec:
+      - V7-VSMEC
+      - V5-VSMEC
+      - V3-VSMEC
+      - V3-VSMEC-noSurprise
+      - V3-VSMEC-strict
+    neuesc:
+      - V3-NEU
+      - V3-NEU-noToxic
