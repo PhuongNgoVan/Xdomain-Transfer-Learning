@@ -1,0 +1,12 @@
+# Task 06, dev-only. Launch explicitly on the intended GPU environment:
+# python -m src.phase2.cli --config configs/phase2_smoke_example.yaml
+protocol_config: phase2.yaml
+run:
+  backbone: ViSoBERT
+  direction: SA
+  method: dft
+  fraction: 10
+  seed: 0
+  lr: 3.0e-5
+  run_mode: smoke
+  no_save_ckpt: true

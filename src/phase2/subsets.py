@@ -176,7 +176,7 @@ def allocate_monotone_counts(
     return schedule
 
 
-def _load_clean_domain_splits(clean_dir: Path, dataset: str) -> Dict[str, pd.DataFrame]:
+def _load_clean_domain_splits(clean_dir: Path, dataset: str, include_test: bool = True) -> Dict[str, pd.DataFrame]:
     """Load canonical train/dev/test frames from `clean_dir`, sorted by integer `id`."""
     if dataset not in DATASET_CODES:
         raise ValueError(f"Unsupported dataset: {dataset!r}")
@@ -184,12 +184,13 @@ def _load_clean_domain_splits(clean_dir: Path, dataset: str) -> Dict[str, pd.Dat
     if dataset == "vsmec":
         splits = {
             sp: pd.read_csv(clean_dir / f"vsmec_{sp}.csv", keep_default_na=False)
-            for sp in ("train", "dev", "test")
+            for sp in (("train", "dev", "test") if include_test else ("train", "dev"))
         }
     else:
         full = pd.read_csv(clean_dir / "neuesc_100.csv", keep_default_na=False)
         splits = {
-            sp: full.loc[full["subset"].eq(sp)].copy() for sp in ("train", "dev", "test")
+            sp: full.loc[full["subset"].eq(sp)].copy()
+            for sp in (("train", "dev", "test") if include_test else ("train", "dev"))
         }
 
     valid_labels = set(DATASET_VALID_LABELS[dataset])
@@ -273,10 +274,16 @@ def load_phase2_target_splits(
     seed: int = 0,
     clean_dir: Union[str, Path] = "data/clean",
     subsets_dir: Union[str, Path] = "data/subsets_phase2",
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, Any]]:
+    *,
+    include_test: bool = True,
+) -> Tuple[pd.DataFrame, pd.DataFrame, Optional[pd.DataFrame], Dict[str, Any]]:
     """Shared strict loader for Task 05–11 (`DFT`, `C0`, `Seq`, `LLRD`, `LoRA`, `XLM-R`, `LLM`).
 
-    Always returns full intact `dev_df` and `test_df`. For `fraction < 100`, validates
+    By default returns full intact `dev_df` and `test_df`. With include_test=False,
+    test is not validated or returned, and VSMEC test is never opened. NEU uses
+    a shared CSV: test rows are filtered before validation. Test integrity and
+    leakage checks are deferred to main; recorded source hashes identify test.
+    For `fraction < 100`, validates
     `MANIFEST.json` SHA-256 digests, index schema, label/text_hash consistency, and zero
     leakage against `dev`/`test` before filtering `train_df` strictly by approved IDs.
     """
@@ -287,15 +294,23 @@ def load_phase2_target_splits(
         raise ValueError(f"Unsupported fraction: {fraction!r}; expected one of 5, 10, 25, 50, 100")
 
     c_dir = Path(clean_dir)
-    splits = _load_clean_domain_splits(c_dir, dataset)
+    splits = _load_clean_domain_splits(c_dir, dataset, include_test=include_test)
     train_full = splits["train"]
     dev_df = splits["dev"]
-    test_df = splits["test"]
+    test_df = splits.get("test")
 
     dev_ids = set(dev_df["id"].tolist())
-    test_ids = set(test_df["id"].tolist())
+    test_ids = set(test_df["id"].tolist()) if include_test else set()
     dev_hashes = {hash_text(str(t), normalize=True) for t in dev_df["text"]}
-    test_hashes = {hash_text(str(t), normalize=True) for t in test_df["text"]}
+    test_hashes = {hash_text(str(t), normalize=True) for t in test_df["text"]} if include_test else set()
+
+    def source_hashes():
+        if include_test or dataset != "vsmec":
+            return _source_hashes_for_clean_dir(c_dir, [dataset])
+        recorded = json.loads((Path(subsets_dir) / "MANIFEST.json").read_text(encoding="utf-8"))
+        hashes = {f"vsmec_{sp}.csv": sha256_file(c_dir / f"vsmec_{sp}.csv") for sp in ("train", "dev")}
+        hashes["vsmec_test.csv"] = recorded["source_files_sha256"]["vsmec_test.csv"]
+        return hashes
 
     if frac == 100:
         train_ids = train_full["id"].tolist()
@@ -305,11 +320,11 @@ def load_phase2_target_splits(
             "seed": int(seed),
             "n_train": int(len(train_full)),
             "n_dev": int(len(dev_df)),
-            "n_test": int(len(test_df)),
+            "n_test": int(len(test_df)) if include_test else None,
             "ids_sha256": _ids_sha256(train_ids),
-            "source_files_sha256": _source_hashes_for_clean_dir(c_dir, [dataset]),
+            "source_files_sha256": source_hashes(),
         }
-        return train_full.copy(), dev_df.copy(), test_df.copy(), meta
+        return train_full.copy(), dev_df.copy(), test_df.copy() if include_test else None, meta
 
     s_dir = Path(subsets_dir)
     manifest_path = s_dir / "MANIFEST.json"
@@ -319,7 +334,7 @@ def load_phase2_target_splits(
 
     # Verify source clean files match MANIFEST.json
     recorded_sources = manifest.get("source_files_sha256") or {}
-    actual_sources = _source_hashes_for_clean_dir(c_dir, [dataset])
+    actual_sources = source_hashes()
     for fname, actual_sha in actual_sources.items():
         if recorded_sources.get(fname) != actual_sha:
             raise ValueError(
@@ -396,10 +411,10 @@ def load_phase2_target_splits(
         "ids_sha256": entry["ids_sha256"],
         "n_train": int(len(train_sub)),
         "n_dev": int(len(dev_df)),
-        "n_test": int(len(test_df)),
+        "n_test": int(len(test_df)) if include_test else None,
         "source_files_sha256": actual_sources,
     }
-    return train_sub, dev_df.copy(), test_df.copy(), meta
+    return train_sub, dev_df.copy(), test_df.copy() if include_test else None, meta
 
 
 def verify_phase2_subsets(
