@@ -1,0 +1,28 @@
+# Cấu hình đầu vào cho Task 01 (Kiểm kê tài nguyên) & Task 02 (Kiểm tra dữ liệu và giao thức cũ)
+# Quy tắc: chỉ đọc tài nguyên gốc; giữ null đối với tài nguyên ngoài Git (Drive/Colab) chưa chép về local.
+
+expected_branch: phase2-resource-transfer
+expected_base_commit: 62df4cd
+
+data_paths:
+  raw_dir: data/raw
+  clean_dir: data/clean
+  splits_dir: data/splits
+  wtrans_dir: data/wtrans
+  token_stats_csv: results/token_stats.csv
+  polarity_hash_json: results/polarity/polarity_files_hash.json
+  step2_readiness_json: reports/step2/readiness_report.json
+
+phase1_external:
+  vsmec_visobert_ckpt_root: null   # 5 checkpoint nguồn UIT-VSMEC ViSoBERT (seed 0..4, head 7 lớp)
+  neu_visobert_ckpt_root: null     # 5 checkpoint nguồn NEU-ESC ViSoBERT (seed 0..4, head 3 lớp)
+  stage1_results_dir: null         # stage1.csv, neu3.csv (nếu có)
+  zs_results_dir: null             # zs.csv và predictions_zs/ (ViSoBERT & PhoBERT mức 100%)
+  seq_results_dir: null            # seq.csv, selection_seq.json, predictions_seq/ (mức 100%)
+  probe_notebook_path: null        # đường dẫn file notebook Probe (Other/Surprise) nếu có local
+
+seeds_required: [0, 1, 2, 3, 4]
+c0_seeds_required: [0, 1, 2]
+max_length: 256
+min_dev_vsmec: 172
+min_samples_5pct_v7: 5

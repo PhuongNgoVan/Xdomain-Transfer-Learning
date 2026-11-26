@@ -1,0 +1,39 @@
+GIAO VIỆC THÀNH VIÊN 2 — CHUẨN BỊ CHƯƠNG TRÌNH HUẤN LUYỆN
+
+1. Nhóm đang nghiên cứu gì?
+Nhóm muốn biết một mô hình AI đã học phân loại cảm xúc trên một bộ dữ liệu tiếng Việt có giúp phân loại tốt hơn trên bộ dữ liệu khác khi bộ thứ hai có ít dữ liệu hay không.
+Hai bộ dữ liệu là UIT-VSMEC (cảm xúc, 7 nhãn) và NEU-ESC (quan điểm, 3 nhãn). Mô hình chính là ViSoBERT. Nhóm thử cả hai chiều chuyển giao.
+Trưởng nhóm đang chuẩn bị dữ liệu và thống nhất cách chạy. Bạn phụ trách chương trình để sau này cả nhóm có thể chạy thí nghiệm một cách thống nhất.
+
+2. Bạn cần hiểu ba cách huấn luyện
+Ví dụ: cần phân loại NEU-ESC nhưng chỉ được dùng khoảng 2.305 câu train (10%).
+- DFT: lấy ViSoBERT gốc, huấn luyện trực tiếp trên 2.305 câu NEU-ESC.
+- Seq: lấy ViSoBERT đã được huấn luyện trên UIT-VSMEC, sau đó huấn luyện tiếp trên 2.305 câu NEU-ESC, với đầu phân loại phù hợp nhãn đích.
+- C0: phương án đối chứng để kiểm tra liệu lợi ích của Seq có chỉ do huấn luyện thêm hay không. Phương án đề xuất là học trên chính 2.305 câu NEU-ESC rồi học tiếp trên cùng tập đó; trưởng nhóm sẽ xác nhận cách chạy chính xác. Không tự dùng mô hình đã học toàn bộ NEU-ESC cho thí nghiệm 10%.
+Khi đổi chiều, NEU-ESC là nguồn và UIT-VSMEC là đích (10% tương đương khoảng 554 câu).
+
+3. Bắt đầu làm gì? (chưa cần GPU)
+Bước 1: Xin trưởng nhóm mã nguồn hoặc notebook cũ, hướng dẫn cài môi trường và một ví dụ kết quả. Mở notebook hoặc code Python, tìm chỗ đọc dữ liệu, tải mô hình, huấn luyện, đánh giá và lưu kết quả. Ghi lại tên file và chức năng của từng phần. Nếu chưa chạy được môi trường, gửi lỗi cụ thể cho trưởng nhóm. Đây là việc đầu tiên cần hoàn thành.
+
+Bước 2: Tập làm quen với dữ liệu. Dữ liệu train là phần dùng để học; dev là phần dùng để chọn mô hình tốt; test là phần dùng để đánh giá cuối cùng. Mỗi câu có ID (mã nhận diện), văn bản và nhãn. Viết hoặc sửa hàm đọc đúng danh sách ID trưởng nhóm cung cấp. Ví dụ, danh sách có 554 ID thì chương trình chỉ lấy đúng 554 câu đó; không tự chọn lại ngẫu nhiên. Có thể thử với vài dòng dữ liệu giả trước khi nhận dữ liệu thật.
+
+Bước 3: Tìm cách chuyển chương trình giữa DFT và Seq. DFT tải mô hình ViSoBERT gốc; Seq tải mô hình đã học trên bộ nguồn (checkpoint là bản lưu trọng số mô hình). Tái sử dụng code cũ, không cần viết lại mọi thứ. C0 chỉ hoàn thiện sau khi trưởng nhóm chốt cách đối chứng.
+
+Bước 4: Chuẩn bị chương trình dùng chung. Cho phép chọn phương pháp, bộ dữ liệu đích, tỷ lệ 10/25/50%, seed (số điều khiển tính ngẫu nhiên để có thể lặp lại thí nghiệm) và learning rate (tốc độ học). Dùng văn bản chưa tách từ và tokenizer ViSoBERT, tức bộ chuyển văn bản thành đầu vào mô hình. Giữ dev/test cố định. Tiêu chí chọn mô hình lấy từ cấu hình trưởng nhóm duyệt.
+
+Bước 5: Lưu kết quả. Mỗi lần chạy cần lưu cấu hình, seed, ID và mã kiểm tra dữ liệu, checkpoint tốt nhất, điểm đánh giá, dự đoán và xác suất từng nhãn theo ID câu test, thời gian chạy, GPU, bộ nhớ GPU, tổng số tham số và số tham số được học. Khi dò siêu tham số chỉ lưu kết quả dev, không dùng test. Chương trình chỉ bỏ qua lượt chạy đã có đầy đủ đầu ra; cần hỗ trợ tiếp tục khi bị ngắt.
+
+Bước 6: Kiểm tra bằng dữ liệu nhỏ. Thử xem có đọc đúng ID không, có lấy nhầm dev/test không, có chọn đúng checkpoint theo dev không, có lưu và đọc lại được kết quả không. Kiểm tra tính lồng nhau của các tập con, số tham số, khả năng tiếp tục và bỏ qua lượt hoàn chỉnh. Chạy bộ kiểm thử cũ và mới. Nếu chưa biết viết kiểm thử tự động, bắt đầu bằng một ví dụ nhỏ rồi nhờ trưởng nhóm hỗ trợ chuyển thành test.
+
+4. Bàn giao gì?
+- Danh sách file cũ có thể sử dụng và phần cần sửa.
+- Code hoặc notebook đã sửa, hướng dẫn cách chạy và cấu hình mẫu.
+- Kết quả kiểm thử và danh sách lỗi còn tồn tại.
+- Một ví dụ đầu ra trên dữ liệu nhỏ (ghi rõ là thử nghiệm, không phải kết quả nghiên cứu).
+
+5. Việc chưa cần làm
+Chưa chạy hàng loạt, chưa chọn learning rate chính thức, chưa triển khai LoRA/LLRD. Không sửa dữ liệu gốc hoặc cấu hình cũ của nhóm. Sau khi dữ liệu, giao thức và kiểm thử được duyệt, mới chuyển sang chạy thử GPU, dò learning rate và thực nghiệm chính.
+
+Tin nhắn cập nhật tiến độ: Mình đã đọc/chạy được file ...; hiện đã làm được ...; đang vướng ...; cần trưởng nhóm cung cấp ...; bước tiếp theo là ...
+
+Lưu ý: hướng dẫn này là bản diễn giải công việc cho người mới, không phải xác nhận rằng mã nguồn thực tế có sẵn đầy đủ. Tên file và cấu hình cụ thể sẽ do nhóm bàn giao.

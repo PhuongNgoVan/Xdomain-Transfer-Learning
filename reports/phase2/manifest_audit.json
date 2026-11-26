@@ -1,0 +1,299 @@
+{
+  "clean": {
+    "core_files_ok": true,
+    "directory": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning\\data\\clean",
+    "duplicate_manifest_hashes": {
+      "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834": [
+        "polarity_long.csv",
+        "polarity_nhat.csv"
+      ]
+    },
+    "entries": {
+      "excluded_records.csv": {
+        "disk_sha256": "5a47eb34ab34836a0c5cf764ccfb45f0dac86f15441467d44e88dd0f45506fc7",
+        "is_core": false,
+        "lf_sha256": "5a47eb34ab34836a0c5cf764ccfb45f0dac86f15441467d44e88dd0f45506fc7",
+        "n_lines": 1,
+        "recorded_sha256": "5a47eb34ab34836a0c5cf764ccfb45f0dac86f15441467d44e88dd0f45506fc7",
+        "size_bytes": 49,
+        "status": "MATCH_EXACT"
+      },
+      "internal_stats.csv": {
+        "disk_sha256": "b01f982d1f9fc13419af36d2dfe56c366f89b55409616b7455560f76b6d7d4d3",
+        "is_core": false,
+        "lf_sha256": "b01f982d1f9fc13419af36d2dfe56c366f89b55409616b7455560f76b6d7d4d3",
+        "n_lines": 10,
+        "recorded_sha256": "b01f982d1f9fc13419af36d2dfe56c366f89b55409616b7455560f76b6d7d4d3",
+        "size_bytes": 402,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_100.csv": {
+        "disk_sha256": "9b0e3f42c2b7fa279e6887d15b522c566dd30d1c28430741972ed6d86ab03ac1",
+        "is_core": true,
+        "lf_sha256": "9b0e3f42c2b7fa279e6887d15b522c566dd30d1c28430741972ed6d86ab03ac1",
+        "n_lines": 32967,
+        "recorded_sha256": "9b0e3f42c2b7fa279e6887d15b522c566dd30d1c28430741972ed6d86ab03ac1",
+        "size_bytes": 9494943,
+        "status": "MATCH_EXACT"
+      },
+      "overlap_matrix.csv": {
+        "disk_sha256": "15b6a7a91f78df62c5bec792294bea2fb098c007202809f7ed68b0a5fd0f85ec",
+        "is_core": false,
+        "lf_sha256": "15b6a7a91f78df62c5bec792294bea2fb098c007202809f7ed68b0a5fd0f85ec",
+        "n_lines": 10,
+        "recorded_sha256": "15b6a7a91f78df62c5bec792294bea2fb098c007202809f7ed68b0a5fd0f85ec",
+        "size_bytes": 398,
+        "status": "MATCH_EXACT"
+      },
+      "polarity_long.csv": {
+        "disk_sha256": "054ffc6808815a79ae9c3601d5e12977fbbadf6ba971d2e1e8ed17da2a05b0e6",
+        "is_core": false,
+        "lf_sha256": "4efa016b53480d1507d15e2067cfc5d02723f6208a25a55d02b799887731b0fa",
+        "n_lines": 101,
+        "recorded_sha256": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834",
+        "size_bytes": 6863,
+        "status": "MISMATCH"
+      },
+      "polarity_nhat.csv": {
+        "disk_sha256": "a22f50bcd290569e65e943b2e2c1c575b176762fd1941560458841d237df98da",
+        "is_core": false,
+        "lf_sha256": "f1cfeda46a81aee4f03786be287eca5e4a8b95495f216a6f54c518b000e216c2",
+        "n_lines": 101,
+        "recorded_sha256": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834",
+        "size_bytes": 6863,
+        "status": "MISMATCH"
+      },
+      "vsfc_test_clean.csv": {
+        "disk_sha256": "e6873a782eb1368b85a46fcabee091aa081a174f01fdc759951558aba4ed6023",
+        "is_core": false,
+        "lf_sha256": "e6873a782eb1368b85a46fcabee091aa081a174f01fdc759951558aba4ed6023",
+        "n_lines": 3167,
+        "recorded_sha256": "e6873a782eb1368b85a46fcabee091aa081a174f01fdc759951558aba4ed6023",
+        "size_bytes": 542065,
+        "status": "MATCH_EXACT"
+      },
+      "vsmec_dev.csv": {
+        "disk_sha256": "08a197fe41368efacb8e69b96dccfd43a209376a32eb81b30f9bc2e630b470b7",
+        "is_core": true,
+        "lf_sha256": "08a197fe41368efacb8e69b96dccfd43a209376a32eb81b30f9bc2e630b470b7",
+        "n_lines": 687,
+        "recorded_sha256": "08a197fe41368efacb8e69b96dccfd43a209376a32eb81b30f9bc2e630b470b7",
+        "size_bytes": 113393,
+        "status": "MATCH_EXACT"
+      },
+      "vsmec_removed.csv": {
+        "disk_sha256": "191bba0be8b5d93e4cd30468de7101c58ac231481d75a7c0356d2da67a37b089",
+        "is_core": false,
+        "lf_sha256": "191bba0be8b5d93e4cd30468de7101c58ac231481d75a7c0356d2da67a37b089",
+        "n_lines": 8,
+        "recorded_sha256": "191bba0be8b5d93e4cd30468de7101c58ac231481d75a7c0356d2da67a37b089",
+        "size_bytes": 1183,
+        "status": "MATCH_EXACT"
+      },
+      "vsmec_test.csv": {
+        "disk_sha256": "e72ae304ef0a7ab3f4bcc8f8eb03b7284f1af133da5ae1ea3683097bde125572",
+        "is_core": true,
+        "lf_sha256": "e72ae304ef0a7ab3f4bcc8f8eb03b7284f1af133da5ae1ea3683097bde125572",
+        "n_lines": 693,
+        "recorded_sha256": "e72ae304ef0a7ab3f4bcc8f8eb03b7284f1af133da5ae1ea3683097bde125572",
+        "size_bytes": 112771,
+        "status": "MATCH_EXACT"
+      },
+      "vsmec_train.csv": {
+        "disk_sha256": "a098066ac85506b5c7846879f754fc19a9088a32d6bfcf83f075a3ab58e125ca",
+        "is_core": true,
+        "lf_sha256": "a098066ac85506b5c7846879f754fc19a9088a32d6bfcf83f075a3ab58e125ca",
+        "n_lines": 5543,
+        "recorded_sha256": "a098066ac85506b5c7846879f754fc19a9088a32d6bfcf83f075a3ab58e125ca",
+        "size_bytes": 918004,
+        "status": "MATCH_EXACT"
+      }
+    },
+    "manifest_path": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning\\data\\clean\\MANIFEST.json",
+    "n_manifest_entries": 11,
+    "status": "WARN",
+    "untracked_on_disk": [
+      {
+        "disk_sha256": "80a19181ad2c88373af0b93289c978328bed4569963acbb4a5a5a8d3d2fdde9c",
+        "filename": "manifest_run1.json",
+        "lf_sha256": "a8ae79c48b5255c8fdb41084cd49718291ca052b755d57ed502458d12104c407",
+        "size_bytes": 1012
+      },
+      {
+        "disk_sha256": "4c5587afe006a905c71af1441b1125a0bcda1035786e66ec828a1a692201b15b",
+        "filename": "polarity_key.csv",
+        "lf_sha256": "498c203616cc9a3f23ef63367d9e6cb0d632d182b6d8b80d7257d64c1aeda632",
+        "size_bytes": 7622
+      },
+      {
+        "disk_sha256": "7071ea3ec51d3a8a72e597e39225757b139a33003758e6f52400b94dd4b59dd8",
+        "filename": "vsmec_clean_report.json",
+        "lf_sha256": "3fca59681eaeac788189e77a86be0b9f9014d237ee47fcda91f7c9e53783d5eb",
+        "size_bytes": 821
+      }
+    ]
+  },
+  "polarity_anomaly": {
+    "both_match_results_polarity_hash": true,
+    "different_actual_disk_hashes": true,
+    "files": {
+      "polarity_long.csv": {
+        "columns": [
+          "id",
+          "text",
+          "polarity_label"
+        ],
+        "disk_sha256": "054ffc6808815a79ae9c3601d5e12977fbbadf6ba971d2e1e8ed17da2a05b0e6",
+        "exists": true,
+        "lf_sha256": "4efa016b53480d1507d15e2067cfc5d02723f6208a25a55d02b799887731b0fa",
+        "manifest_clean_sha256": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834",
+        "matches_manifest_clean": false,
+        "matches_results_polarity_hash": true,
+        "n_rows": 100,
+        "non_empty_polarity_labels": 100,
+        "results_polarity_hash_sha256": "054ffc6808815a79ae9c3601d5e12977fbbadf6ba971d2e1e8ed17da2a05b0e6",
+        "size_bytes": 6863
+      },
+      "polarity_nhat.csv": {
+        "columns": [
+          "id",
+          "text",
+          "polarity_label"
+        ],
+        "disk_sha256": "a22f50bcd290569e65e943b2e2c1c575b176762fd1941560458841d237df98da",
+        "exists": true,
+        "lf_sha256": "f1cfeda46a81aee4f03786be287eca5e4a8b95495f216a6f54c518b000e216c2",
+        "manifest_clean_sha256": "bba9a68c2af398bdca44eccf6fea1194802f26b641fa1455c8ddbe7eddfc6834",
+        "matches_manifest_clean": false,
+        "matches_results_polarity_hash": true,
+        "n_rows": 100,
+        "non_empty_polarity_labels": 100,
+        "results_polarity_hash_sha256": "a22f50bcd290569e65e943b2e2c1c575b176762fd1941560458841d237df98da",
+        "size_bytes": 6863
+      }
+    },
+    "impact_on_task03_subsampling": "KHÔNG ảnh hưởng đến việc tạo tập con train/dev/test ở Task 03 (hai file polarity chỉ phục vụ gán nhãn kiểm chứng M1b/M7, không tham gia nạp train/dev/test của UIT-VSMEC hay NEU-ESC).",
+    "recommended_action": "Giữ nguyên data/clean/MANIFEST.json đóng băng để không làm lệch provenance Giai đoạn 1; ghi nhận ngoại lệ này trong biên bản Task 02 và chỉ dùng results/polarity/polarity_files_hash.json khi đối chiếu artifact gán nhãn polarity.",
+    "root_cause_explanation": "Mã hash trùng trong data/clean/MANIFEST.json phản ánh ảnh chụp file mẫu trống trước khi hai người gán nhãn (Long, Nhật) điền cột polarity_label; sau khi gán nhãn, hash thật của từng file đã được lưu khớp tại results/polarity/polarity_files_hash.json nhưng data/clean/MANIFEST.json đóng băng không được ghi đè.",
+    "same_hash_in_clean_manifest": true
+  },
+  "splits": {
+    "core_files_ok": true,
+    "directory": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning\\data\\splits",
+    "duplicate_manifest_hashes": {},
+    "entries": {
+      "neuesc_100.csv": {
+        "disk_sha256": "e955a4af994fb69353f2ba67999174d31cc92e8632cf49f05e3d4770823e2698",
+        "is_core": true,
+        "lf_sha256": "e955a4af994fb69353f2ba67999174d31cc92e8632cf49f05e3d4770823e2698",
+        "n_lines": 32967,
+        "recorded_sha256": "e955a4af994fb69353f2ba67999174d31cc92e8632cf49f05e3d4770823e2698",
+        "size_bytes": 4966718,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_10_s0.csv": {
+        "disk_sha256": "27db77f07bde93b27c54e3ec35147293dba3ac0a24ca9f0c95a2148120b8da6e",
+        "is_core": false,
+        "lf_sha256": "27db77f07bde93b27c54e3ec35147293dba3ac0a24ca9f0c95a2148120b8da6e",
+        "n_lines": 9249,
+        "recorded_sha256": "27db77f07bde93b27c54e3ec35147293dba3ac0a24ca9f0c95a2148120b8da6e",
+        "size_bytes": 1438684,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_10_s1.csv": {
+        "disk_sha256": "0225ffea53ba943a5f1d0567b1356b46df5054909a067c2605eb73f0ce238a28",
+        "is_core": false,
+        "lf_sha256": "0225ffea53ba943a5f1d0567b1356b46df5054909a067c2605eb73f0ce238a28",
+        "n_lines": 9249,
+        "recorded_sha256": "0225ffea53ba943a5f1d0567b1356b46df5054909a067c2605eb73f0ce238a28",
+        "size_bytes": 1420867,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_10_s2.csv": {
+        "disk_sha256": "54b2e40da33ab23b411e2c8ac6c855a807f20893ff957ee8dee373ddfbcc8497",
+        "is_core": false,
+        "lf_sha256": "54b2e40da33ab23b411e2c8ac6c855a807f20893ff957ee8dee373ddfbcc8497",
+        "n_lines": 9249,
+        "recorded_sha256": "54b2e40da33ab23b411e2c8ac6c855a807f20893ff957ee8dee373ddfbcc8497",
+        "size_bytes": 1429707,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_1_s0.csv": {
+        "disk_sha256": "f48f9807449e041f710ae71ce9e1e4eb3f14edbb0b6711a71904a183d8cc72c0",
+        "is_core": false,
+        "lf_sha256": "f48f9807449e041f710ae71ce9e1e4eb3f14edbb0b6711a71904a183d8cc72c0",
+        "n_lines": 6877,
+        "recorded_sha256": "f48f9807449e041f710ae71ce9e1e4eb3f14edbb0b6711a71904a183d8cc72c0",
+        "size_bytes": 1067101,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_1_s1.csv": {
+        "disk_sha256": "3d0d99834b4ac8239903a4f645fecaa3c300e95215c8f552ffa3241aa05bfa9f",
+        "is_core": false,
+        "lf_sha256": "3d0d99834b4ac8239903a4f645fecaa3c300e95215c8f552ffa3241aa05bfa9f",
+        "n_lines": 6877,
+        "recorded_sha256": "3d0d99834b4ac8239903a4f645fecaa3c300e95215c8f552ffa3241aa05bfa9f",
+        "size_bytes": 1064037,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_1_s2.csv": {
+        "disk_sha256": "6bd9a2f11bbeea4ad62d3756490f71f07eb833fc0299310621e391c3a0f8ed92",
+        "is_core": false,
+        "lf_sha256": "6bd9a2f11bbeea4ad62d3756490f71f07eb833fc0299310621e391c3a0f8ed92",
+        "n_lines": 6877,
+        "recorded_sha256": "6bd9a2f11bbeea4ad62d3756490f71f07eb833fc0299310621e391c3a0f8ed92",
+        "size_bytes": 1063979,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_5_s0.csv": {
+        "disk_sha256": "5c43e4a25d44da26526971eb73896e61250be0cfddf0638fbc39e870f1baaa7b",
+        "is_core": false,
+        "lf_sha256": "5c43e4a25d44da26526971eb73896e61250be0cfddf0638fbc39e870f1baaa7b",
+        "n_lines": 7931,
+        "recorded_sha256": "5c43e4a25d44da26526971eb73896e61250be0cfddf0638fbc39e870f1baaa7b",
+        "size_bytes": 1230631,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_5_s1.csv": {
+        "disk_sha256": "1d7d78442bca0517b8fb125068ef7c4f015df515b7ae79bf060857a9daf8eb38",
+        "is_core": false,
+        "lf_sha256": "1d7d78442bca0517b8fb125068ef7c4f015df515b7ae79bf060857a9daf8eb38",
+        "n_lines": 7931,
+        "recorded_sha256": "1d7d78442bca0517b8fb125068ef7c4f015df515b7ae79bf060857a9daf8eb38",
+        "size_bytes": 1237823,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_5_s2.csv": {
+        "disk_sha256": "e4e19c49dc6b22d692b4d3a55c4ee445c77566daba416d70c542786bbda1e93e",
+        "is_core": false,
+        "lf_sha256": "e4e19c49dc6b22d692b4d3a55c4ee445c77566daba416d70c542786bbda1e93e",
+        "n_lines": 7931,
+        "recorded_sha256": "e4e19c49dc6b22d692b4d3a55c4ee445c77566daba416d70c542786bbda1e93e",
+        "size_bytes": 1236487,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_5_s3.csv": {
+        "disk_sha256": "716014afe3e9a22b72920af2b55d43700aadaece4b2b4ceb46e0797fcec3e129",
+        "is_core": false,
+        "lf_sha256": "716014afe3e9a22b72920af2b55d43700aadaece4b2b4ceb46e0797fcec3e129",
+        "n_lines": 7931,
+        "recorded_sha256": "716014afe3e9a22b72920af2b55d43700aadaece4b2b4ceb46e0797fcec3e129",
+        "size_bytes": 1228838,
+        "status": "MATCH_EXACT"
+      },
+      "neuesc_5_s4.csv": {
+        "disk_sha256": "d4ffcb384d12bc6642a574fbe1500c799dc69aca69cd504c29f7311823a7d71a",
+        "is_core": false,
+        "lf_sha256": "d4ffcb384d12bc6642a574fbe1500c799dc69aca69cd504c29f7311823a7d71a",
+        "n_lines": 7931,
+        "recorded_sha256": "d4ffcb384d12bc6642a574fbe1500c799dc69aca69cd504c29f7311823a7d71a",
+        "size_bytes": 1233095,
+        "status": "MATCH_EXACT"
+      }
+    },
+    "manifest_path": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning\\data\\splits\\MANIFEST.json",
+    "n_manifest_entries": 12,
+    "status": "PASS",
+    "untracked_on_disk": []
+  }
+}

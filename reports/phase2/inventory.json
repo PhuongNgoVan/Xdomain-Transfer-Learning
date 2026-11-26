@@ -1,0 +1,365 @@
+{
+  "checkpoints": {
+    "neu_visobert": {
+      "alias": "ViSoBERT",
+      "domain": "neu3",
+      "expected_classes": 3,
+      "n_required": 5,
+      "n_valid": 0,
+      "per_seed": {
+        "0": {
+          "reason": "Chưa cấu hình đường dẫn ckpt_root (null).",
+          "status": "MISSING"
+        },
+        "1": {
+          "reason": "Chưa cấu hình đường dẫn ckpt_root (null).",
+          "status": "MISSING"
+        },
+        "2": {
+          "reason": "Chưa cấu hình đường dẫn ckpt_root (null).",
+          "status": "MISSING"
+        },
+        "3": {
+          "reason": "Chưa cấu hình đường dẫn ckpt_root (null).",
+          "status": "MISSING"
+        },
+        "4": {
+          "reason": "Chưa cấu hình đường dẫn ckpt_root (null).",
+          "status": "MISSING"
+        }
+      },
+      "root": null,
+      "status": "MISSING"
+    },
+    "vsmec_visobert": {
+      "alias": "ViSoBERT",
+      "domain": "vsmec",
+      "expected_classes": 7,
+      "n_required": 5,
+      "n_valid": 0,
+      "per_seed": {
+        "0": {
+          "reason": "Chưa cấu hình đường dẫn ckpt_root (null).",
+          "status": "MISSING"
+        },
+        "1": {
+          "reason": "Chưa cấu hình đường dẫn ckpt_root (null).",
+          "status": "MISSING"
+        },
+        "2": {
+          "reason": "Chưa cấu hình đường dẫn ckpt_root (null).",
+          "status": "MISSING"
+        },
+        "3": {
+          "reason": "Chưa cấu hình đường dẫn ckpt_root (null).",
+          "status": "MISSING"
+        },
+        "4": {
+          "reason": "Chưa cấu hình đường dẫn ckpt_root (null).",
+          "status": "MISSING"
+        }
+      },
+      "root": null,
+      "status": "MISSING"
+    }
+  },
+  "code_and_configs": {
+    "code_files_status": "PRESENT",
+    "files": {
+      "configs": {
+        "configs/base.yaml": true,
+        "configs/seq.yaml": true,
+        "configs/step2_data.yaml": true,
+        "configs/zs.yaml": true
+      },
+      "seq_pipeline": {
+        "src/seq/analysis.py": true,
+        "src/seq/analyze.py": true,
+        "src/seq/protocol.py": true,
+        "src/seq/select_lr.py": true,
+        "src/seq/stage2.py": true,
+        "src/seq/train.py": true,
+        "src/seq/trainer.py": true
+      },
+      "stats_and_plm": {
+        "src/common/constants.py": true,
+        "src/common/hashing.py": true,
+        "src/common/schema.py": true,
+        "src/common/textnorm.py": true,
+        "src/data/make_splits.py": true,
+        "src/data/preprocess.py": true,
+        "src/plm/model_ckpt.py": true,
+        "src/stats/bootstrap.py": true,
+        "src/stats/holm.py": true
+      },
+      "zs_pipeline": {
+        "src/zs/analysis.py": true,
+        "src/zs/analyze.py": true,
+        "src/zs/check_consistency.py": true,
+        "src/zs/ckpt.py": true,
+        "src/zs/infer.py": true,
+        "src/zs/mapping.py": true,
+        "src/zs/views.py": true
+      }
+    },
+    "missing_expected_files": [],
+    "phase2_gaps": [
+      "Chưa có chế độ DFT khởi tạo trực tiếp từ pretrained HuggingFace ID (uitnlp/visobert, xlm-roberta-base) trong src/seq/trainer.py (hiện load_encoder_new_head chỉ nạp checkpoint local chứa thư mục encoder/).",
+      "Chưa có giao thức C0 low-resource: C0N/C0V trong src/seq/stage2.py hiện nạp checkpoint nguồn 100% cùng miền, gây rò rỉ dữ liệu 100% đích nếu dùng cho 10%/25%/50% (cần chốt ở Task 04 và viết lại ở Task 05).",
+      "Chưa có bộ sinh & nạp tập con phân tầng lồng nhau 5% ⊂ 10% ⊂ 25% ⊂ 50% theo ID cho UIT-VSMEC và NEU-ESC (Task 03).",
+      "Chưa hỗ trợ tiêu chí chọn best checkpoint trên dev bằng Macro-F1 5 lớp (bỏ Surprise/Other) trong TorchTrainer (Task 04–05).",
+      "Chưa có log chi phí huấn luyện đầy đủ (total_params, trainable_params qua requires_grad, peak VRAM, GPU-giờ, tên GPU) trong SEQ_COLUMNS / trainer (Task 05).",
+      "Chưa có LLRD (hệ số 0.8/0.9) và LoRA (r=8/16, alpha=2r, query/value, full head; cần thêm peft hoặc module tương đương) (Task 10).",
+      "Chưa có góc nhìn nhãn bổ sung V5-VSMEC (Macro-F1 5 lớp), V3-noSurprise, V3-NEU-noToxic trong src/zs/views.py và hỗ trợ Holm m=2 + CI tỷ số SD giữa seed (Task 12)."
+    ],
+    "status": "PARTIAL"
+  },
+  "datasets": {
+    "legacy_splits": {
+      "dir": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning\\data\\splits",
+      "files": [
+        "neuesc_100.csv",
+        "neuesc_10_s0.csv",
+        "neuesc_10_s1.csv",
+        "neuesc_10_s2.csv",
+        "neuesc_1_s0.csv",
+        "neuesc_1_s1.csv",
+        "neuesc_1_s2.csv",
+        "neuesc_5_s0.csv",
+        "neuesc_5_s1.csv",
+        "neuesc_5_s2.csv",
+        "neuesc_5_s3.csv",
+        "neuesc_5_s4.csv"
+      ],
+      "note": "Chỉ có tập cắt NEU-ESC cũ (1%, 5%, 10% độc lập, không lồng nhau) — chưa có tập con lồng nhau 5/10/25/50% cho UIT-VSMEC và NEU-ESC (làm ở Task 03).",
+      "status": "PARTIAL"
+    },
+    "neuesc_clean": {
+      "file": {
+        "columns": [
+          "id",
+          "text",
+          "label",
+          "subset",
+          "text_seg"
+        ],
+        "exists": true,
+        "n_rows": 32966,
+        "path": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning\\data\\clean\\neuesc_100.csv",
+        "size_bytes": 9494943,
+        "subset_counts": {
+          "dev": 3305,
+          "test": 6613,
+          "train": 23048
+        }
+      },
+      "status": "PRESENT"
+    },
+    "raw_data": {
+      "dir": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning\\data\\raw",
+      "files": {
+        "NEU_ESC_full.csv": {
+          "n_lines": 32967,
+          "size_bytes": 5033948
+        },
+        "NEU_ESC_test.csv": {
+          "n_lines": 6614,
+          "size_bytes": 1002820
+        },
+        "NEU_ESC_train.csv": {
+          "n_lines": 23049,
+          "size_bytes": 3338169
+        },
+        "NEU_ESC_validation.csv": {
+          "n_lines": 3306,
+          "size_bytes": 485313
+        },
+        "UIT_VSFC_full.csv": {
+          "n_lines": 16176,
+          "size_bytes": 1746624
+        },
+        "UIT_VSFC_test.csv": {
+          "n_lines": 3167,
+          "size_bytes": 322275
+        },
+        "UIT_VSFC_train.csv": {
+          "n_lines": 11427,
+          "size_bytes": 1166735
+        },
+        "UIT_VSFC_validation.csv": {
+          "n_lines": 1584,
+          "size_bytes": 155931
+        },
+        "UIT_VSMEC_full.csv": {
+          "n_lines": 6928,
+          "size_bytes": 629217
+        },
+        "UIT_VSMEC_test.csv": {
+          "n_lines": 694,
+          "size_bytes": 57861
+        },
+        "UIT_VSMEC_train.csv": {
+          "n_lines": 5549,
+          "size_bytes": 468570
+        },
+        "UIT_VSMEC_validation.csv": {
+          "n_lines": 687,
+          "size_bytes": 58523
+        }
+      },
+      "status": "PRESENT"
+    },
+    "vsmec_clean": {
+      "extra": {
+        "vsmec_clean_report.json": {
+          "exists": true,
+          "size_bytes": 821
+        },
+        "vsmec_removed.csv": {
+          "columns": [
+            "split",
+            "id",
+            "label",
+            "reason",
+            "text_hash",
+            "norm_text"
+          ],
+          "exists": true,
+          "n_rows": 7,
+          "path": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning\\data\\clean\\vsmec_removed.csv",
+          "size_bytes": 1183
+        }
+      },
+      "splits": {
+        "dev": {
+          "columns": [
+            "id",
+            "text",
+            "label",
+            "subset",
+            "text_seg"
+          ],
+          "exists": true,
+          "n_rows": 686,
+          "path": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning\\data\\clean\\vsmec_dev.csv",
+          "size_bytes": 113393,
+          "subset_counts": {
+            "dev": 686
+          }
+        },
+        "test": {
+          "columns": [
+            "id",
+            "text",
+            "label",
+            "subset",
+            "text_seg"
+          ],
+          "exists": true,
+          "n_rows": 692,
+          "path": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning\\data\\clean\\vsmec_test.csv",
+          "size_bytes": 112771,
+          "subset_counts": {
+            "test": 692
+          }
+        },
+        "train": {
+          "columns": [
+            "id",
+            "text",
+            "label",
+            "subset",
+            "text_seg"
+          ],
+          "exists": true,
+          "n_rows": 5542,
+          "path": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning\\data\\clean\\vsmec_train.csv",
+          "size_bytes": 918004,
+          "subset_counts": {
+            "train": 5542
+          }
+        }
+      },
+      "status": "PRESENT"
+    }
+  },
+  "git": {
+    "base_is_ancestor": true,
+    "branch": "phase2-resource-transfer",
+    "expected_base_commit": "62df4cd",
+    "expected_branch": "phase2-resource-transfer",
+    "head_full": "29564eb3a810c96336ab2f2cdc267a144dbc4e24",
+    "head_short": "29564eb",
+    "notes": [
+      "Đúng nhánh 'phase2-resource-transfer' @ 29564eb, kế thừa trực tiếp từ seq-core (62df4cd)."
+    ],
+    "seq_core_short": "62df4cd",
+    "stash_count": 4,
+    "stashes": [
+      "stash@{0}: On seq-core: !!GitHub_Desktop<seq-core>",
+      "stash@{1}: On p1: !!GitHub_Desktop<p1>",
+      "stash@{2}: On main: !!GitHub_Desktop<main>",
+      "stash@{3}: On phuong: !!GitHub_Desktop<phuong>"
+    ],
+    "status": "PRESENT"
+  },
+  "phase1_results": {
+    "any_external_dir_set": false,
+    "external_dirs_configured": {
+      "seq_results_dir": null,
+      "stage1_results_dir": null,
+      "zs_results_dir": null
+    },
+    "local_results_files": [
+      "results/polarity/confusion_all.csv",
+      "results/polarity/confusion_other.csv",
+      "results/polarity/confusion_surprise.csv",
+      "results/polarity/kappa_report.json",
+      "results/polarity/kappa_report.md",
+      "results/polarity/polarity_disagreements.backup.csv",
+      "results/polarity/polarity_disagreements.csv",
+      "results/polarity/polarity_distribution.csv",
+      "results/polarity/polarity_files_hash.json",
+      "results/token_stats.csv"
+    ],
+    "n_prediction_csvs": 0,
+    "prediction_coverage_100pct": {
+      "PhoBERT": {
+        "c0_N_seeds": [],
+        "c0_V_seeds": [],
+        "ref_neuesc_seeds": [],
+        "ref_vsmec_seeds": [],
+        "seq_A_seeds": [],
+        "seq_B_seeds": [],
+        "zs_A_seeds": [],
+        "zs_B_seeds": []
+      },
+      "ViSoBERT": {
+        "c0_N_seeds": [],
+        "c0_V_seeds": [],
+        "ref_neuesc_seeds": [],
+        "ref_vsmec_seeds": [],
+        "seq_A_seeds": [],
+        "seq_B_seeds": [],
+        "zs_A_seeds": [],
+        "zs_B_seeds": []
+      }
+    },
+    "status": "MISSING",
+    "summary_files": {
+      "neu3.csv": null,
+      "selection_seq.json": null,
+      "seq.csv": null,
+      "stage1.csv": null,
+      "zs.csv": null
+    }
+  },
+  "probe_notebook": {
+    "configured_path": null,
+    "discovered_in_workspace": [],
+    "findings": [],
+    "note": "Chưa có notebook Probe (Other/Surprise) trong workspace local hoặc chưa cấu hình `phase1_external.probe_notebook_path`.",
+    "status": "MISSING"
+  },
+  "repo_root": "C:\\Users\\ADMIN\\PycharmProjects\\Xdomain Transfer Learning"
+}

@@ -1,0 +1,39 @@
+GIAO VIỆC THÀNH VIÊN 3 — TÌM HIỂU VÀ THỬ HAI CÁCH CẢI TIẾN MÔ HÌNH
+
+1. Nhóm đang nghiên cứu gì?
+Nhóm dùng ViSoBERT để phân loại văn bản tiếng Việt trên hai bộ dữ liệu: UIT-VSMEC (7 nhãn cảm xúc) và NEU-ESC (3 nhãn quan điểm). Nhóm muốn kiểm tra việc học trên bộ dữ liệu nguồn trước rồi học tiếp trên bộ đích có giúp ích khi đích có ít dữ liệu không. Cách học hai giai đoạn này gọi là Seq.
+Ví dụ: mô hình đã học UIT-VSMEC, sau đó học tiếp NEU-ESC với chỉ 10% dữ liệu train. Giai đoạn trước ghi nhận chiều chuyển giao này có thể làm kết quả kém đi. Bạn sẽ thử hai cách cập nhật mô hình là LLRD và LoRA để xem có cải thiện được không. Không cần tạo một mô hình AI mới từ đầu.
+
+2. LLRD và LoRA là gì?
+Mô hình có nhiều tầng và chứa nhiều trọng số (các con số được điều chỉnh khi học). Learning rate là tốc độ điều chỉnh những trọng số đó.
+- Seq thông thường: tinh chỉnh toàn bộ mô hình trên dữ liệu đích.
+- LLRD: vẫn tinh chỉnh toàn bộ, nhưng tầng gần đầu vào học chậm hơn tầng gần đầu ra. Ví dụ minh họa: tầng trên có tốc độ 0,00002, tầng kế dưới có thể học với 80% tốc độ đó. Mục đích là kiểm tra liệu cách cập nhật nhẹ hơn ở tầng thấp có giúp chuyển giao ổn định hơn không.
+- LoRA: giữ nguyên trọng số encoder gốc (phần xử lý biểu diễn văn bản), thêm một số tham số nhỏ để học nhiệm vụ mới. Đầu phân loại (phần dự đoán nhãn) vẫn phải được huấn luyện đầy đủ. Mục đích là thử cách thích nghi với ít tham số được cập nhật hơn.
+Hai cách này là hai thí nghiệm riêng, không kết hợp với nhau trong kế hoạch hiện tại. Chưa thể khẳng định chúng hiệu quả trước khi có kết quả.
+
+3. Bắt đầu làm gì? (chưa cần GPU)
+Bước 1: Xin trưởng nhóm code hoặc notebook ViSoBERT đang dùng. Tìm hiểu PyTorch và Hugging Face ở mức đủ để tải mô hình, xem các tầng, xem tên tham số và hiểu requires_grad (tham số có được học hay không). Ghi lại sơ đồ đơn giản: văn bản → encoder → đầu phân loại → nhãn. Thử in danh sách các tầng. Nếu chưa có code hoặc chưa cài được môi trường, báo lại ngay. Đây là nhiệm vụ đầu tiên.
+
+Bước 2: Tập thử LLRD. Viết một đoạn code nhỏ chia tham số thành nhóm theo tầng, gán tốc độ học giảm dần từ đầu phân loại về tầng thấp. In bảng tên tầng và tốc độ học để kiểm tra. Dùng thử hệ số 0,8 và 0,9. Với mô hình thật, lấy số tầng từ cấu trúc thực tế và đảm bảo mỗi tham số học được chỉ thuộc một nhóm. Giữ quy tắc weight decay của nhóm. Chưa cần huấn luyện cả bộ dữ liệu.
+
+Bước 3: Tập thử LoRA. Có thể tìm hiểu thư viện PEFT để gắn adapter (phần tham số bổ sung) vào mô hình. Kiểm tra tên module thực tế trước khi gắn vào query/value. Cấu hình dự kiến: r=8 hoặc 16 (kích thước adapter), alpha=2r (hệ số điều chỉnh), dropout=0,1. In tổng số tham số và số tham số được học. Kiểm tra encoder gốc được đóng băng, adapter và đầu phân loại được học. Sau vài bước thử trên dữ liệu nhỏ, xác minh trọng số đóng băng không đổi và tham số cần học có thể cập nhật. Không cần hiểu toàn bộ toán học LoRA mới bắt đầu được.
+
+Bước 4: Phối hợp với thành viên 2. Người đó xây chương trình huấn luyện Seq dùng chung. Thống nhất cách bật LLRD hoặc LoRA trong chương trình. Bạn phụ trách hai module cải tiến và kiểm thử của chúng, không viết lại toàn bộ chương trình huấn luyện hoặc tự chia dữ liệu. Cùng chuẩn bị cách ghi thời gian, bộ nhớ GPU, số tham số và dự đoán đầu ra.
+
+4. Sau khi code đã chạy được thì làm gì?
+Chỉ thực hiện phần này khi trưởng nhóm bàn giao dữ liệu, cấu hình và learning rate Seq đã được lựa chọn; chương trình dùng chung đã kiểm thử thành công.
+- Dò cấu hình trên 10% dữ liệu train, dùng dev để chọn, không xem test. LLRD thử hai hệ số (4 lượt cho hai chiều); LoRA thử hai giá trị r và ba tốc độ học 0,0001 / 0,0003 / 0,0005 (12 lượt cho hai chiều). Tổng cơ sở 16 lượt, seed 0.
+- Chạy chính hai phương pháp ở 10% cho cả hai chiều, mỗi phương pháp 5 seed (20 lượt). Chạy thêm ở 100% riêng chiều UIT-VSMEC sang NEU-ESC (10 lượt). Tổng cơ sở 46 lượt gồm cả dò; chỉ mở rộng khi nhóm duyệt.
+- Ghi kết quả Macro-F1 (điểm chất lượng phân loại coi trọng các lớp như nhau), mức dao động qua 5 seed và chi phí chạy. So sánh với Seq và DFT dùng cùng dữ liệu, seed, giao thức. Mốc 100% cũ chỉ dùng để so sánh trực tiếp nếu tương thích.
+Ví dụ giả lập: DFT đạt 0,70; Seq đạt 0,65; LoRA đạt 0,68. LoRA cải thiện so với Seq nhưng vẫn thấp hơn DFT. Không được kết luận đã loại bỏ chuyển giao âm. Cần thêm phân tích độ bất định; cũng không khẳng định đã giảm quên kiến thức nếu chưa đo trực tiếp.
+
+5. Bàn giao gì?
+Giai đoạn chuẩn bị: đoạn code/module LLRD, LoRA; bảng tốc độ học từng tầng; bảng tham số đóng băng/được học; kết quả kiểm thử và lỗi còn tồn tại; hướng dẫn tích hợp cho thành viên 2.
+Giai đoạn thực nghiệm: bảng điểm dev khi dò, cấu hình tốt nhất đã khóa, dự đoán test theo ID, log chi phí, bảng so sánh F1 và độ lệch chuẩn. Nêu cả kết quả tốt lẫn không tốt.
+
+6. Việc chưa cần làm
+Chưa chạy 46 lượt ngay, chưa cần XLM-R hoặc LLM, chưa tự chọn bộ dữ liệu hay thay đổi tiêu chí đánh giá. Tập trung hiểu hai cách cập nhật trọng số và làm một ví dụ nhỏ chạy được trước.
+
+Tin nhắn cập nhật tiến độ: Mình đã hiểu/thử được ...; đây là kết quả kiểm tra ...; đang vướng ...; cần hỗ trợ ...; bước tiếp theo là ...
+
+Lưu ý: hướng dẫn này diễn giải công việc cho người mới. Code, cấu trúc model và cấu hình cụ thể phải đối chiếu với tài nguyên nhóm bàn giao; chưa có xác nhận thực nghiệm thực tế.
