@@ -1,0 +1,629 @@
+{
+  "datasets": [
+    "vsmec",
+    "neuesc"
+  ],
+  "fractions": [
+    5,
+    10,
+    25,
+    50
+  ],
+  "rng_spec": "PCG64([20261126, dataset_code, seed, class_id])",
+  "schema_version": "phase2-subsets-v1",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "source_files_sha256": {
+    "neuesc_100.csv": "9b0e3f42c2b7fa279e6887d15b522c566dd30d1c28430741972ed6d86ab03ac1",
+    "vsmec_dev.csv": "08a197fe41368efacb8e69b96dccfd43a209376a32eb81b30f9bc2e630b470b7",
+    "vsmec_test.csv": "e72ae304ef0a7ab3f4bcc8f8eb03b7284f1af133da5ae1ea3683097bde125572",
+    "vsmec_train.csv": "a098066ac85506b5c7846879f754fc19a9088a32d6bfcf83f075a3ab58e125ca"
+  },
+  "subsets": {
+    "neuesc_f10_s0_ids.csv": {
+      "class_counts": {
+        "0": 421,
+        "1": 1594,
+        "2": 290
+      },
+      "dataset": "neuesc",
+      "file_sha256": "799e9ef5fd8a6e18660db2fc6722955e82bb2f69f70db011ab9b67e71dcf3a06",
+      "fraction": 10,
+      "ids_sha256": "14f5fba3a6823278a13894e9e4dd017fba9461c373cbdfb515c389e978d3a218",
+      "n_rows": 2305,
+      "seed": 0
+    },
+    "neuesc_f10_s1_ids.csv": {
+      "class_counts": {
+        "0": 421,
+        "1": 1594,
+        "2": 290
+      },
+      "dataset": "neuesc",
+      "file_sha256": "9405cfa8bde4c68ae44e81c94de4d4890d819c3162eb998e16aaecaf43f5ac89",
+      "fraction": 10,
+      "ids_sha256": "85c5a7c47e141d82adbc48f1f72918a63863bf64387ede52f9c380263ce026e9",
+      "n_rows": 2305,
+      "seed": 1
+    },
+    "neuesc_f10_s2_ids.csv": {
+      "class_counts": {
+        "0": 421,
+        "1": 1594,
+        "2": 290
+      },
+      "dataset": "neuesc",
+      "file_sha256": "fc0d86aaadb49983365085b1ed251196d54bef6442baeaef3c5700b4a15267ec",
+      "fraction": 10,
+      "ids_sha256": "1924bee354c97ef154ed5e76dff2114b283259ad2b8566a9d3df048456db1ea9",
+      "n_rows": 2305,
+      "seed": 2
+    },
+    "neuesc_f10_s3_ids.csv": {
+      "class_counts": {
+        "0": 421,
+        "1": 1594,
+        "2": 290
+      },
+      "dataset": "neuesc",
+      "file_sha256": "e40f205560d003adc583cb79929cb8ca11e2c1f3b6c5749422032de44fab2d51",
+      "fraction": 10,
+      "ids_sha256": "0ea8a0dd266f81fe96fabe33cc2f85db6dc43075fc19217a20de031857c6f897",
+      "n_rows": 2305,
+      "seed": 3
+    },
+    "neuesc_f10_s4_ids.csv": {
+      "class_counts": {
+        "0": 421,
+        "1": 1594,
+        "2": 290
+      },
+      "dataset": "neuesc",
+      "file_sha256": "2eaf5a4e8a8385eb687ab0f806710396809da3bf8d008d32063c750c47ac515e",
+      "fraction": 10,
+      "ids_sha256": "d51cb926fe93922d856a67586a5c34d25bc6c87d1b09e183e51054409ddead1f",
+      "n_rows": 2305,
+      "seed": 4
+    },
+    "neuesc_f25_s0_ids.csv": {
+      "class_counts": {
+        "0": 1054,
+        "1": 3984,
+        "2": 724
+      },
+      "dataset": "neuesc",
+      "file_sha256": "e825ba4388ad84c7dc6f94192f80b55c427b01038c4594542fd9d01ba56300c5",
+      "fraction": 25,
+      "ids_sha256": "21d21a4079ce369fcf99d93930dc5c2b7c9e2486fac5a1c628ad468ac3646c30",
+      "n_rows": 5762,
+      "seed": 0
+    },
+    "neuesc_f25_s1_ids.csv": {
+      "class_counts": {
+        "0": 1054,
+        "1": 3984,
+        "2": 724
+      },
+      "dataset": "neuesc",
+      "file_sha256": "d4a091252ec4a91aced6dd8400fdbe6f6854ae3e2d126b4b649d1bbfac47b177",
+      "fraction": 25,
+      "ids_sha256": "2fef46363424dbfee653ecd3e1e06eb093d2b8e533eea8d2549cfa33a7b49ee4",
+      "n_rows": 5762,
+      "seed": 1
+    },
+    "neuesc_f25_s2_ids.csv": {
+      "class_counts": {
+        "0": 1054,
+        "1": 3984,
+        "2": 724
+      },
+      "dataset": "neuesc",
+      "file_sha256": "5bfc9af450e9412cdfbfc9eefcd05e724895ef39342e29a2180ba398578edc79",
+      "fraction": 25,
+      "ids_sha256": "10dd1b52daa48002c9c240b6f66691b975f0113806424b2470dfc9613fb76920",
+      "n_rows": 5762,
+      "seed": 2
+    },
+    "neuesc_f25_s3_ids.csv": {
+      "class_counts": {
+        "0": 1054,
+        "1": 3984,
+        "2": 724
+      },
+      "dataset": "neuesc",
+      "file_sha256": "b93e348914fcbb8bbc332ebf2b6d09adb8ffe0f5bc5ba4ffc664ec34c870d66e",
+      "fraction": 25,
+      "ids_sha256": "29c9bb58a34fa1307078badbe1ae81636cacaf87c9758e4a6e5bbf73a29a518c",
+      "n_rows": 5762,
+      "seed": 3
+    },
+    "neuesc_f25_s4_ids.csv": {
+      "class_counts": {
+        "0": 1054,
+        "1": 3984,
+        "2": 724
+      },
+      "dataset": "neuesc",
+      "file_sha256": "3568479cdd2c85b8606861443b3e59b3f3c7d0d27e1a1e5d0bd6b7e6ec6cedef",
+      "fraction": 25,
+      "ids_sha256": "03b3ef1a05e03b7e54aa9c82c740c680169b7ee373443d629d9184d1fa2340be",
+      "n_rows": 5762,
+      "seed": 4
+    },
+    "neuesc_f50_s0_ids.csv": {
+      "class_counts": {
+        "0": 2108,
+        "1": 7968,
+        "2": 1448
+      },
+      "dataset": "neuesc",
+      "file_sha256": "bd6135c581dafca3b61c5817e572eb1b1b6b2d37a35929fd627d3f3af025a580",
+      "fraction": 50,
+      "ids_sha256": "29f068763e2b66357075248a977159cb0c320daecd9e19da63e6b09b6d49754f",
+      "n_rows": 11524,
+      "seed": 0
+    },
+    "neuesc_f50_s1_ids.csv": {
+      "class_counts": {
+        "0": 2108,
+        "1": 7968,
+        "2": 1448
+      },
+      "dataset": "neuesc",
+      "file_sha256": "34bc6e7ebb3bb8ef2df8ddebf53bff345c7b3005417a9141dc0d2796feabe980",
+      "fraction": 50,
+      "ids_sha256": "1c78a873a979ee344129e5c4ba5a19b8173e6f55b573ddb0b374737d3803b67d",
+      "n_rows": 11524,
+      "seed": 1
+    },
+    "neuesc_f50_s2_ids.csv": {
+      "class_counts": {
+        "0": 2108,
+        "1": 7968,
+        "2": 1448
+      },
+      "dataset": "neuesc",
+      "file_sha256": "aa5f67d24641bbe5d40db75435d14f91e6038bef2c4ccf220d2a9f6ca7e75941",
+      "fraction": 50,
+      "ids_sha256": "0d1a56839b23eac516a6f4571ebac26d8fa4d2455c5928db8bb3ef6543197908",
+      "n_rows": 11524,
+      "seed": 2
+    },
+    "neuesc_f50_s3_ids.csv": {
+      "class_counts": {
+        "0": 2108,
+        "1": 7968,
+        "2": 1448
+      },
+      "dataset": "neuesc",
+      "file_sha256": "462ae1221af1d08b440fd86bf39ac8b2e3626922a2387ce2bfaeb8098811c575",
+      "fraction": 50,
+      "ids_sha256": "c8396cb9c28a23099a7ce8a03433aacf92aa04fd07dc3919823a192d5616f67f",
+      "n_rows": 11524,
+      "seed": 3
+    },
+    "neuesc_f50_s4_ids.csv": {
+      "class_counts": {
+        "0": 2108,
+        "1": 7968,
+        "2": 1448
+      },
+      "dataset": "neuesc",
+      "file_sha256": "5a44ec4ad593d6cf46f8ddcd3f6ab7786b26c418ebc67006913125c07794b2ad",
+      "fraction": 50,
+      "ids_sha256": "5e8da9093ea43b12adb469b3a9fb4101a19be783cf326a9937e69d006d72f94a",
+      "n_rows": 11524,
+      "seed": 4
+    },
+    "neuesc_f5_s0_ids.csv": {
+      "class_counts": {
+        "0": 211,
+        "1": 796,
+        "2": 145
+      },
+      "dataset": "neuesc",
+      "file_sha256": "8617b16a4b9b75bba0a96d50f5278385fb53a94e65f0ee2b2a70a81abf717637",
+      "fraction": 5,
+      "ids_sha256": "050192aed38cbbda8f6d5ce0cc92879d53f07a5356a2437a2dce6fd4d66a6612",
+      "n_rows": 1152,
+      "seed": 0
+    },
+    "neuesc_f5_s1_ids.csv": {
+      "class_counts": {
+        "0": 211,
+        "1": 796,
+        "2": 145
+      },
+      "dataset": "neuesc",
+      "file_sha256": "1ed78279b6cec7bb7d2fc19dac9093e4ade1fe36562b78a9333ba34d1d856013",
+      "fraction": 5,
+      "ids_sha256": "3b225e231b2e93e0c6c3781f3350a4ce1d6e65cf1c11ba18a33035cf02740fbb",
+      "n_rows": 1152,
+      "seed": 1
+    },
+    "neuesc_f5_s2_ids.csv": {
+      "class_counts": {
+        "0": 211,
+        "1": 796,
+        "2": 145
+      },
+      "dataset": "neuesc",
+      "file_sha256": "a98ba887db3c42cf1be56d8bb2134770643cdbe5c11535e8c124807cbba9bd0b",
+      "fraction": 5,
+      "ids_sha256": "7b3c7b32dfa71b8301dcc26cec9b9d7c9c1b0968e567382e451b075e761651b4",
+      "n_rows": 1152,
+      "seed": 2
+    },
+    "neuesc_f5_s3_ids.csv": {
+      "class_counts": {
+        "0": 211,
+        "1": 796,
+        "2": 145
+      },
+      "dataset": "neuesc",
+      "file_sha256": "894d172fda4a2a91dc7e574f60686817250806960cafe45f1e277d38567278e0",
+      "fraction": 5,
+      "ids_sha256": "ad220b88f2e4e1e2bf958fe1ab37b2ca6091eb0d1a82df2645a7860d36a9186f",
+      "n_rows": 1152,
+      "seed": 3
+    },
+    "neuesc_f5_s4_ids.csv": {
+      "class_counts": {
+        "0": 211,
+        "1": 796,
+        "2": 145
+      },
+      "dataset": "neuesc",
+      "file_sha256": "04db361dd9f42f0c86e86e0df9ba3231acd8e9de2d2f6fccdf6505ca5fe4bda6",
+      "fraction": 5,
+      "ids_sha256": "9aef4769438c0d1a5e69a988e0bda96a630328c58bb850e4b80b16caa5c8d373",
+      "n_rows": 1152,
+      "seed": 4
+    },
+    "vsmec_f10_s0_ids.csv": {
+      "class_counts": {
+        "0": 156,
+        "1": 95,
+        "2": 31,
+        "3": 39,
+        "4": 107,
+        "5": 24,
+        "6": 102
+      },
+      "dataset": "vsmec",
+      "file_sha256": "8a64d3cb9aaa39cf09a5431f3a9816c905adefffc689e645159fa47a6fef28b0",
+      "fraction": 10,
+      "ids_sha256": "d803584504b4065b2b40fee7f3baec9c4fe2bda3aab9a20823a17d5592e5c12a",
+      "n_rows": 554,
+      "seed": 0
+    },
+    "vsmec_f10_s1_ids.csv": {
+      "class_counts": {
+        "0": 156,
+        "1": 95,
+        "2": 31,
+        "3": 39,
+        "4": 107,
+        "5": 24,
+        "6": 102
+      },
+      "dataset": "vsmec",
+      "file_sha256": "67a43f639adedd683f2a080e9cb8ee472681d65ad80c7ea39e5c960c0e8dc7ef",
+      "fraction": 10,
+      "ids_sha256": "9810ef091c97a3795132060d2ca1cfc2abb96259899873f16c7d3d05c1ca4a1e",
+      "n_rows": 554,
+      "seed": 1
+    },
+    "vsmec_f10_s2_ids.csv": {
+      "class_counts": {
+        "0": 156,
+        "1": 95,
+        "2": 31,
+        "3": 39,
+        "4": 107,
+        "5": 24,
+        "6": 102
+      },
+      "dataset": "vsmec",
+      "file_sha256": "dc66e99a61b972196af239dbdccfeab7f39af84d2f32adbd6cd712a9f9df0ffa",
+      "fraction": 10,
+      "ids_sha256": "d42267f0df879f56f9773fce95169d812508b37e007bdc5fe4b2a551b72c176e",
+      "n_rows": 554,
+      "seed": 2
+    },
+    "vsmec_f10_s3_ids.csv": {
+      "class_counts": {
+        "0": 156,
+        "1": 95,
+        "2": 31,
+        "3": 39,
+        "4": 107,
+        "5": 24,
+        "6": 102
+      },
+      "dataset": "vsmec",
+      "file_sha256": "a99ebd3339236e50c2a49e01aa2baae5a3cb4cbea65a6d7dd0bf63b88e1c3c59",
+      "fraction": 10,
+      "ids_sha256": "9ffa64cc1b051eaa5984398965728ab2c838c9df850dd03ba69e62184f34328f",
+      "n_rows": 554,
+      "seed": 3
+    },
+    "vsmec_f10_s4_ids.csv": {
+      "class_counts": {
+        "0": 156,
+        "1": 95,
+        "2": 31,
+        "3": 39,
+        "4": 107,
+        "5": 24,
+        "6": 102
+      },
+      "dataset": "vsmec",
+      "file_sha256": "c869245763b9f8e3c761ee3f01282097eb931d1858704b021c33cd8fe2383253",
+      "fraction": 10,
+      "ids_sha256": "3643a38349f38ab9c4897a31f3c725d0bfb1cde003029ac29430797f3a87de2c",
+      "n_rows": 554,
+      "seed": 4
+    },
+    "vsmec_f25_s0_ids.csv": {
+      "class_counts": {
+        "0": 390,
+        "1": 237,
+        "2": 79,
+        "3": 98,
+        "4": 267,
+        "5": 60,
+        "6": 255
+      },
+      "dataset": "vsmec",
+      "file_sha256": "d72f6f0e571181d9ddda25bca80771df82eee69c7009be8bf75de9e40f32860b",
+      "fraction": 25,
+      "ids_sha256": "e3ed2c6b544f535aeef4c098e541e67e6c7ccd963446e072801ccb904985a9a9",
+      "n_rows": 1386,
+      "seed": 0
+    },
+    "vsmec_f25_s1_ids.csv": {
+      "class_counts": {
+        "0": 390,
+        "1": 237,
+        "2": 79,
+        "3": 98,
+        "4": 267,
+        "5": 60,
+        "6": 255
+      },
+      "dataset": "vsmec",
+      "file_sha256": "7db369780b69a6a50b9f46f00f93896b7a25515ab88db17f553b5f29fc3bcae8",
+      "fraction": 25,
+      "ids_sha256": "13195bbbdee21d0ce9061a3acd4511825d8fd3f93aa3e93f6d581c3f76a8ea5d",
+      "n_rows": 1386,
+      "seed": 1
+    },
+    "vsmec_f25_s2_ids.csv": {
+      "class_counts": {
+        "0": 390,
+        "1": 237,
+        "2": 79,
+        "3": 98,
+        "4": 267,
+        "5": 60,
+        "6": 255
+      },
+      "dataset": "vsmec",
+      "file_sha256": "b90826d8c1968fa90aaa11669719a4be0568fa943dfdd18bc40f792c346ec33f",
+      "fraction": 25,
+      "ids_sha256": "de47d1171a2261a62c72e90542f0f8dd5b092646995e5e2f647c3ae9000b3d5e",
+      "n_rows": 1386,
+      "seed": 2
+    },
+    "vsmec_f25_s3_ids.csv": {
+      "class_counts": {
+        "0": 390,
+        "1": 237,
+        "2": 79,
+        "3": 98,
+        "4": 267,
+        "5": 60,
+        "6": 255
+      },
+      "dataset": "vsmec",
+      "file_sha256": "187d8820127787dea6c910c3fc4b28f5691738fbdc5b82ef9de10f88889323b9",
+      "fraction": 25,
+      "ids_sha256": "da757970fcbd6b90d6e851c23a781e790f8ec7fc90b8b850eb0f44d2457bb7f9",
+      "n_rows": 1386,
+      "seed": 3
+    },
+    "vsmec_f25_s4_ids.csv": {
+      "class_counts": {
+        "0": 390,
+        "1": 237,
+        "2": 79,
+        "3": 98,
+        "4": 267,
+        "5": 60,
+        "6": 255
+      },
+      "dataset": "vsmec",
+      "file_sha256": "76d09f18214bdda2a9a893db7a699dbf55007ece9d4e02415fb75a00e00b6058",
+      "fraction": 25,
+      "ids_sha256": "a3e1e49a348dd1f85353fd1f0092af3344a2553114cca706821840df08865897",
+      "n_rows": 1386,
+      "seed": 4
+    },
+    "vsmec_f50_s0_ids.csv": {
+      "class_counts": {
+        "0": 779,
+        "1": 474,
+        "2": 158,
+        "3": 195,
+        "4": 535,
+        "5": 120,
+        "6": 510
+      },
+      "dataset": "vsmec",
+      "file_sha256": "cee778b665c22672d2d97b5944a5ece3ff7abe0f41014f7edcdd1506be8e8eb9",
+      "fraction": 50,
+      "ids_sha256": "f9e5f9c305a79c8b95f754e1beea2fa6a27649184428d59b14e3cf3b762f3f5f",
+      "n_rows": 2771,
+      "seed": 0
+    },
+    "vsmec_f50_s1_ids.csv": {
+      "class_counts": {
+        "0": 779,
+        "1": 474,
+        "2": 158,
+        "3": 195,
+        "4": 535,
+        "5": 120,
+        "6": 510
+      },
+      "dataset": "vsmec",
+      "file_sha256": "58d7be4e6ff76c79db0f90fc4a293cb676e9e7ce8f42efd37843a178582b60d1",
+      "fraction": 50,
+      "ids_sha256": "265736e028afa021e8cc7dfb7b287e6862fd342d2e555a0db3ee7f52446f5fbd",
+      "n_rows": 2771,
+      "seed": 1
+    },
+    "vsmec_f50_s2_ids.csv": {
+      "class_counts": {
+        "0": 779,
+        "1": 474,
+        "2": 158,
+        "3": 195,
+        "4": 535,
+        "5": 120,
+        "6": 510
+      },
+      "dataset": "vsmec",
+      "file_sha256": "9d6ff4eae0a7eefeb1931ae9531919ccb97909346b5136c5fbdb2363022a4550",
+      "fraction": 50,
+      "ids_sha256": "9b9d9012c201199760386f5863fa43f1913059a6da45329a451a68cb2fdb060d",
+      "n_rows": 2771,
+      "seed": 2
+    },
+    "vsmec_f50_s3_ids.csv": {
+      "class_counts": {
+        "0": 779,
+        "1": 474,
+        "2": 158,
+        "3": 195,
+        "4": 535,
+        "5": 120,
+        "6": 510
+      },
+      "dataset": "vsmec",
+      "file_sha256": "78398557e23da0111f389e42835476cf4f14b0a1e7cb0d254e4aafe8b518f8e5",
+      "fraction": 50,
+      "ids_sha256": "34bcd7a05c3a37b5ab8e893e6d714692a4c4a7b530c5256cd9dfc075a392a586",
+      "n_rows": 2771,
+      "seed": 3
+    },
+    "vsmec_f50_s4_ids.csv": {
+      "class_counts": {
+        "0": 779,
+        "1": 474,
+        "2": 158,
+        "3": 195,
+        "4": 535,
+        "5": 120,
+        "6": 510
+      },
+      "dataset": "vsmec",
+      "file_sha256": "ed366518ab49f4bb77bd2fde12e00ff1d96cafbcbcfe8a441595739521d1cb07",
+      "fraction": 50,
+      "ids_sha256": "c9b4c58edf04050d986fee8203911e0b065dc6d237dedc6633b70c5638fa534a",
+      "n_rows": 2771,
+      "seed": 4
+    },
+    "vsmec_f5_s0_ids.csv": {
+      "class_counts": {
+        "0": 78,
+        "1": 47,
+        "2": 16,
+        "3": 20,
+        "4": 53,
+        "5": 12,
+        "6": 51
+      },
+      "dataset": "vsmec",
+      "file_sha256": "4a7d2e6a268d632311b5c9351d14e81299f96aaa78f94a5d04f7bf3018749ce9",
+      "fraction": 5,
+      "ids_sha256": "f06474027c40e22f90e060ca7482d6685a2729b79fc91d79833e4bca34d1585b",
+      "n_rows": 277,
+      "seed": 0
+    },
+    "vsmec_f5_s1_ids.csv": {
+      "class_counts": {
+        "0": 78,
+        "1": 47,
+        "2": 16,
+        "3": 20,
+        "4": 53,
+        "5": 12,
+        "6": 51
+      },
+      "dataset": "vsmec",
+      "file_sha256": "827fd1ce9ffd43841dfbbcef929f700a24c94225751a1e52e0a214617aa24381",
+      "fraction": 5,
+      "ids_sha256": "04b8b62c206643fa42ffd63b40e25df646d6700e5cd932aa6f8c618aca8cf60c",
+      "n_rows": 277,
+      "seed": 1
+    },
+    "vsmec_f5_s2_ids.csv": {
+      "class_counts": {
+        "0": 78,
+        "1": 47,
+        "2": 16,
+        "3": 20,
+        "4": 53,
+        "5": 12,
+        "6": 51
+      },
+      "dataset": "vsmec",
+      "file_sha256": "f73269ab07fb47e125f0f27a5e90fe9b42e0e90e066483b931d2a9c941a4630b",
+      "fraction": 5,
+      "ids_sha256": "cc595d4f35b70f3871aec0da9fc90b72a9903bafa7d3c91953ae03f5a8528661",
+      "n_rows": 277,
+      "seed": 2
+    },
+    "vsmec_f5_s3_ids.csv": {
+      "class_counts": {
+        "0": 78,
+        "1": 47,
+        "2": 16,
+        "3": 20,
+        "4": 53,
+        "5": 12,
+        "6": 51
+      },
+      "dataset": "vsmec",
+      "file_sha256": "4a8bc19cac1487ce95bed17fc3f47631cbbe1075090fdf1f2f47131b1cce3983",
+      "fraction": 5,
+      "ids_sha256": "7f3af584eb3c85678c77e56f68109c726e8b32580c3c734b90f657c5f6023194",
+      "n_rows": 277,
+      "seed": 3
+    },
+    "vsmec_f5_s4_ids.csv": {
+      "class_counts": {
+        "0": 78,
+        "1": 47,
+        "2": 16,
+        "3": 20,
+        "4": 53,
+        "5": 12,
+        "6": 51
+      },
+      "dataset": "vsmec",
+      "file_sha256": "9a9e08c74364b0f2f5783272538269b2d774a04b875cda52c1cdf43f8d0ed65a",
+      "fraction": 5,
+      "ids_sha256": "24499161c677e5e579a75c0d515ed56f48a90b97bb062a893d748bf31cce79bf",
+      "n_rows": 277,
+      "seed": 4
+    }
+  }
+}

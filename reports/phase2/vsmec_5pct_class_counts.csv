@@ -1,0 +1,6 @@
+seed,total_rows,c0_Enjoyment,c1_Sadness,c2_Fear,c3_Anger,c4_Disgust,c5_Surprise,c6_Other,min_class_name,min_class_count,eligible_v7_min5
+0,277,78,47,16,20,53,12,51,Surprise,12,True
+1,277,78,47,16,20,53,12,51,Surprise,12,True
+2,277,78,47,16,20,53,12,51,Surprise,12,True
+3,277,78,47,16,20,53,12,51,Surprise,12,True
+4,277,78,47,16,20,53,12,51,Surprise,12,True

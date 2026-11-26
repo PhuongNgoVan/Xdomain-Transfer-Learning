@@ -1,0 +1,177 @@
+{
+  "all_gates_passed": true,
+  "datasets": {
+    "neuesc": {
+      "fractions": {
+        "10": {
+          "class_counts_s0": {
+            "0": 421,
+            "1": 1594,
+            "2": 290
+          },
+          "max_drift_pp_across_seeds": 0.023279,
+          "n_rows": 2305,
+          "within_1pp_limit": true
+        },
+        "25": {
+          "class_counts_s0": {
+            "0": 1054,
+            "1": 3984,
+            "2": 724
+          },
+          "max_drift_pp_across_seeds": 0.004339,
+          "n_rows": 5762,
+          "within_1pp_limit": true
+        },
+        "5": {
+          "class_counts_s0": {
+            "0": 211,
+            "1": 796,
+            "2": 145
+          },
+          "max_drift_pp_across_seeds": 0.045437,
+          "n_rows": 1152,
+          "within_1pp_limit": true
+        },
+        "50": {
+          "class_counts_s0": {
+            "0": 2108,
+            "1": 7968,
+            "2": 1448
+          },
+          "max_drift_pp_across_seeds": 0.004339,
+          "n_rows": 11524,
+          "within_1pp_limit": true
+        }
+      },
+      "n_dev_fixed": 3305,
+      "n_test_fixed": 6613,
+      "n_train_100": 23048,
+      "train_100_class_counts": {
+        "0": 4215,
+        "1": 15936,
+        "2": 2897
+      },
+      "train_100_class_pct": {
+        "0": 18.2879,
+        "1": 69.1427,
+        "2": 12.5694
+      }
+    },
+    "vsmec": {
+      "fractions": {
+        "10": {
+          "class_counts_s0": {
+            "0": 156,
+            "1": 95,
+            "2": 31,
+            "3": 39,
+            "4": 107,
+            "5": 24,
+            "6": 102
+          },
+          "max_drift_pp_across_seeds": 0.106245,
+          "n_rows": 554,
+          "within_1pp_limit": true
+        },
+        "25": {
+          "class_counts_s0": {
+            "0": 390,
+            "1": 237,
+            "2": 79,
+            "3": 98,
+            "4": 267,
+            "5": 60,
+            "6": 255
+          },
+          "max_drift_pp_across_seeds": 0.025933,
+          "n_rows": 1386,
+          "within_1pp_limit": true
+        },
+        "5": {
+          "class_counts_s0": {
+            "0": 78,
+            "1": 47,
+            "2": 16,
+            "3": 20,
+            "4": 53,
+            "5": 12,
+            "6": 51
+          },
+          "max_drift_pp_across_seeds": 0.165002,
+          "n_rows": 277,
+          "within_1pp_limit": true
+        },
+        "50": {
+          "class_counts_s0": {
+            "0": 779,
+            "1": 474,
+            "2": 158,
+            "3": 195,
+            "4": 535,
+            "5": 120,
+            "6": 510
+          },
+          "max_drift_pp_across_seeds": 0.018044,
+          "n_rows": 2771,
+          "within_1pp_limit": true
+        }
+      },
+      "n_dev_fixed": 686,
+      "n_test_fixed": 692,
+      "n_train_100": 5542,
+      "train_100_class_counts": {
+        "0": 1558,
+        "1": 947,
+        "2": 316,
+        "3": 391,
+        "4": 1069,
+        "5": 241,
+        "6": 1020
+      },
+      "train_100_class_pct": {
+        "0": 28.1126,
+        "1": 17.0877,
+        "2": 5.7019,
+        "3": 7.0552,
+        "4": 19.2891,
+        "5": 4.3486,
+        "6": 18.4049
+      }
+    }
+  },
+  "expected_subset_files": 40,
+  "gates": {
+    "S1_nested_inclusion": {
+      "status": "PASS",
+      "violations": []
+    },
+    "S2_zero_split_leakage": {
+      "status": "PASS",
+      "violations": []
+    },
+    "S3_stratification_drift_1pp": {
+      "status": "PASS",
+      "violations": []
+    },
+    "S4_seed_diversity_and_identity": {
+      "status": "PASS",
+      "violations": []
+    },
+    "S5_manifest_and_5pct_table": {
+      "status": "PASS",
+      "violations": []
+    }
+  },
+  "schema_version": "phase2-subsets-v1",
+  "vsmec_5pct_summary": {
+    "eligible_v7_min5_all_seeds": true,
+    "min_class_count_across_seeds": 12,
+    "min_class_name": "Surprise",
+    "n_seeds": 5,
+    "threshold": 5,
+    "total_rows_per_seed": [
+      277
+    ]
+  }
+}

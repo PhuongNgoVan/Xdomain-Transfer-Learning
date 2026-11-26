@@ -1,0 +1,17 @@
+# Cấu hình sinh và kiểm định tập con phân tầng lồng nhau (Task 03 — Phase 2)
+# Quy tắc: chỉ rút mẫu từ train sạch trong data/clean/; giữ nguyên 100% dev và test;
+# ghi toàn bộ chỉ mục mới vào data/subsets_phase2/ (không ghi đè data/splits/).
+
+schema_version: phase2-subsets-v1
+clean_dir: data/clean
+subsets_dir: data/subsets_phase2
+reports_dir: reports/phase2
+
+datasets: [vsmec, neuesc]
+fractions: [5, 10, 25, 50]
+drift_checked_fractions: [10, 25, 50]
+seeds: [0, 1, 2, 3, 4]
+
+max_drift_pp: 1.0
+min_vsmec_5pct_per_class: 5
+rng_base_seed: 20261126
