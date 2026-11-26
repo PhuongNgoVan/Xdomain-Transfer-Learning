@@ -12,7 +12,7 @@ Ngày triển khai: 2026-11-26. Nhánh: `phase2-resource-transfer`.
   vẫn `unverified`, không suy ra xác minh lượt thật từ checkpoint CPU.
 - `src/phase2/trainer.py`: AdamW chỉ lấy tham số trainable, warmup tuyến tính,
   chọn best bằng dev V5/V3, early stopping, khôi phục best trước suy luận.
-  Resume nguyên tử sau mỗi update, gồm cursor, best state, optimizer,
+  Resume nguyên tử ở update đầu tiên và mỗi lần eval, gồm cursor, best state, optimizer,
   scheduler, history và RNG Python/NumPy/Torch/CUDA. Mỗi work directory mới
   tạo optimizer/scheduler mới; resume từ thư mục cũ kiểm tra train/dev/settings.
 - `src/phase2/run.py`: xuất prediction theo schema ZS, chấm các view từ CSV
@@ -86,3 +86,27 @@ Chưa chạy GPU nghiên cứu, truy cập Drive, tải mô hình từ mạng, x
 baseline lịch sử, commit hoặc push. `.gitignore` hiện ẩn file test Phase2;
 khi chuẩn bị commit, người điều phối cần whitelist `!tests/test_phase2_*.py`
 và `!tasks/AGENT_phase2_*.md` theo task.
+
+## Điều chỉnh I/O Colab — 2026-11-27
+
+Resume lưu ở update đầu tiên và mỗi lần eval, gồm cả điểm dừng sớm. Với
+eval cuối epoch, tối đa 10 epoch tương ứng tối đa 11 lần lưu. Không đổi
+training profile, tiêu chí dev hay RNG; không thay `configs/phase2.yaml`.
+Nếu gián đoạn giữa các lần lưu, tiếp tục từ checkpoint gần nhất và chạy
+lại các update chưa lưu. Mỗi checkpoint vẫn chứa đầy đủ cursor/RNG và best.
+
+Thêm log bắt đầu fit, khôi phục resume, tiến độ mỗi 10 update, bắt đầu eval,
+loss/điểm dev và lưu checkpoint. Giải phóng biến chứa trạng thái CPU sau
+load; best state dùng một lần copy sang CPU, tránh deepcopy bản CPU vừa tạo.
+
+Task05 hiện có 16 trường hợp PASS, gồm kiểm tra số lần lưu và gián đoạn
+sau update chưa lưu: history và xác suất cuối khớp chạy liên tục. Notebook
+Task06 đã cập nhật hướng dẫn và sửa lỗi clone `--no-checkout`. Notebook và
+hai script Python nhúng đều compile; chưa thực thi GPU tại máy local.
+Giảm I/O đã được kiểm chứng bằng test CPU; chưa đo tốc độ, RAM hay xác nhận
+nguyên nhân runtime Colab ngắt bằng log GPU thực tế.
+
+Hồi quy local sau điều chỉnh: **99 PASS trong 130,57 giây** bằng lệnh
+`.venv/Scripts/python.exe -X utf8 -m pytest -q` với `OMP_NUM_THREADS=1`,
+`MKL_NUM_THREADS=1`. Compile trainer/test/notebook và diff tài nguyên đóng
+băng đều đạt. Đây là kiểm chứng CPU/offline, chưa phải kết quả GPU Colab.

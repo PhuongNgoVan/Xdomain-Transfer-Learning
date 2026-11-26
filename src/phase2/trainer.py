@@ -1,5 +1,4 @@
 """Native training, dev selection, atomic recovery and Task 10 extension hooks."""
-import copy
 import math
 from pathlib import Path
 import random
@@ -123,10 +122,15 @@ class Phase2Trainer:
             random.setstate(state["python_rng"])
             if self.device.type == "cuda":
                 torch.cuda.set_rng_state_all(state["cuda_rng"])
+            del state  # Release loaded CPU model/optimizer tensors after restoration.
+            print(f"[resume] epoch={epoch} cursor={cursor} step={step} best_step={best_step}", flush=True)
         if self.device.type == "cuda":
             torch.cuda.synchronize()
             torch.cuda.reset_peak_memory_stats()
         started = time.perf_counter()
+        print(f"[fit] device={self.device} precision={'bf16' if self.amp else 'fp32'} "
+              f"train={len(train_texts)} dev={len(dev_texts)} updates_per_epoch={steps_epoch} "
+              f"epochs={s['epochs']} resume_save=step1-and-eval", flush=True)
 
         def save(next_epoch, next_cursor):
             state = dict(identity=identity, model=self.model.state_dict(),
@@ -138,6 +142,7 @@ class Phase2Trainer:
                 torch_rng=torch.get_rng_state(), numpy_rng=np.random.get_state(),
                 python_rng=random.getstate(), cuda_rng=torch.cuda.get_rng_state_all() if self.device.type == "cuda" else [])
             self._save_resume(state, state_file)
+            print(f"[resume saved] step={step} epoch={next_epoch} cursor={next_cursor}", flush=True)
 
         stop = patience >= s["patience"]
         while epoch < s["epochs"] and not stop:
@@ -165,21 +170,31 @@ class Phase2Trainer:
                 self.scheduler.step()
                 cursor += len(chunk)
                 step += 1
-                if math.ceil(cursor / s["gradient_accumulation_steps"]) in eval_steps:
+                if step == 1 or step % 10 == 0:
+                    print(f"[train] epoch={epoch + 1} step={step} batch={cursor}/{n_batches} "
+                          f"loss={loss.item():.4f}", flush=True)
+                evaluate = math.ceil(cursor / s["gradient_accumulation_steps"]) in eval_steps
+                if evaluate:
+                    print(f"[eval] epoch={epoch + cursor / n_batches:.2f} step={step}", flush=True)
                     score = compute_dev_selection_score(dev_labels, self.predict(dev_texts).argmax(1), self.target_domain)
                     position = epoch + cursor / n_batches
                     self.history.append(dict(epoch=position, step=step, train_loss=loss_sum / loss_items,
                                              dev_selection_score=score))
+                    print(f"[epoch={position:.2f} step={step}] "
+                          f"train_loss={self.history[-1]['train_loss']:.4f} dev_score={score:.4f}", flush=True)
                     loss_sum = loss_items = 0
                     if score > best_score:
                         best_score, best_step, best_epoch = score, step, position
-                        best_state = copy.deepcopy({k: v.detach().cpu() for k, v in self.model.state_dict().items()})
+                        best_state = {k: v.detach().to(device="cpu", copy=True)
+                                      for k, v in self.model.state_dict().items()}
                         patience = 0
                     else:
                         patience += 1
                     stop = patience >= s["patience"]
-                # Every completed update is recoverable, including between evaluations.
-                save(epoch + 1 if cursor == n_batches else epoch, 0 if cursor == n_batches else cursor)
+                # Recover from the last saved update; replay any unsaved work.
+                # Step 1 supports a quick smoke interruption; eval saves best/history.
+                if step == 1 or evaluate or stop:
+                    save(epoch + 1 if cursor == n_batches else epoch, 0 if cursor == n_batches else cursor)
                 if stop:
                     break
             epoch += 1
