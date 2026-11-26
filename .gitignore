@@ -17,3 +17,4 @@ __pycache__/
 data/clean_underthesea_backup/
 data/clean/manifest_run1.json
 reports/step2/inputs/
+docs/workflow_phase2_resource_transfer.md
