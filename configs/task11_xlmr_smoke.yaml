@@ -1,0 +1,12 @@
+# Task 11 XLM-R smoke test — dev-only, no checkpoint save.
+# python -m src.phase2.cli --config configs/task11_xlmr_smoke.yaml
+protocol_config: phase2.yaml
+run:
+  backbone: XLMR
+  direction: SA
+  method: dft
+  fraction: 10
+  seed: 0
+  lr: 3.0e-5
+  run_mode: smoke
+  no_save_ckpt: true

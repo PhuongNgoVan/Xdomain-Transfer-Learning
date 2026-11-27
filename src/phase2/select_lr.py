@@ -15,14 +15,24 @@ from src.phase2.run import atomic_json
 from src.zs.infer import _atomic_csv
 
 
-def select_phase2_p1_lr(results_dir, out=None, config_path="configs/phase2.yaml"):
+def select_phase2_p1_lr(results_dir, out=None, config_path="configs/phase2.yaml",
+                        backbone="ViSoBERT"):
+    """Lock P1 learning rates from a complete dev-only sweep grid.
+
+    Parameters
+    ----------
+    backbone : str
+        ``"ViSoBERT"`` (default, Task 07) or ``"XLMR"`` (Task 11).
+    """
     cfg = load_phase2_config(config_path)
+    if backbone not in ("ViSoBERT", "XLMR"):
+        raise ValueError(f"Unsupported backbone: {backbone}")
     root = Path(results_dir)
     frame = pd.read_csv(root / "phase2_runs.csv", keep_default_na=False)
     sweep = frame.loc[frame.run_mode.eq("sweep")]
     if not sweep.split.eq("dev").all():
         raise ValueError("test rows detected in sweep")
-    grid = sweep.loc[sweep.backbone.eq("ViSoBERT") & sweep.fraction.eq(10) & sweep.seed.eq(0)
+    grid = sweep.loc[sweep.backbone.eq(backbone) & sweep.fraction.eq(10) & sweep.seed.eq(0)
                      & sweep.method.isin(["dft", "seq"])].copy()
     if set(grid.protocol_version) != {cfg["protocol_version"]}:
         raise ValueError("Mixed/missing protocol_version in sweep")
@@ -30,6 +40,7 @@ def select_phase2_p1_lr(results_dir, out=None, config_path="configs/phase2.yaml"
         raise ValueError("Truncated sweep cannot select research LR")
     if grid.git_commit.nunique() != 1:
         raise ValueError("Mixed git_commit in sweep")
+    suffix = "xlmr" if backbone == "XLMR" else "p1"
     selected, records, code_hashes = {}, [], set()
     for direction in ("SA", "SB"):
         domain = grid.loc[grid.direction.eq(direction)]
@@ -67,18 +78,19 @@ def select_phase2_p1_lr(results_dir, out=None, config_path="configs/phase2.yaml"
             edge = float(winner.lr) in (min(expected), max(expected))
             if edge:
                 warnings.warn(f"{direction}/{method}: selected LR {winner.lr:g} is at grid edge", UserWarning)
-            record = {"backbone": "ViSoBERT", "direction": direction, "method": method,
+            record = {"backbone": backbone, "direction": direction, "method": method,
                       "lr": float(winner.lr), "dev_selection_score": float(winner.dev_selection_score),
                       "data_hash": str(winner.data_hash), "ids_sha256": str(winner.ids_sha256),
                       "run_id": str(winner.run_id), "grid_edge": edge}
-            selected[f"ViSoBERT/{direction}/{method}"] = record
+            selected[f"{backbone}/{direction}/{method}"] = record
             records.append(record)
     if len(code_hashes) != 1:
         raise ValueError("Mixed source code hashes in sweep")
     result = {"protocol_version": cfg["protocol_version"], "protocol_hash": canonical_digest(cfg),
               "tie_breaker": "smaller_lr", "selected": selected}
-    atomic_json(Path(out) if out else root / "selection_p1_lr.json", result)
-    _atomic_csv(pd.DataFrame(records), root / "p1_lr_selection.csv")
+    out_name = f"selection_{suffix}_lr.json"
+    atomic_json(Path(out) if out else root / out_name, result)
+    _atomic_csv(pd.DataFrame(records), root / f"{suffix}_lr_selection.csv")
     return result
 
 
@@ -87,8 +99,9 @@ def main():
     parser.add_argument("--results-dir", default="results/phase2")
     parser.add_argument("--out")
     parser.add_argument("--config", default="configs/phase2.yaml")
+    parser.add_argument("--backbone", choices=["ViSoBERT", "XLMR"], default="ViSoBERT")
     args = parser.parse_args()
-    select_phase2_p1_lr(args.results_dir, args.out, args.config)
+    select_phase2_p1_lr(args.results_dir, args.out, args.config, backbone=args.backbone)
 
 
 if __name__ == "__main__":

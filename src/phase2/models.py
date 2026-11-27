@@ -70,6 +70,35 @@ def verify_c0_stage1_dft_checkpoint(dft_run_dir, expected_direction, expected_fr
             "stage1_backbone": meta["backbone"], "stage1_fingerprint": completion["fingerprint"]}
 
 
+def _locate_phase2_xlmr_source_checkpoint(root, direction, seed):
+    """Locate a unique Phase 2 XLMR DFT 100% source checkpoint for Seq."""
+    root = Path(root)
+    if not root.is_dir():
+        raise FileNotFoundError(f"Checkpoint root does not exist: {root}")
+    source_dir = "SB" if direction == "SA" else "SA"
+    expected_labels = 7 if direction == "SA" else 3
+    prefix = f"XLMR_{source_dir}_dft_f100_s{int(seed)}_"
+    candidates = [
+        p.resolve() for p in root.rglob(f"{prefix}*")
+        if p.is_dir() and (p / "head.pt").is_file() and (p / "encoder").is_dir()
+        and not any("sweep" in part.lower() or "smoke" in part.lower()
+                    for part in p.relative_to(root).parts)
+    ]
+    candidates = list(dict.fromkeys(candidates))
+    if len(candidates) != 1:
+        raise ValueError(
+            f"Expected exactly one XLMR/{direction}/seed={seed} source checkpoint, "
+            f"found {len(candidates)} under {root}"
+        )
+    ckpt = candidates[0]
+    _find_encoder_weight_file(ckpt / "encoder")
+    import torch
+    head = torch.load(ckpt / "head.pt", map_location="cpu", weights_only=True)
+    if head["weight"].ndim != 2 or head["weight"].shape[0] != expected_labels:
+        raise ValueError(f"Invalid head width: expected {expected_labels} classes in {ckpt}")
+    return ckpt
+
+
 def resolve_model_source(method, direction, backbone, seed, fraction, protocol_cfg, *,
                          pretrained_model_path=None, source_ckpt_root=None,
                          c0_stage1_run_dir=None, expected_ids_sha256=None):
@@ -81,7 +110,10 @@ def resolve_model_source(method, direction, backbone, seed, fraction, protocol_c
         if source_ckpt_root is None:
             raise ValueError("Seq requires source_ckpt_root")
         domain = "vsmec" if direction == "SA" else "neu3"
-        ckpt = locate_checkpoint(source_ckpt_root, backbone, domain, seed)
+        if backbone == "XLMR":
+            ckpt = _locate_phase2_xlmr_source_checkpoint(source_ckpt_root, direction, seed)
+        else:
+            ckpt = locate_checkpoint(source_ckpt_root, backbone, domain, seed)
         return str(ckpt / "encoder"), {"init_kind": "source_checkpoint", "src_ckpt_path": str(ckpt),
                 "src_domain": domain, "encoder_sha256": sha256_file(_find_encoder_weight_file(ckpt / "encoder")),
                 "source_files_sha256": file_hashes(ckpt), "historical_run_provenance": "unverified"}

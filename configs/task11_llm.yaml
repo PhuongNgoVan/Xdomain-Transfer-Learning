@@ -1,0 +1,25 @@
+# Task 11 open-weight LLM reference config (10% pool, dev-only prompt selection)
+# python -m src.phase2.llm dev-sweep --domain vsmec
+protocol_config: phase2.yaml
+
+llm:
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  verify_license_before_run: true
+  precision: bf16
+  temperature: 0.0
+  max_input_length: 1024
+  max_new_tokens: 16
+  batch_size: 16
+  prompt_selection_split: dev_only
+  few_shot_pool: train_10pct_only
+  prompt_styles:
+    - concise
+    - rubric
+  strategies:
+    - zero_shot
+    - stratified_fixed
+    - tfidf_knn
+    - balanced_tfidf_knn
+  shots_per_class:
+    vsmec: 1
+    neuesc: 2

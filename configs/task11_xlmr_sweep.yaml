@@ -1,0 +1,11 @@
+# Task 11 XLM-R LR sweep template — dev-only, seed 0.
+# Override --direction, --method, --lr per run.
+# python -m src.phase2.cli --config configs/task11_xlmr_sweep.yaml \
+#     --direction SA --method dft --lr 2e-5
+protocol_config: phase2.yaml
+run:
+  backbone: XLMR
+  fraction: 10
+  seed: 0
+  run_mode: sweep
+  no_save_ckpt: true
