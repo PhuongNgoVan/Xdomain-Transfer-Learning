@@ -4,11 +4,13 @@ tests/*
 !tests/test_vsmec_strict_rule.py
 !tests/test_zs_*.py
 !tests/test_seq_*.py
+!tests/test_phase2_*.py
 tasks/*
 !tasks/AGENT_zscdt_core.md
 !tasks/AGENT_step3_seq.md
 !tasks/AGENT_step3_seq (1).md
 !tasks/README.md
+!tasks/task11_review_and_plan.md
 # *.md
 !README.md
 .venv/

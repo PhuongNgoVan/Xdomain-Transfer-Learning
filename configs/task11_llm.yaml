@@ -7,7 +7,8 @@ llm:
   verify_license_before_run: true
   precision: bf16
   temperature: 0.0
-  max_input_length: 1024
+  max_input_length: 2048
+  max_example_chars: 600
   max_new_tokens: 16
   batch_size: 16
   prompt_selection_split: dev_only

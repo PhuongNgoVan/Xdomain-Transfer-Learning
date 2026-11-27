@@ -70,8 +70,68 @@ def verify_c0_stage1_dft_checkpoint(dft_run_dir, expected_direction, expected_fr
             "stage1_backbone": meta["backbone"], "stage1_fingerprint": completion["fingerprint"]}
 
 
-def _locate_phase2_xlmr_source_checkpoint(root, direction, seed):
-    """Locate a unique Phase 2 XLMR DFT 100% source checkpoint for Seq."""
+def _verify_xlmr_run_manifest(ckpt, source_dir, seed, encoder_weight, results_dir=None, protocol_cfg=None):
+    run_id = ckpt.name
+    search_dirs = []
+    if results_dir is not None:
+        res_root = Path(results_dir).resolve()
+        res_runs = res_root / "runs"
+        expected_run_dir = res_runs / run_id
+        if res_runs.is_dir() and any(res_runs.glob("XLMR_*")) and not expected_run_dir.is_dir():
+            raise ValueError(f"Invalid XLMR Stage-1 source checkpoint: missing run directory {expected_run_dir}")
+        search_dirs.append(expected_run_dir)
+    search_dirs.extend([
+        ckpt.parent.parent / "results" / "phase2" / "runs" / run_id,
+        ckpt.parent.parent.parent / "results" / "phase2" / "runs" / run_id,
+        ckpt.parent / "runs" / run_id,
+    ])
+    run_dir = None
+    for candidate in search_dirs:
+        if candidate.is_dir() and ((candidate / "completion.json").exists() or (candidate / "metadata.json").exists()):
+            run_dir = candidate
+            break
+    if run_dir is None:
+        return {"run_id": run_id, "verified_completion": False}
+
+    comp_path = run_dir / "completion.json"
+    meta_path = run_dir / "metadata.json"
+    if not comp_path.is_file() or not meta_path.is_file():
+        raise ValueError(f"Invalid XLMR Stage-1 source checkpoint: missing completion/metadata in {run_dir}")
+    completion = json.loads(comp_path.read_text(encoding="utf-8"))
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    if completion.get("complete") is not True:
+        raise ValueError(f"Invalid XLMR Stage-1 source checkpoint: incomplete run {run_id}")
+    if (
+        meta.get("backbone") != "XLMR"
+        or meta.get("method") != "dft"
+        or meta.get("direction") != source_dir
+        or int(meta.get("fraction", -1)) != 100
+        or int(meta.get("seed", -1)) != int(seed)
+        or meta.get("run_mode") != "main"
+        or meta.get("max_examples") is not None
+        or (meta.get("data_provenance") or {}).get("max_examples") is not None
+    ):
+        raise ValueError(f"Invalid XLMR Stage-1 source checkpoint: metadata mismatch or truncated run {run_id}")
+    if protocol_cfg is not None and meta.get("protocol_version") != protocol_cfg["protocol_version"]:
+        raise ValueError(f"Invalid XLMR Stage-1 source checkpoint: protocol_version mismatch for {run_id}")
+
+    artifacts = completion.get("artifacts", {})
+    for req_name in ("metadata.json", "config.yaml"):
+        req_file = run_dir / req_name
+        if req_name not in artifacts or not req_file.is_file() or sha256_file(req_file) != artifacts[req_name]:
+            raise ValueError(f"Invalid XLMR Stage-1 source checkpoint: artifact hash mismatch for {run_id}/{req_name}")
+
+    head_entries = [digest for rel, digest in artifacts.items() if rel == "head.pt" or rel.endswith("/head.pt")]
+    enc_entries = [digest for rel, digest in artifacts.items() if rel.endswith(f"/encoder/{encoder_weight.name}")]
+    if not head_entries or sha256_file(ckpt / "head.pt") != head_entries[0]:
+        raise ValueError(f"Invalid XLMR Stage-1 source checkpoint: head.pt hash mismatch for {run_id}")
+    if not enc_entries or sha256_file(encoder_weight) != enc_entries[0]:
+        raise ValueError(f"Invalid XLMR Stage-1 source checkpoint: encoder hash mismatch for {run_id}")
+    return {"run_id": meta["run_id"], "verified_completion": True}
+
+
+def _locate_phase2_xlmr_source_checkpoint(root, direction, seed, *, results_dir=None, protocol_cfg=None, return_meta=False):
+    """Locate and verify a unique Phase 2 XLMR DFT 100% source checkpoint for Seq/ZS."""
     root = Path(root)
     if not root.is_dir():
         raise FileNotFoundError(f"Checkpoint root does not exist: {root}")
@@ -82,7 +142,7 @@ def _locate_phase2_xlmr_source_checkpoint(root, direction, seed):
         p.resolve() for p in root.rglob(f"{prefix}*")
         if p.is_dir() and (p / "head.pt").is_file() and (p / "encoder").is_dir()
         and not any("sweep" in part.lower() or "smoke" in part.lower()
-                    for part in p.relative_to(root).parts)
+                    for part in (root.name, *p.relative_to(root).parts))
     ]
     candidates = list(dict.fromkeys(candidates))
     if len(candidates) != 1:
@@ -91,17 +151,27 @@ def _locate_phase2_xlmr_source_checkpoint(root, direction, seed):
             f"found {len(candidates)} under {root}"
         )
     ckpt = candidates[0]
-    _find_encoder_weight_file(ckpt / "encoder")
+    encoder_weight = _find_encoder_weight_file(ckpt / "encoder")
     import torch
     head = torch.load(ckpt / "head.pt", map_location="cpu", weights_only=True)
-    if head["weight"].ndim != 2 or head["weight"].shape[0] != expected_labels:
-        raise ValueError(f"Invalid head width: expected {expected_labels} classes in {ckpt}")
-    return ckpt
+    weight, bias = head.get("weight"), head.get("bias")
+    if (
+        not isinstance(weight, torch.Tensor)
+        or weight.ndim != 2
+        or weight.shape[0] != expected_labels
+        or not isinstance(bias, torch.Tensor)
+        or bias.shape != (expected_labels,)
+    ):
+        raise ValueError(f"Invalid head width/bias: expected {expected_labels} classes in {ckpt}")
+    meta_info = _verify_xlmr_run_manifest(
+        ckpt, source_dir, seed, encoder_weight, results_dir=results_dir, protocol_cfg=protocol_cfg
+    )
+    return (ckpt, meta_info) if return_meta else ckpt
 
 
 def resolve_model_source(method, direction, backbone, seed, fraction, protocol_cfg, *,
                          pretrained_model_path=None, source_ckpt_root=None,
-                         c0_stage1_run_dir=None, expected_ids_sha256=None):
+                         c0_stage1_run_dir=None, expected_ids_sha256=None, results_dir=None):
     if method == "dft":
         ref = str(pretrained_model_path or protocol_cfg["backbones"][backbone]["model_name"])
         return ref, {"init_kind": "pretrained_backbone", "model_ref": ref,
@@ -111,9 +181,21 @@ def resolve_model_source(method, direction, backbone, seed, fraction, protocol_c
             raise ValueError("Seq requires source_ckpt_root")
         domain = "vsmec" if direction == "SA" else "neu3"
         if backbone == "XLMR":
-            ckpt = _locate_phase2_xlmr_source_checkpoint(source_ckpt_root, direction, seed)
-        else:
-            ckpt = locate_checkpoint(source_ckpt_root, backbone, domain, seed)
+            ckpt, xlmr_meta = _locate_phase2_xlmr_source_checkpoint(
+                source_ckpt_root, direction, seed,
+                results_dir=results_dir, protocol_cfg=protocol_cfg, return_meta=True,
+            )
+            return str(ckpt / "encoder"), {
+                "init_kind": "source_checkpoint",
+                "src_ckpt_path": str(ckpt),
+                "src_domain": domain,
+                "encoder_sha256": sha256_file(_find_encoder_weight_file(ckpt / "encoder")),
+                "source_files_sha256": file_hashes(ckpt),
+                "source_run_origin": "phase2_xlmr_dft_100pct",
+                "source_dft_run_id": xlmr_meta["run_id"],
+                "source_dft_verified": xlmr_meta["verified_completion"],
+            }
+        ckpt = locate_checkpoint(source_ckpt_root, backbone, domain, seed)
         return str(ckpt / "encoder"), {"init_kind": "source_checkpoint", "src_ckpt_path": str(ckpt),
                 "src_domain": domain, "encoder_sha256": sha256_file(_find_encoder_weight_file(ckpt / "encoder")),
                 "source_files_sha256": file_hashes(ckpt), "historical_run_provenance": "unverified"}
@@ -130,10 +212,10 @@ def resolve_model_source(method, direction, backbone, seed, fraction, protocol_c
 
 def build_phase2_model(method, direction, backbone, seed, fraction, protocol_cfg, *,
                        pretrained_model_path=None, source_ckpt_root=None, c0_stage1_run_dir=None,
-                       expected_ids_sha256=None, local_files_only=False, model_adapter_fn=None):
+                       expected_ids_sha256=None, results_dir=None, local_files_only=False, model_adapter_fn=None):
     ref, provenance = resolve_model_source(method, direction, backbone, seed, fraction, protocol_cfg,
         pretrained_model_path=pretrained_model_path, source_ckpt_root=source_ckpt_root,
-        c0_stage1_run_dir=c0_stage1_run_dir, expected_ids_sha256=expected_ids_sha256)
+        c0_stage1_run_dir=c0_stage1_run_dir, expected_ids_sha256=expected_ids_sha256, results_dir=results_dir)
     local = local_files_only or method != "dft"
     encoder = AutoModel.from_pretrained(ref, local_files_only=local)
     tokenizer = AutoTokenizer.from_pretrained(ref, local_files_only=local)

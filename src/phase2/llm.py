@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import argparse
+import inspect
 import json
 import math
 from pathlib import Path
 import re
 import time
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -60,6 +61,12 @@ PRETRAINING_LEAKAGE_NOTE = (
     "Public Vietnamese datasets (UIT-VSMEC, NEU-ESC) may overlap with pretraining "
     "corpora of open-weight LLMs; results are an upper-bound reference rather than "
     "strictly unseen zero-shot generalization."
+)
+
+_NEGATION_PREFIX_RE = re.compile(
+    r"(?:không\s+phải(?:\s+là)?|chứ\s+không(?:\s+phải)?|không\s+thể\s+là|không|not|isn't|is\s+not|never)"
+    r"(?:\s+(?:nhãn|label))?[\s\"'`*:\-\[\]()]*$",
+    flags=re.IGNORECASE,
 )
 
 
@@ -182,7 +189,9 @@ class FewShotSelector:
             take = min(self.shots_per_class, len(pool))
             chosen = rng.choice(pool, size=take, replace=False).tolist()
             fixed.extend(chosen)
-        self._fixed_indices = fixed
+        # Shuffle fixed examples deterministically so the final class never sits last by default.
+        perm = rng.permutation(len(fixed)).tolist()
+        self._fixed_indices = [fixed[i] for i in perm]
 
         self._vectorizer = TfidfVectorizer(
             analyzer="char_wb", ngram_range=(2, 5), lowercase=True, sublinear_tf=True
@@ -204,7 +213,7 @@ class FewShotSelector:
         results: List[List[Tuple[str, str]]] = []
         for row in sims:
             if strategy == "tfidf_knn":
-                order = np.argsort(row)[-self.total_shots :]
+                order = np.argsort(row, kind="mergesort")[-self.total_shots :]
                 chosen = order.tolist()
             elif strategy == "balanced_tfidf_knn":
                 picked: List[Tuple[float, int]] = []
@@ -212,11 +221,11 @@ class FewShotSelector:
                     pool = np.asarray(self._by_class[cls_id], dtype=np.int64)
                     cls_scores = row[pool]
                     take = min(self.shots_per_class, len(pool))
-                    top_local = np.argsort(cls_scores)[-take:]
+                    top_local = np.argsort(cls_scores, kind="mergesort")[-take:]
                     for local_idx in top_local:
                         idx = int(pool[local_idx])
                         picked.append((float(row[idx]), idx))
-                picked.sort(key=lambda item: item[0])
+                picked.sort(key=lambda item: (item[0], item[1]))
                 chosen = [idx for _, idx in picked]
             else:  # pragma: no cover - guarded above
                 raise ValueError(strategy)
@@ -271,42 +280,152 @@ def render_prompt_text(tokenizer: Any, messages: List[Dict[str, str]]) -> str:
     return "\n\n".join(f"[{m['role'].upper()}]\n{m['content']}" for m in messages) + "\n[ASSISTANT]\n"
 
 
+def _count_prompt_tokens(tokenizer: Any, prompt: str) -> int:
+    if tokenizer is None:
+        return len(prompt.split())
+    if callable(tokenizer):
+        try:
+            enc = tokenizer(prompt, add_special_tokens=False, truncation=False)
+            if isinstance(enc, Mapping) and "input_ids" in enc:
+                return len(enc["input_ids"])
+        except TypeError:
+            pass
+    if hasattr(tokenizer, "encode"):
+        try:
+            return len(tokenizer.encode(prompt, add_special_tokens=False))
+        except TypeError:
+            return len(tokenizer.encode(prompt))
+    return len(prompt.split())
+
+
+def prepare_safe_llm_prompt(
+    tokenizer: Any,
+    query_text: str,
+    domain: str,
+    examples: Sequence[Tuple[str, str]],
+    prompt_style: str = "concise",
+    *,
+    max_input_length: int = 2048,
+    max_example_chars: int = 600,
+) -> Tuple[str, int, bool]:
+    """Render prompt and trim only few-shot examples if needed so the target query is never truncated."""
+    limit = int(max_input_length)
+    if limit <= 0:
+        raise ValueError("max_input_length must be positive")
+
+    base_prompt = render_prompt_text(
+        tokenizer, build_llm_messages(query_text, domain, [], prompt_style=prompt_style)
+    )
+    base_tokens = _count_prompt_tokens(tokenizer, base_prompt)
+    if base_tokens > limit:
+        raise ValueError(
+            f"Target query prompt ({base_tokens} tokens) exceeds max_input_length={limit}; "
+            "refusing to right-truncate the query."
+        )
+
+    trimmed = False
+    cur_examples: List[Tuple[str, str]] = []
+    for ex_text, ex_label in examples:
+        txt = str(ex_text)
+        if max_example_chars and len(txt) > int(max_example_chars):
+            txt = txt[: max(1, int(max_example_chars) - 3)] + "..."
+            trimmed = True
+        cur_examples.append((txt, str(ex_label)))
+
+    rendered = render_prompt_text(
+        tokenizer, build_llm_messages(query_text, domain, cur_examples, prompt_style=prompt_style)
+    )
+    tok_count = _count_prompt_tokens(tokenizer, rendered)
+    if tok_count <= limit or not cur_examples:
+        return rendered, tok_count, trimmed
+
+    # Proportionally shorten few-shot example texts while preserving target query & labels verbatim.
+    for cap in (240, 140, 80, 40, 20):
+        trimmed = True
+        shrunk = [
+            ((txt[:cap] + "...") if len(txt) > cap else txt, lbl)
+            for txt, lbl in cur_examples
+        ]
+        rendered = render_prompt_text(
+            tokenizer, build_llm_messages(query_text, domain, shrunk, prompt_style=prompt_style)
+        )
+        tok_count = _count_prompt_tokens(tokenizer, rendered)
+        if tok_count <= limit:
+            return rendered, tok_count, True
+
+    # Drop oldest/lowest-ranked examples from the front if text caps alone still exceed limit.
+    while len(cur_examples) > 1:
+        cur_examples = cur_examples[1:]
+        trimmed = True
+        shrunk = [((txt[:80] + "...") if len(txt) > 80 else txt, lbl) for txt, lbl in cur_examples]
+        rendered = render_prompt_text(
+            tokenizer, build_llm_messages(query_text, domain, shrunk, prompt_style=prompt_style)
+        )
+        tok_count = _count_prompt_tokens(tokenizer, rendered)
+        if tok_count <= limit:
+            return rendered, tok_count, True
+
+    raise ValueError(
+        f"Prompt ({tok_count} tokens) still exceeds max_input_length={limit} after trimming examples."
+    )
+
+
 def parse_llm_label(raw_output: str, domain: str) -> Tuple[int, str, bool]:
-    """Parse generated text into target label ID, canonical name, and validity flag."""
+    """Strictly parse generated text into target label ID, canonical name, and validity flag."""
     labels = DOMAIN_LABELS[domain]
     lower_map = {name.lower(): (idx, name) for idx, name in enumerate(labels)}
+    fb = FALLBACK_LABEL_ID[domain]
     text = str(raw_output or "").strip()
     if not text:
-        fb = FALLBACK_LABEL_ID[domain]
         return fb, labels[fb], False
 
-    first_line = text.splitlines()[0].strip()
+    all_hits: List[Tuple[int, int, str]] = []
+    for idx, name in enumerate(labels):
+        for m in re.finditer(rf"\b{re.escape(name)}\b", text, flags=re.IGNORECASE):
+            all_hits.append((m.start(), idx, name))
+
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    first_line = lines[0] if lines else ""
     cleaned = re.sub(r'^[\s"\'`*:\-\[\]().,;]+|[\s"\'`*:\-\[\]().,;]+$', "", first_line).lower()
     if cleaned in lower_map:
         idx, name = lower_map[cleaned]
-        return idx, name, True
-
-    # Try JSON or "Nhãn: <label>" / "Label: <label>" patterns
-    json_match = re.search(r'"?(?:label|nhãn)"?\s*:\s*"?([a-zA-Z]+)"?', text, flags=re.IGNORECASE)
-    if json_match:
-        cand = json_match.group(1).lower()
-        if cand in lower_map:
-            idx, name = lower_map[cand]
+        other_ids = {h_idx for _, h_idx, _ in all_hits}
+        if not other_ids or other_ids == {idx}:
             return idx, name, True
+        return fb, labels[fb], False
 
-    # Boundary word match across allowed labels (prefer earliest single occurrence)
-    hits: List[Tuple[int, int, str]] = []
-    for idx, name in enumerate(labels):
-        m = re.search(rf"\b{re.escape(name)}\b", text, flags=re.IGNORECASE)
-        if m:
-            hits.append((m.start(), idx, name))
-    if hits:
-        hits.sort(key=lambda item: item[0])
-        _, idx, name = hits[0]
+    # JSON {"label": "..."} or {"nhãn": "..."}
+    json_matches = re.findall(r'"?(?:label|nhãn)"?\s*:\s*"?([a-zA-Z]+)"?', text, flags=re.IGNORECASE)
+    json_ids = {lower_map[cand.lower()] for cand in json_matches if cand.lower() in lower_map}
+    if len(json_ids) == 1:
+        idx, name = next(iter(json_ids))
         return idx, name, True
+    if len(json_ids) > 1:
+        return fb, labels[fb], False
 
-    fb = FALLBACK_LABEL_ID[domain]
-    return fb, labels[fb], False
+    # Explicit line-anchored declaration ("Nhãn: positive", "Label: Anger")
+    decl_matches = re.findall(
+        r'(?im)^\s*(?:nhãn|label|đáp án|answer)\s*[:=]\s*["\'`*]*([a-zA-Z]+)["\'`*.\s]*$',
+        text,
+    )
+    decl_ids = {lower_map[cand.lower()] for cand in decl_matches if cand.lower() in lower_map}
+    if len(decl_ids) == 1:
+        idx, name = next(iter(decl_ids))
+        return idx, name, True
+    if len(decl_ids) > 1:
+        return fb, labels[fb], False
+
+    # Fallback boundary scan: valid ONLY when a single unambiguous un-negated label appears.
+    unique_ids = {idx for _, idx, _ in all_hits}
+    if len(unique_ids) != 1:
+        return fb, labels[fb], False
+
+    all_hits.sort(key=lambda item: item[0])
+    pos, idx, name = all_hits[0]
+    prefix = text[max(0, pos - 32) : pos]
+    if _NEGATION_PREFIX_RE.search(prefix):
+        return fb, labels[fb], False
+    return idx, name, True
 
 
 def verify_hf_model_metadata(model_name: str, verify_license: bool = True) -> Dict[str, Any]:
@@ -335,6 +454,21 @@ def verify_hf_model_metadata(model_name: str, verify_license: bool = True) -> Di
         return {"model_name": model_name, "model_revision": "unknown", "license": "unverified"}
 
 
+def _count_causal_lm_params(model: Any) -> Tuple[int, Optional[float]]:
+    """Use `model.num_parameters()` so packed 4-bit/8-bit weights report true parameter counts."""
+    if hasattr(model, "num_parameters"):
+        total_params = int(model.num_parameters())
+    else:
+        total_params = int(sum(p.numel() for p in model.parameters()))
+    footprint_mb: Optional[float] = None
+    if hasattr(model, "get_memory_footprint"):
+        try:
+            footprint_mb = float(model.get_memory_footprint() / (1024 ** 2))
+        except Exception:
+            footprint_mb = None
+    return total_params, footprint_mb
+
+
 class HuggingFaceLLMClassifier:
     """Greedy-decoding zero/few-shot classifier for open-weight CausalLMs."""
 
@@ -343,7 +477,7 @@ class HuggingFaceLLMClassifier:
         model_name: str = "Qwen/Qwen2.5-7B-Instruct",
         *,
         precision: str = "bf16",
-        max_input_length: int = 1024,
+        max_input_length: int = 2048,
         max_new_tokens: int = 16,
         batch_size: int = 16,
         verify_license: bool = True,
@@ -394,10 +528,10 @@ class HuggingFaceLLMClassifier:
             for attr in ("temperature", "top_p", "top_k"):
                 if hasattr(gen_cfg, attr):
                     setattr(gen_cfg, attr, None)
-        self.total_params = sum(p.numel() for p in self.model.parameters())
+        self.total_params, self.memory_footprint_mb = _count_causal_lm_params(self.model)
         self.trainable_params = 0
 
-    def generate_batch(self, prompts: Sequence[str]) -> List[str]:
+    def generate_batch(self, prompts: Sequence[str], *, quiet: bool = False) -> List[str]:
         import torch
 
         device = next(self.model.parameters()).device
@@ -408,12 +542,17 @@ class HuggingFaceLLMClassifier:
             for batch_idx, start in enumerate(range(0, len(order), self.batch_size), 1):
                 idxs = order[start : start + self.batch_size]
                 batch_prompts = [prompts[i] for i in idxs]
+                raw_lens = [len(ids) for ids in self.tokenizer(batch_prompts, padding=False, truncation=False)["input_ids"]]
+                if max(raw_lens, default=0) > self.max_input_length:
+                    raise ValueError(
+                        f"Prompt token length {max(raw_lens)} exceeds max_input_length={self.max_input_length}; "
+                        "refusing to right-truncate target query."
+                    )
                 enc = self.tokenizer(
                     batch_prompts,
                     return_tensors="pt",
                     padding=True,
-                    truncation=True,
-                    max_length=self.max_input_length,
+                    truncation=False,
                 ).to(device)
                 prompt_len = enc["input_ids"].shape[1]
                 gen = self.model.generate(
@@ -425,23 +564,27 @@ class HuggingFaceLLMClassifier:
                 decoded = self.tokenizer.batch_decode(gen[:, prompt_len:], skip_special_tokens=True)
                 for pos, text in zip(idxs, decoded):
                     restored[pos] = text.strip()
-                if batch_idx == 1 or batch_idx % 20 == 0 or batch_idx == total_batches:
+                if not quiet and (batch_idx == 1 or batch_idx % 20 == 0 or batch_idx == total_batches):
                     print(f"[llm] batch {batch_idx}/{total_batches} ({min(start + self.batch_size, len(order))}/{len(order)})", flush=True)
         return restored
 
     def metadata(self) -> Dict[str, Any]:
         import torch
 
-        return {
+        meta = {
             **self.hub_meta,
             "precision": self.precision,
             "quantization": self.precision if self.precision in ("4bit", "8bit") else "none",
             "temperature": 0.0,
             "do_sample": False,
+            "max_input_length": int(self.max_input_length),
             "total_params": int(self.total_params),
             "trainable_params": int(self.trainable_params),
             "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
         }
+        if self.memory_footprint_mb is not None:
+            meta["memory_footprint_mb"] = float(self.memory_footprint_mb)
+        return meta
 
 
 def _one_hot_probabilities(pred_ids: Sequence[int], num_labels: int) -> np.ndarray:
@@ -462,13 +605,29 @@ def evaluate_llm_split(
     selector: FewShotSelector,
     predictor_fn: Callable[[Sequence[str]], Sequence[str]],
     tokenizer: Any = None,
+    *,
+    max_input_length: int = 2048,
+    max_example_chars: int = 600,
 ) -> Dict[str, Any]:
     """Run deterministic LLM prediction and score all domain views on one split."""
     examples_per_row = selector.select_batch(texts, strategy)
-    prompts = [
-        render_prompt_text(tokenizer, build_llm_messages(text, domain, exs, prompt_style=prompt_style))
-        for text, exs in zip(texts, examples_per_row)
-    ]
+    prompts: List[str] = []
+    prompt_tokens: List[int] = []
+    trimmed_count = 0
+    for text, exs in zip(texts, examples_per_row):
+        rendered, n_tok, was_trimmed = prepare_safe_llm_prompt(
+            tokenizer,
+            text,
+            domain,
+            exs,
+            prompt_style=prompt_style,
+            max_input_length=max_input_length,
+            max_example_chars=max_example_chars,
+        )
+        prompts.append(rendered)
+        prompt_tokens.append(n_tok)
+        trimmed_count += int(was_trimmed)
+
     t0 = time.perf_counter()
     raw_outputs = list(predictor_fn(prompts))
     elapsed = time.perf_counter() - t0
@@ -493,7 +652,14 @@ def evaluate_llm_split(
     views = (
         [("V3-NEU", "none")]
         if domain == "neuesc"
-        else [("V7-VSMEC", "none"), ("V5-VSMEC", "none"), ("V3-VSMEC", "sum"), ("V3-VSMEC-strict", "sum")]
+        else [
+            ("V7-VSMEC", "none"),
+            ("V5-VSMEC", "none"),
+            ("V3-VSMEC", "sum"),
+            ("V3-VSMEC", "argmax"),
+            ("V3-VSMEC-strict", "sum"),
+            ("V3-VSMEC-strict", "argmax"),
+        ]
     )
     view_metrics = {f"{v}/{m}": score_view(pred_frame, v, m) for v, m in views}
     raw_df = pd.DataFrame(
@@ -503,6 +669,7 @@ def evaluate_llm_split(
             "y_pred": parsed_ids,
             "pred_label": parsed_names,
             "valid_parse": valid_flags,
+            "prompt_tokens": prompt_tokens,
             "raw_output": raw_outputs,
         }
     )
@@ -517,6 +684,9 @@ def evaluate_llm_split(
         "view_metrics": view_metrics,
         "invalid_output_count": int(invalid_count),
         "invalid_output_rate": float(invalid_count / len(texts)),
+        "max_prompt_tokens": int(max(prompt_tokens, default=0)),
+        "mean_prompt_tokens": float(np.mean(prompt_tokens)) if prompt_tokens else 0.0,
+        "trimmed_example_prompts": int(trimmed_count),
         "elapsed_seconds": float(elapsed),
         "throughput_samples_per_sec": float(len(texts) / elapsed) if elapsed > 0 else 0.0,
         "pred_frame": pred_frame,
@@ -540,8 +710,12 @@ def run_llm_dev_sweep(
     max_examples: Optional[int] = None,
     config_path: str | Path = "configs/task11_llm.yaml",
 ) -> Dict[str, Any]:
-    """Evaluate zero-shot and few-shot strategies on dev ONLY and lock selection JSON."""
+    """Evaluate zero-shot and few-shot strategies on dev ONLY, supporting artifact SKIP, and lock selection JSON."""
     cfg_bundle = load_llm_task_config(config_path)
+    llm_cfg = cfg_bundle["llm"]
+    max_input_length = int(llm_cfg.get("max_input_length", 2048))
+    max_example_chars = int(llm_cfg.get("max_example_chars", 600))
+
     data = load_llm_splits(
         domain,
         fraction=10,
@@ -562,10 +736,57 @@ def run_llm_dev_sweep(
     root = Path(out_dir) / domain
     root.mkdir(parents=True, exist_ok=True)
     primary_view = "V3-NEU/none" if domain == "neuesc" else "V5-VSMEC/none"
+    proto_hash = canonical_digest(cfg_bundle["protocol_cfg"])
+    code_sha = sha256_file(Path(__file__))
+    cfg_sha = sha256_file(Path(config_path))
 
     rows: List[Dict[str, Any]] = []
+    skipped_tags: List[str] = []
     for style in prompt_styles:
         for strategy in strategies:
+            tag = f"{strategy}__{style}"
+            pred_path = root / f"dev_pred_{tag}.csv"
+            raw_path = root / f"dev_raw_{tag}.csv"
+            comp_path = root / f"dev_completion_{tag}.json"
+            tag_fp = canonical_digest(
+                {
+                    "protocol_hash": proto_hash,
+                    "domain": domain,
+                    "strategy": strategy,
+                    "prompt_style": style,
+                    "shots_per_class": int(shots_per_class),
+                    "seed": int(seed),
+                    "max_examples": max_examples,
+                    "max_input_length": max_input_length,
+                    "max_example_chars": max_example_chars,
+                    "data_hash": data["provenance"]["data_hash"],
+                    "ids_sha256": data["provenance"]["ids_sha256"],
+                    "model_meta": {
+                        "model_name": (model_meta or {}).get("model_name"),
+                        "precision": (model_meta or {}).get("precision"),
+                    },
+                    "code_sha256": code_sha,
+                    "config_sha256": cfg_sha,
+                }
+            )
+            if comp_path.is_file():
+                comp = json.loads(comp_path.read_text(encoding="utf-8"))
+                if comp.get("fingerprint") != tag_fp:
+                    raise ValueError(f"Dev sweep fingerprint mismatch for {domain}/{tag}")
+                artifacts = comp.get("artifacts", {})
+                if (
+                    comp.get("complete") is True
+                    and pred_path.is_file()
+                    and raw_path.is_file()
+                    and artifacts.get(pred_path.name) == sha256_file(pred_path)
+                    and artifacts.get(raw_path.name) == sha256_file(raw_path)
+                    and isinstance(comp.get("row"), dict)
+                ):
+                    rows.append(comp["row"])
+                    skipped_tags.append(tag)
+                    continue
+
+            atomic_json(comp_path, {"complete": False, "fingerprint": tag_fp})
             res = evaluate_llm_split(
                 "dev",
                 data["dev_df"],
@@ -577,45 +798,76 @@ def run_llm_dev_sweep(
                 selector,
                 predictor_fn,
                 tokenizer=tokenizer,
+                max_input_length=max_input_length,
+                max_example_chars=max_example_chars,
             )
-            tag = f"{strategy}__{style}"
-            _atomic_csv(res["pred_frame"], root / f"dev_pred_{tag}.csv")
-            _atomic_csv(res["raw_frame"], root / f"dev_raw_{tag}.csv")
+            _atomic_csv(res["pred_frame"], pred_path)
+            _atomic_csv(res["raw_frame"], raw_path)
             prim = res["view_metrics"][primary_view]
-            rows.append(
+            row = {
+                "domain": domain,
+                "strategy": strategy,
+                "prompt_style": style,
+                "is_few_shot": strategy != "zero_shot",
+                "shots": 0 if strategy == "zero_shot" else selector.total_shots,
+                "n_eval": res["n_eval"],
+                "dev_selection_score": res["dev_selection_score"],
+                "macro_f1": prim["macro_f1"],
+                "weighted_f1": prim["weighted_f1"],
+                "accuracy": prim["accuracy"],
+                "invalid_output_count": res["invalid_output_count"],
+                "invalid_output_rate": res["invalid_output_rate"],
+                "max_prompt_tokens": res["max_prompt_tokens"],
+                "mean_prompt_tokens": res["mean_prompt_tokens"],
+                "trimmed_example_prompts": res["trimmed_example_prompts"],
+                "elapsed_seconds": res["elapsed_seconds"],
+                "data_hash": data["provenance"]["data_hash"],
+                "ids_sha256": data["provenance"]["ids_sha256"],
+                "max_examples": max_examples,
+            }
+            atomic_json(
+                comp_path,
                 {
-                    "domain": domain,
-                    "strategy": strategy,
-                    "prompt_style": style,
-                    "is_few_shot": strategy != "zero_shot",
-                    "shots": 0 if strategy == "zero_shot" else selector.total_shots,
-                    "n_eval": res["n_eval"],
-                    "dev_selection_score": res["dev_selection_score"],
-                    "macro_f1": prim["macro_f1"],
-                    "weighted_f1": prim["weighted_f1"],
-                    "accuracy": prim["accuracy"],
-                    "invalid_output_count": res["invalid_output_count"],
-                    "invalid_output_rate": res["invalid_output_rate"],
-                    "elapsed_seconds": res["elapsed_seconds"],
-                    "data_hash": data["provenance"]["data_hash"],
-                    "ids_sha256": data["provenance"]["ids_sha256"],
-                    "max_examples": max_examples,
-                }
+                    "complete": True,
+                    "fingerprint": tag_fp,
+                    "artifacts": {
+                        pred_path.name: sha256_file(pred_path),
+                        raw_path.name: sha256_file(raw_path),
+                    },
+                    "row": row,
+                },
             )
+            rows.append(row)
+
     sweep_df = pd.DataFrame(rows)
     _atomic_csv(sweep_df, root / f"dev_sweep_{domain}.csv")
+
+    style_rank = {s: i for i, s in enumerate(PROMPT_STYLES)}
+    strat_rank = {s: i for i, s in enumerate(STRATEGIES)}
+
+    def _pick_best(sub: pd.DataFrame) -> pd.Series:
+        ordered = sub.assign(
+            _s_rank=sub["prompt_style"].map(lambda x: style_rank.get(str(x), 99)),
+            _t_rank=sub["strategy"].map(lambda x: strat_rank.get(str(x), 99)),
+        ).sort_values(
+            ["dev_selection_score", "invalid_output_rate", "_s_rank", "_t_rank"],
+            ascending=[False, True, True, True],
+            kind="mergesort",
+        )
+        return ordered.iloc[0]
 
     zs_df = sweep_df.loc[sweep_df["strategy"].eq("zero_shot")]
     fs_df = sweep_df.loc[sweep_df["strategy"].ne("zero_shot")]
     selection: Dict[str, Any] = {
         "protocol_version": cfg_bundle["protocol_cfg"]["protocol_version"],
-        "protocol_hash": canonical_digest(cfg_bundle["protocol_cfg"]),
+        "protocol_hash": proto_hash,
         "domain": domain,
         "selection_split": "dev_only",
         "few_shot_pool": "train_10pct_only",
         "shots_per_class": int(shots_per_class),
         "seed": int(seed),
         "max_examples": max_examples,
+        "max_input_length": max_input_length,
         "data_hash": data["provenance"]["data_hash"],
         "ids_sha256": data["provenance"]["ids_sha256"],
         "git_commit": _git_commit(),
@@ -624,7 +876,7 @@ def run_llm_dev_sweep(
         "selected": {},
     }
     if not zs_df.empty:
-        best_zs = zs_df.sort_values(["dev_selection_score", "invalid_output_rate"], ascending=[False, True]).iloc[0]
+        best_zs = _pick_best(zs_df)
         selection["selected"]["zero_shot"] = {
             "strategy": str(best_zs["strategy"]),
             "prompt_style": str(best_zs["prompt_style"]),
@@ -632,7 +884,7 @@ def run_llm_dev_sweep(
             "invalid_output_rate": float(best_zs["invalid_output_rate"]),
         }
     if not fs_df.empty:
-        best_fs = fs_df.sort_values(["dev_selection_score", "invalid_output_rate"], ascending=[False, True]).iloc[0]
+        best_fs = _pick_best(fs_df)
         selection["selected"]["few_shot"] = {
             "strategy": str(best_fs["strategy"]),
             "prompt_style": str(best_fs["prompt_style"]),
@@ -641,7 +893,27 @@ def run_llm_dev_sweep(
         }
     sel_path = root / f"selection_llm_{domain}.json"
     atomic_json(sel_path, selection)
-    return {"sweep_df": sweep_df, "selection": selection, "selection_path": sel_path}
+    return {
+        "sweep_df": sweep_df,
+        "selection": selection,
+        "selection_path": sel_path,
+        "skipped_tags": skipped_tags,
+    }
+
+
+def _verify_llm_model_meta_compatibility(
+    sel_meta: Mapping[str, Any],
+    cur_meta: Optional[Mapping[str, Any]],
+) -> None:
+    if not cur_meta or not sel_meta:
+        return
+    for field in ("model_name", "precision"):
+        sel_val = sel_meta.get(field)
+        cur_val = cur_meta.get(field)
+        if sel_val is not None and cur_val is not None and str(sel_val) != str(cur_val):
+            raise ValueError(
+                f"Selection {field} mismatch: selection has {sel_val!r}, runtime has {cur_val!r}"
+            )
 
 
 def run_llm_test_eval(
@@ -657,8 +929,12 @@ def run_llm_test_eval(
     max_examples: Optional[int] = None,
     config_path: str | Path = "configs/task11_llm.yaml",
 ) -> Dict[str, Any]:
-    """Run locked dev-selected zero-shot & few-shot configs once on held-out test."""
+    """Run locked dev-selected zero-shot & few-shot configs once on held-out test with completion/SKIP."""
     cfg_bundle = load_llm_task_config(config_path)
+    llm_cfg = cfg_bundle["llm"]
+    max_input_length = int(llm_cfg.get("max_input_length", 2048))
+    max_example_chars = int(llm_cfg.get("max_example_chars", 600))
+
     sel = json.loads(Path(selection_path).read_text(encoding="utf-8"))
     if sel.get("domain") != domain or sel.get("selection_split") != "dev_only":
         raise ValueError("Invalid LLM dev selection manifest")
@@ -666,6 +942,7 @@ def run_llm_test_eval(
         raise ValueError("Selection protocol_hash mismatch")
     if max_examples is None and sel.get("max_examples") is not None:
         raise ValueError("Truncated dev sweep selection cannot be used for full test evaluation")
+    _verify_llm_model_meta_compatibility(sel.get("model_meta") or {}, model_meta)
 
     data = load_llm_splits(
         domain,
@@ -689,9 +966,53 @@ def run_llm_test_eval(
     root = Path(out_dir) / domain
     root.mkdir(parents=True, exist_ok=True)
     summary_rows: List[Dict[str, Any]] = []
+    skipped_modes: List[str] = []
+    sel_sha = sha256_file(Path(selection_path))
+    code_sha = sha256_file(Path(__file__))
+    effective_meta = model_meta or sel.get("model_meta", {})
 
     for mode_key, chosen in sel["selected"].items():
         strategy, style = chosen["strategy"], chosen["prompt_style"]
+        run_dir = root / f"test_{mode_key}"
+        comp_path = run_dir / "completion.json"
+        mode_fp = canonical_digest(
+            {
+                "protocol_hash": sel["protocol_hash"],
+                "domain": domain,
+                "mode": mode_key,
+                "strategy": strategy,
+                "prompt_style": style,
+                "selection_sha256": sel_sha,
+                "data_hash": data["provenance"]["data_hash"],
+                "ids_sha256": data["provenance"]["ids_sha256"],
+                "max_examples": max_examples,
+                "max_input_length": max_input_length,
+                "max_example_chars": max_example_chars,
+                "model_meta": {
+                    "model_name": (effective_meta or {}).get("model_name"),
+                    "precision": (effective_meta or {}).get("precision"),
+                },
+                "code_sha256": code_sha,
+            }
+        )
+        req_files = ("predictions_test.csv", "raw_outputs_test.csv", "metrics.json", "metadata.json")
+        if comp_path.is_file():
+            comp = json.loads(comp_path.read_text(encoding="utf-8"))
+            if comp.get("fingerprint") != mode_fp:
+                raise ValueError(f"LLM test completion fingerprint mismatch for {domain}/{mode_key}")
+            artifacts = comp.get("artifacts", {})
+            if (
+                comp.get("complete") is True
+                and set(req_files).issubset(artifacts)
+                and all((run_dir / fname).is_file() and sha256_file(run_dir / fname) == artifacts[fname] for fname in req_files)
+                and isinstance(comp.get("summary_rows"), list)
+            ):
+                summary_rows.extend(comp["summary_rows"])
+                skipped_modes.append(mode_key)
+                continue
+
+        run_dir.mkdir(parents=True, exist_ok=True)
+        atomic_json(comp_path, {"complete": False, "fingerprint": mode_fp})
         res = evaluate_llm_split(
             "test",
             data["test_df"],
@@ -703,9 +1024,9 @@ def run_llm_test_eval(
             selector,
             predictor_fn,
             tokenizer=tokenizer,
+            max_input_length=max_input_length,
+            max_example_chars=max_example_chars,
         )
-        run_dir = root / f"test_{mode_key}"
-        run_dir.mkdir(parents=True, exist_ok=True)
         _atomic_csv(res["pred_frame"], run_dir / "predictions_test.csv")
         _atomic_csv(res["raw_frame"], run_dir / "raw_outputs_test.csv")
         atomic_json(
@@ -718,6 +1039,9 @@ def run_llm_test_eval(
                 "n_eval": res["n_eval"],
                 "invalid_output_count": res["invalid_output_count"],
                 "invalid_output_rate": res["invalid_output_rate"],
+                "max_prompt_tokens": res["max_prompt_tokens"],
+                "mean_prompt_tokens": res["mean_prompt_tokens"],
+                "trimmed_example_prompts": res["trimmed_example_prompts"],
                 "test_metrics": res["view_metrics"],
                 "probabilities_note": "Deterministic one-hot from greedy decoding; not calibrated posteriors.",
             },
@@ -732,16 +1056,19 @@ def run_llm_test_eval(
                 "prompt_style": style,
                 "shots": 0 if strategy == "zero_shot" else selector.total_shots,
                 "selection_ref": str(Path(selection_path).resolve()),
+                "selection_sha256": sel_sha,
                 "data_provenance": data["provenance"],
-                "model_meta": model_meta or sel.get("model_meta", {}),
+                "model_meta": effective_meta,
                 "git_commit": _git_commit(),
+                "fingerprint": mode_fp,
                 "pretraining_leakage_risk": True,
                 "pretraining_leakage_note": PRETRAINING_LEAKAGE_NOTE,
             },
         )
+        mode_rows: List[Dict[str, Any]] = []
         for view_key, metrics in res["view_metrics"].items():
             view_name, map_method = view_key.split("/", 1)
-            summary_rows.append(
+            mode_rows.append(
                 {
                     "domain": domain,
                     "mode": mode_key,
@@ -755,57 +1082,66 @@ def run_llm_test_eval(
                     **metrics,
                 }
             )
+        artifacts = {fname: sha256_file(run_dir / fname) for fname in req_files}
+        atomic_json(
+            comp_path,
+            {
+                "complete": True,
+                "fingerprint": mode_fp,
+                "artifacts": artifacts,
+                "summary_rows": mode_rows,
+            },
+        )
+        summary_rows.extend(mode_rows)
+
     summary_df = pd.DataFrame(summary_rows)
     _atomic_csv(summary_df, root / f"test_summary_{domain}.csv")
-    return {"summary_df": summary_df, "out_dir": root}
+    return {"summary_df": summary_df, "out_dir": root, "skipped_modes": skipped_modes}
 
 
-def benchmark_llm_inference(
-    classifier: HuggingFaceLLMClassifier,
-    texts: Sequence[str],
-    domain: str,
+def _invoke_generate_quiet(classifier: Any, prompts: Sequence[str]) -> Sequence[str]:
+    sig = inspect.signature(classifier.generate_batch)
+    if "quiet" in sig.parameters:
+        return classifier.generate_batch(prompts, quiet=True)
+    return classifier.generate_batch(prompts)
+
+
+def _benchmark_prompt_set(
+    classifier: Any,
+    prompts: Sequence[str],
     *,
-    n_b1: int = 50,
-    large_batch_size: int = 16,
-    n_large: int = 160,
-    out_path: Optional[str | Path] = None,
+    n_b1: int,
+    large_batch_size: int,
+    n_large: int,
 ) -> Dict[str, Any]:
-    """Measure peak VRAM, batch=1 latency, large-batch throughput, and GPU-h/1k samples."""
     import torch
 
-    prompts = [
-        render_prompt_text(classifier.tokenizer, build_llm_messages(t, domain, [], prompt_style="concise"))
-        for t in list(texts)[: max(n_b1, n_large)]
-    ]
     if torch.cuda.is_available():
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
 
-    # Warmup
-    classifier.generate_batch(prompts[:1])
+    _invoke_generate_quiet(classifier, prompts[:1])
     if torch.cuda.is_available():
         torch.cuda.synchronize()
 
-    # Batch = 1 latency
     prev_bs = classifier.batch_size
     classifier.batch_size = 1
     b1_times: List[float] = []
-    for p in prompts[: min(n_b1, len(prompts))]:
+    for p in prompts[: min(int(n_b1), len(prompts))]:
         if torch.cuda.is_available():
             torch.cuda.synchronize()
         t0 = time.perf_counter()
-        classifier.generate_batch([p])
+        _invoke_generate_quiet(classifier, [p])
         if torch.cuda.is_available():
             torch.cuda.synchronize()
         b1_times.append(time.perf_counter() - t0)
 
-    # Large batch throughput
     classifier.batch_size = int(large_batch_size)
-    batch_prompts = prompts[: min(n_large, len(prompts))]
+    batch_prompts = prompts[: min(int(n_large), len(prompts))]
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     t0 = time.perf_counter()
-    classifier.generate_batch(batch_prompts)
+    _invoke_generate_quiet(classifier, batch_prompts)
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     large_elapsed = time.perf_counter() - t0
@@ -813,23 +1149,110 @@ def benchmark_llm_inference(
 
     n_proc = len(batch_prompts)
     throughput = n_proc / large_elapsed if large_elapsed > 0 else 0.0
-    gpu_hours_1k = (large_elapsed / n_proc) * 1000.0 / 3600.0 if n_proc > 0 else 0.0
+    gpu_hours_1k = (large_elapsed / n_proc) * 1000.0 / 3600.0 if (n_proc > 0 and torch.cuda.is_available()) else 0.0
     peak_vram_mb = torch.cuda.max_memory_allocated() / 1024**2 if torch.cuda.is_available() else 0.0
-
-    cost = {
-        **classifier.metadata(),
-        "domain": domain,
+    return {
         "peak_vram_mb": float(peak_vram_mb),
         "n_b1": len(b1_times),
         "latency_batch1_mean_ms": float(np.mean(b1_times) * 1000.0) if b1_times else 0.0,
         "latency_batch1_p50_ms": float(np.median(b1_times) * 1000.0) if b1_times else 0.0,
         "latency_batch1_p95_ms": float(np.percentile(b1_times, 95) * 1000.0) if b1_times else 0.0,
         "large_batch_size": int(large_batch_size),
-        "n_large": n_proc,
+        "n_large": int(n_proc),
         "large_batch_seconds": float(large_elapsed),
         "throughput_samples_per_sec": float(throughput),
         "gpu_hours_per_1000_samples": float(gpu_hours_1k),
     }
+
+
+def benchmark_llm_inference(
+    classifier: Any,
+    texts: Sequence[str],
+    domain: str,
+    *,
+    n_b1: int = 50,
+    large_batch_size: int = 16,
+    n_large: int = 160,
+    out_path: Optional[str | Path] = None,
+    selection_path: Optional[str | Path] = None,
+    clean_dir: str | Path = "data/clean",
+    subsets_dir: str | Path = "data/subsets_phase2",
+    max_input_length: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Measure peak VRAM, batch=1 latency, large-batch throughput, and GPU-h/1k for zero-shot & locked few-shot."""
+    sample_texts = list(texts)[: max(int(n_b1), int(n_large))]
+    limit = int(max_input_length or getattr(classifier, "max_input_length", 2048))
+
+    zs_prompts = [
+        prepare_safe_llm_prompt(
+            classifier.tokenizer, t, domain, [], prompt_style="concise", max_input_length=limit
+        )[0]
+        for t in sample_texts
+    ]
+    modes: Dict[str, Dict[str, Any]] = {}
+    if selection_path is not None and Path(selection_path).is_file():
+        sel = json.loads(Path(selection_path).read_text(encoding="utf-8"))
+        sel_limit = int(sel.get("max_input_length", limit))
+        splits = load_llm_splits(
+            domain,
+            fraction=10,
+            seed=int(sel["seed"]),
+            clean_dir=clean_dir,
+            subsets_dir=subsets_dir,
+            include_test=False,
+        )
+        selector = FewShotSelector(
+            splits["train_texts"],
+            splits["train_labels"],
+            splits["labels"],
+            seed=int(sel["seed"]),
+            shots_per_class=int(sel["shots_per_class"]),
+        )
+        for mode_key, chosen in (sel.get("selected") or {}).items():
+            strategy = str(chosen["strategy"])
+            style = str(chosen["prompt_style"])
+            ex_batches = selector.select_batch(sample_texts, strategy)
+            mode_prompts = [
+                prepare_safe_llm_prompt(
+                    classifier.tokenizer, t, domain, exs, prompt_style=style, max_input_length=sel_limit
+                )[0]
+                for t, exs in zip(sample_texts, ex_batches)
+            ]
+            modes[mode_key] = {
+                "strategy": strategy,
+                "prompt_style": style,
+                **_benchmark_prompt_set(
+                    classifier, mode_prompts, n_b1=n_b1, large_batch_size=large_batch_size, n_large=n_large
+                ),
+            }
+    if "zero_shot" not in modes:
+        modes["zero_shot"] = {
+            "strategy": "zero_shot",
+            "prompt_style": "concise",
+            **_benchmark_prompt_set(
+                classifier, zs_prompts, n_b1=n_b1, large_batch_size=large_batch_size, n_large=n_large
+            ),
+        }
+
+    primary = modes["zero_shot"]
+    cost: Dict[str, Any] = {
+        **classifier.metadata(),
+        "domain": domain,
+        **{k: v for k, v in primary.items() if k not in ("strategy", "prompt_style")},
+        "modes": modes,
+    }
+    if "few_shot" in modes:
+        fs = modes["few_shot"]
+        cost.update(
+            {
+                "few_shot_strategy": fs["strategy"],
+                "few_shot_prompt_style": fs["prompt_style"],
+                "few_shot_peak_vram_mb": fs["peak_vram_mb"],
+                "few_shot_latency_batch1_mean_ms": fs["latency_batch1_mean_ms"],
+                "few_shot_throughput_samples_per_sec": fs["throughput_samples_per_sec"],
+                "few_shot_gpu_hours_per_1000_samples": fs["gpu_hours_per_1000_samples"],
+            }
+        )
     if out_path is not None:
         atomic_json(out_path, cost)
     return cost
@@ -857,7 +1280,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     clf = HuggingFaceLLMClassifier(
         model_name=model_name,
         precision=precision,
-        max_input_length=int(cfg.get("max_input_length", 1024)),
+        max_input_length=int(cfg.get("max_input_length", 2048)),
         max_new_tokens=int(cfg.get("max_new_tokens", 16)),
         batch_size=batch_size,
         verify_license=not args.no_verify_license,
@@ -893,7 +1316,16 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     elif args.action == "benchmark":
         data = load_llm_splits(args.domain, include_test=False, seed=args.seed)
         out = Path(args.out_dir) / f"cost_llm_{args.domain}.json"
-        cost = benchmark_llm_inference(clf, data["dev_texts"], args.domain, large_batch_size=batch_size, out_path=out)
+        default_sel = Path(args.out_dir) / args.domain / f"selection_llm_{args.domain}.json"
+        sel_path = args.selection_path or (str(default_sel) if default_sel.is_file() else None)
+        cost = benchmark_llm_inference(
+            clf,
+            data["dev_texts"],
+            args.domain,
+            large_batch_size=batch_size,
+            out_path=out,
+            selection_path=sel_path,
+        )
         print(json.dumps(cost, indent=2, ensure_ascii=False))
 
 

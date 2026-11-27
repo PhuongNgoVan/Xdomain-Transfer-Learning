@@ -96,7 +96,8 @@ def run_phase2_experiment(config_path="configs/phase2.yaml", *, backbone="ViSoBE
     data = load_phase2_prepared_data(direction, fraction, seed, backbone, cfg, run_mode=run_mode,
                                     clean_dir=clean_dir, subsets_dir=subsets_dir, max_examples=max_examples)
     source_args = dict(pretrained_model_path=pretrained_model_path, source_ckpt_root=source_ckpt_root,
-                       c0_stage1_run_dir=c0_stage1_run_dir, expected_ids_sha256=data["provenance"]["ids_sha256"])
+                       c0_stage1_run_dir=c0_stage1_run_dir, expected_ids_sha256=data["provenance"]["ids_sha256"],
+                       results_dir=results_dir)
     _, source = resolve_model_source(base_method, direction, backbone, seed, fraction, cfg, **source_args)
     if base_method == "c0" and source["stage1_source_files_sha256"] != data["provenance"]["source_files_sha256"]:
         raise ValueError("C0 low-resource violation: source data hashes mismatch")
